@@ -703,7 +703,12 @@ function ScheduleSummary({bookings,users}){
 function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [step,setStep]=useState(1);
   const [subject,setSubject]=useState("");
-  const [classRoom,setClassRoom]=useState("");
+  
+  // 1. เพิ่ม State สำหรับแยกเก็บข้อมูล ระดับชั้น, ห้องเรียน, และสถานที่สอน
+  const [grade, setGrade] = useState("");
+  const [roomNum, setRoomNum] = useState("");
+  const [physRoom, setPhysRoom] = useState("");
+
   const [adminId,setAdminId]=useState("");
   const [t1Id,setT1Id]=useState("");
   const [t2Id,setT2Id]=useState("");
@@ -721,32 +726,45 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
     bookings.some(b=>b.teacherId===currentUser.id&&b.date===date&&b.time===t)||
     userBusy(adminId,date,t,bookings)||userBusy(t1Id,date,t,bookings)||userBusy(t2Id,date,t,bookings)
   );
-  const canStep2=subject.trim()&&classRoom.trim()&&adminId&&t1Id&&t2Id&&t1Id!==t2Id;
+
+  // 2. ตรวจสอบว่ากรอกข้อมูลครบถ้วนก่อนให้กดปุ่ม 'ถัดไป' (บังคับเลือกชั้น, ห้อง, และกรอกสถานที่สอน)
+  const canStep2=subject.trim()&&grade&&roomNum&&physRoom.trim()&&adminId&&t1Id&&t2Id&&t1Id!==t2Id;
+  
   const pickT=tid=>{
     if(t1Id===tid){setT1Id(t2Id);setT2Id("");return;}
     if(t2Id===tid){setT2Id("");return;}
     if(!t1Id){setT1Id(tid);return;}
     if(!t2Id){setT2Id(tid);return;}
   };
+
   const submit=async()=>{
     if(!selDate||!selTime){setMsg({t:"e",s:"กรุณาเลือกวันที่และเวลา"});return;}
     setSaving(true);
     try {
       const au=users.find(u=>u.id===adminId),t1u=users.find(u=>u.id===t1Id),t2u=users.find(u=>u.id===t2Id);
+      
+      // 3. รวมค่าให้เป็นรูปแบบเดียว เช่น "ม.3/1 (ห้อง 324)" ก่อนบันทึก
+      const fullClassRoom = `${grade}/${roomNum} (ห้อง ${physRoom.trim()})`;
+
       const nb={
         id:uid(),teacherId:currentUser.id,teacherName:currentUser.displayName,teacherEmail:currentUser.email,
-        subject:subject.trim(),classRoom:classRoom.trim(),
+        subject:subject.trim(),
+        classRoom:fullClassRoom,
         adminId,adminName:au?.displayName||"",teacher1Id:t1Id,teacher1Name:t1u?.displayName||"",
         teacher2Id:t2Id,teacher2Name:t2u?.displayName||"",
         date:selDate,time:selTime,evals:{},createdAt:new Date().toISOString()
       };
       await onSave(nb);
       setMsg({t:"s",s:`✅ จองสำเร็จ! ${fmtDate(selDate)} ${selTime} น.`});
-      setSubject("");setClassRoom("");setAdminId("");setT1Id("");setT2Id("");setSelDate("");setSelTime("");setStep(1);
+      
+      // เคลียร์ค่าฟอร์มทั้งหมดหลังจากบันทึกเสร็จ
+      setSubject("");setGrade("");setRoomNum("");setPhysRoom("");
+      setAdminId("");setT1Id("");setT2Id("");setSelDate("");setSelTime("");setStep(1);
       setTimeout(()=>setMsg(null),7000);
     } catch(e){setMsg({t:"e",s:"เกิดข้อผิดพลาด กรุณาลองใหม่"});}
     setSaving(false);
   };
+  
   const prevMon=()=>{if(calM===0){setCalY(y=>y-1);setCalM(11);}else setCalM(m=>m-1);};
   const nextMon=()=>{if(calM===11){setCalY(y=>y+1);setCalM(0);}else setCalM(m=>m+1);};
 
@@ -760,11 +778,35 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
         <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>สวัสดี <b>{currentUser.displayName}</b> — เลือกกรรมการ 3 ท่าน และระบุวันเวลา</p>
       </div>
       {msg&&<div style={{padding:"12px 16px",borderRadius:9,marginBottom:18,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B",border:`1.5px solid ${msg.t==="s"?"#A7F3D0":"#FECACA"}`}}>{msg.s}</div>}
+      
       {step===1&&<div className="card">
-        <div className="g2">
-          <div className="frow"><label className="flbl">รายวิชา *</label><input className="inp" value={subject} onChange={e=>setSubject(e.target.value)} placeholder="เช่น คณิตศาสตร์ ม.3"/></div>
-          <div className="frow"><label className="flbl">ระดับชั้น / ห้อง *</label><input className="inp" value={classRoom} onChange={e=>setClassRoom(e.target.value)} placeholder="เช่น ม.3/1"/></div>
+        <div className="frow" style={{marginBottom:10}}>
+          <label className="flbl">รายวิชา *</label>
+          <input className="inp" value={subject} onChange={e=>setSubject(e.target.value)} placeholder="เช่น คณิตศาสตร์พื้นฐาน"/>
         </div>
+        
+        {/* 4. ปรับเปลี่ยน Layout ของฟอร์มกรอกชั้น/ห้อง ให้เป็นแบบ Dropdown 3 คอลัมน์ */}
+        <div className="g3" style={{marginBottom:16}}>
+          <div className="frow">
+             <label className="flbl">ระดับชั้น *</label>
+             <select className="inp" value={grade} onChange={e=>setGrade(e.target.value)}>
+                <option value="">- เลือกระดับชั้น -</option>
+                {[1,2,3,4,5,6].map(m=><option key={m} value={`ม.${m}`}>ม.{m}</option>)}
+             </select>
+          </div>
+          <div className="frow">
+             <label className="flbl">ห้องเรียน *</label>
+             <select className="inp" value={roomNum} onChange={e=>setRoomNum(e.target.value)} disabled={!grade}>
+                <option value="">- เลือกห้อง -</option>
+                {[1,2,3,4,5,6,7,8,9].map(r=><option key={r} value={r}>/{r}</option>)}
+             </select>
+          </div>
+          <div className="frow">
+             <label className="flbl">ห้องที่สอน (สถานที่) *</label>
+             <input className="inp" value={physRoom} onChange={e=>setPhysRoom(e.target.value)} placeholder="เช่น 324, อาคาร 4"/>
+          </div>
+        </div>
+
         <div style={{background:"#EEF2FF",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
           <div style={{fontWeight:700,color:"var(--P)",marginBottom:10,fontSize:14}}>① ผู้บริหารที่นิเทศ (1 คน)</div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(185px,1fr))",gap:7}}>
@@ -786,6 +828,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
         </div>
         <button onClick={()=>setStep(2)} disabled={!canStep2} className="btn bp" style={{width:"100%",padding:"12px",fontSize:15}}>ถัดไป: เลือกวันที่และเวลา →</button>
       </div>}
+      
       {step===2&&<div className="g2" style={{alignItems:"start"}}>
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:10}}>เลือกวันที่</h3>
@@ -815,7 +858,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
 
       {/* ส่วนแสดงรายการจองของฉันที่ยังรอการนิเทศ */}
       <div className="card" style={{marginTop:24}}>
-        <h3 style={{fontWeight:700,fontSize:16,color:"var(--P)",marginBottom:12}}>📌 รายการจองของคุณ</h3>
+        <h3 style={{fontWeight:700,fontSize:16,color:"var(--P)",marginBottom:12}}>📌 รายการจองของคุณ (เพื่อกันลืม)</h3>
         {myBookings.length === 0 ? (
            <p style={{color:"var(--TS)",fontSize:13}}>คุณยังไม่มีรายการจองที่รอการนิเทศ</p>
         ) : (
@@ -827,11 +870,13 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
                      <div style={{fontSize:13,color:"var(--T)",marginTop:4}}>{b.subject} ({b.classRoom})</div>
                      <div style={{fontSize:12,color:"#6B7280",marginTop:4}}>กรรมการ: {b.adminName}, {b.teacher1Name}, {b.teacher2Name}</div>
                    </div>
-                   <button onClick={() => {
-                      if(window.confirm("คุณต้องการยกเลิกและลบรายการจองนี้ใช่หรือไม่?")) {
-                         onDelete(b.id);
-                      }
-                   }} className="btn br" style={{padding:"8px 12px",fontSize:12,marginTop:8}}>🗑️ ลบและจองใหม่</button>
+                   {onDelete && (
+                     <button onClick={() => {
+                        if(window.confirm("คุณต้องการยกเลิกและลบรายการจองนี้ใช่หรือไม่?")) {
+                           onDelete(b.id);
+                        }
+                     }} className="btn br" style={{padding:"8px 12px",fontSize:12,marginTop:8}}>🗑️ ลบและจองใหม่</button>
+                   )}
                 </div>
              ))}
            </div>
