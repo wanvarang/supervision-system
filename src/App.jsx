@@ -700,7 +700,7 @@ function ScheduleSummary({bookings,users}){
 // ═══════════════════════════════════════════════
 //  BOOKING PAGE
 // ═══════════════════════════════════════════════
-function BookingPage({currentUser,users,bookings,blockedDates,onSave}){
+function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [step,setStep]=useState(1);
   const [subject,setSubject]=useState("");
   const [classRoom,setClassRoom]=useState("");
@@ -749,6 +749,9 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave}){
   };
   const prevMon=()=>{if(calM===0){setCalY(y=>y-1);setCalM(11);}else setCalM(m=>m-1);};
   const nextMon=()=>{if(calM===11){setCalY(y=>y+1);setCalM(0);}else setCalM(m=>m+1);};
+
+  // ดึงรายการจองของฉันที่ยังประเมินไม่เสร็จ
+  const myBookings = bookings.filter(b => b.teacherId === currentUser.id && !isFullyEval(b));
 
   return(
     <div>
@@ -809,6 +812,31 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave}){
           <button onClick={()=>setStep(1)} className="btn bx" style={{width:"100%",marginTop:8,fontSize:13}}>← กลับแก้ไข</button>
         </div>
       </div>}
+
+      {/* ส่วนแสดงรายการจองของฉันที่ยังรอการนิเทศ */}
+      <div className="card" style={{marginTop:24}}>
+        <h3 style={{fontWeight:700,fontSize:16,color:"var(--P)",marginBottom:12}}>📌 รายการจองของคุณ (เพื่อกันลืม)</h3>
+        {myBookings.length === 0 ? (
+           <p style={{color:"var(--TS)",fontSize:13}}>คุณยังไม่มีรายการจองที่รอการนิเทศ</p>
+        ) : (
+           <div style={{display:"flex",flexDirection:"column",gap:8}}>
+             {myBookings.map(b => (
+                <div key={b.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#F9FAFB",borderRadius:8,borderLeft:"4px solid var(--A)",flexWrap:"wrap"}}>
+                   <div>
+                     <div style={{fontWeight:700,fontSize:14,color:"var(--P)"}}>{fmtDate(b.date)} — เวลา {b.time} น.</div>
+                     <div style={{fontSize:13,color:"var(--T)",marginTop:4}}>{b.subject} ({b.classRoom})</div>
+                     <div style={{fontSize:12,color:"#6B7280",marginTop:4}}>กรรมการ: {b.adminName}, {b.teacher1Name}, {b.teacher2Name}</div>
+                   </div>
+                   <button onClick={() => {
+                      if(window.confirm("คุณต้องการยกเลิกและลบรายการจองนี้ใช่หรือไม่?")) {
+                         onDelete(b.id);
+                      }
+                   }} className="btn br" style={{padding:"8px 12px",fontSize:12,marginTop:8}}>🗑️ ลบและจองใหม่</button>
+                </div>
+             ))}
+           </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1253,6 +1281,7 @@ export default function App() {
 
   const addBooking    = async (nb) => await setDoc(bkRef(nb.id),nb);
   const updateBooking = async (up) => await setDoc(bkRef(up.id),up);
+  const deleteBooking = async (id) => await deleteDoc(bkRef(id));
   const saveSettings  = async (s)  => { setSettings(s); await fsSet("settings",s); };
   const saveStructure = async (st) => { setStructure(st); await fsSet("structure",st); };
   const saveBlocked   = async (bd) => { setBlockedDates(bd); await fsSet("blockedDates",bd); };
@@ -1317,9 +1346,8 @@ export default function App() {
       <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"22px 14px 56px":"0"}}>
         {!currentUser&&<LoginPage users={users} settings={settings} onLogin={handleLogin}/>}
         {currentUser&&page==="dashboard"                                  &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
-        {currentUser&&page==="booking"   &&currentUser.role==="teacher"   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking}/>}
-        {currentUser&&page==="summary"                                    &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings}/>}
-        {currentUser&&page==="evaluate"                                   &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
+        {currentUser&&page==="booking"   &&currentUser.role==="teacher"   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
+        {currentUser&&page==="summary"                                    &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings} onDeleteBooking={deleteBooking}/>}        {currentUser&&page==="evaluate"                                   &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
         {currentUser&&page==="schedule"                                   &&<ScheduleSummary bookings={bookings} users={users}/>}
         {currentUser&&page==="users"     &&currentUser.role==="sysadmin"  &&<UsersTab users={users}/>}
         {currentUser&&page==="settings"  &&currentUser.role==="sysadmin"  &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
