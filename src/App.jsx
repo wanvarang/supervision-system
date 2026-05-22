@@ -38,10 +38,10 @@ const fsSet = async (key, val) => {
 //  CONSTANTS
 // ═══════════════════════════════════════════════
 const DEFAULT_DOMAIN = "banmi.ac.th";
-const TH_MONTHS   = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const TH_MONTHS   = ["มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน"];
 const TH_MONTHS_S = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 const WEEKDAYS    = ["อา","จ","อ","พ","พฤ","ศ","ส"];
-const TIME_SLOTS  = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30"];
+const TIME_SLOTS  = ["คาบที่ 1","คาบที่ 2","คาบที่ 3","คาบที่ 4","คาบที่ 5","คาบที่ 6","คาบที่ 7","คาบที่ 8","คาบที่ 9"];
 const ROLES       = { sysadmin:"ผู้ดูแลระบบ", admin:"ผู้บริหาร", teacher:"ครูผู้สอน" };
 const ROLE_COLOR  = { sysadmin:"#4C1D95", admin:"#1E3A8A", teacher:"#166634" };
 
@@ -815,7 +815,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
 
       {/* ส่วนแสดงรายการจองของฉันที่ยังรอการนิเทศ */}
       <div className="card" style={{marginTop:24}}>
-        <h3 style={{fontWeight:700,fontSize:16,color:"var(--P)",marginBottom:12}}>📌 รายการจองของคุณ (เพื่อกันลืม)</h3>
+        <h3 style={{fontWeight:700,fontSize:16,color:"var(--P)",marginBottom:12}}>📌 รายการจองของคุณ</h3>
         {myBookings.length === 0 ? (
            <p style={{color:"var(--TS)",fontSize:13}}>คุณยังไม่มีรายการจองที่รอการนิเทศ</p>
         ) : (
@@ -978,13 +978,12 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
-  // Structure editor
+  // โหลดโครงสร้างจาก Props มาทำเป็น State ภายในเพื่อรองรับการแก้ไข (เพิ่ม/ลบ)
   const [str, setStr] = useState(JSON.parse(JSON.stringify(structure)));
   const [strSaving, setStrSaving] = useState(false);
   const [strMsg, setStrMsg] = useState("");
 
   // Blocked dates
-  const [selBD, setSelBD] = useState(null);
   const [bdCalY, setBDCalY] = useState(new Date().getFullYear());
   const [bdCalM, setBDCalM] = useState(new Date().getMonth());
   const [blocked, setBlocked] = useState([...blockedDates]);
@@ -998,29 +997,42 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
     setSaving(false);
   };
 
+  // ฟังก์ชันเพิ่มรายการประเมินย่อยในหมวดนั้น ๆ
   const addDomain = (dim_id) => {
     setStr(prev=>prev.map(d=>d.id===dim_id?{...d,items:[...d.items,{id:"di_"+uid(),name:"รายการประเมินใหม่",maxScore:5}]}:d));
   };
+
+  // ฟังก์ชันเพิ่มหมวดหมู่หลักอันใหม่
   const addDomain2 = () => {
-    setStr(prev=>[...prev,{id:"ds_"+uid(),name:"หมวดใหม่",items:[{id:"di_"+uid(),name:"รายการประเมิน",maxScore:5}]}]);
+    setStr(prev=>[...prev,{id:"ds_"+uid(),name:"หมวดใหม่",items:[{id:"di_"+uid(),name:"รายการประเมินเริ่มต้น",maxScore:5}]}]);
   };
+
+  // ฟังก์ชันอัปเดตข้อมูลข้อความหรือคะแนนในรายการย่อย
   const updateItem = (did,iid,field,val) => {
     setStr(prev=>prev.map(d=>d.id===did?{...d,items:d.items.map(i=>i.id===iid?{...i,[field]:val}:i)}:d));
   };
+
+  // ฟังก์ชันลบรายการประเมินย่อย
   const removeItem = (did,iid) => {
     setStr(prev=>prev.map(d=>d.id===did?{...d,items:d.items.filter(i=>i.id!==iid)}:d));
   };
+
+  // ฟังก์ชันแก้ไขชื่อหมวดหมู่หลัก
   const updateDomain = (did,val) => {
     setStr(prev=>prev.map(d=>d.id===did?{...d,name:val}:d));
   };
+
+  // ฟังก์ชันลบหมวดหมู่หลัก (ลบทั้งยวด)
   const removeDomain = (did) => {
-    if(!confirm("ลบหมวดนี้ทั้งหมด?")) return;
+    if(!confirm("คุณต้องการลบหมวดหมู่นี้และรายการย่อยทั้งหมดใช่หรือไม่?")) return;
     setStr(prev=>prev.filter(d=>d.id!==did));
   };
+
+  // ฟังก์ชันบันทึกโครงสร้างทั้งหมดลง Firebase Firestore
   const saveStructure = async () => {
     setStrSaving(true);
     await onSaveStructure(str);
-    setStrMsg("✅ บันทึกโครงสร้างการประเมินแล้ว");
+    setStrMsg("✅ บันทึกโครงสร้างการประเมินลงฐานข้อมูลเรียบร้อยแล้ว");
     setTimeout(()=>setStrMsg(""),3000);
     setStrSaving(false);
   };
@@ -1069,32 +1081,32 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
 
       {tab==="structure"&&(
         <div>
-          <p style={{color:"var(--TS)",fontSize:13,marginBottom:16}}>แก้ไขหัวข้อและคะแนนเต็มของแบบประเมิน</p>
+          <p style={{color:"var(--TS)",fontSize:13,marginBottom:16}}>แก้ไขหัวข้อและคะแนนเต็มของแบบประเมินนิเทศการสอน (จัดการโดย sysadmin)</p>
           {str.map((d,di)=>(
             <div key={d.id} className="card" style={{marginBottom:14,borderLeft:"4px solid var(--P)"}}>
               <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
-                <input className="inp" value={d.name} onChange={e=>updateDomain(d.id,e.target.value)} style={{fontWeight:700,fontSize:15,flex:1}}/>
-                <button onClick={()=>removeDomain(d.id)} className="btn br" style={{padding:"7px 10px",fontSize:12}}>ลบหมวด</button>
+                <input className="inp" value={d.name} onChange={e=>updateDomain(d.id,e.target.value)} style={{fontWeight:700,fontSize:15,flex:1}} placeholder="ชื่อหมวดหมู่หลัก"/>
+                <button onClick={()=>removeDomain(d.id)} className="btn br" style={{padding:"7px 10px",fontSize:12}}>🗑️ ลบหมวด</button>
               </div>
               <div style={{display:"flex",flexDirection:"column",gap:8}}>
                 {d.items.map((item,ii)=>(
                   <div key={item.id} style={{display:"flex",gap:8,alignItems:"center",background:"#F9FAFB",borderRadius:8,padding:"8px 12px"}}>
                     <span style={{color:"var(--TS)",fontSize:12,minWidth:20}}>{ii+1}.</span>
-                    <input className="inp" value={item.name} onChange={e=>updateItem(d.id,item.id,"name",e.target.value)} style={{flex:1}}/>
+                    <input className="inp" value={item.name} onChange={e=>updateItem(d.id,item.id,"name",e.target.value)} style={{flex:1}} placeholder="รายละเอียดเกณฑ์การประเมิน"/>
                     <div style={{display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
-                      <span style={{fontSize:12,color:"var(--TS)"}}>เต็ม</span>
-                      <input className="inp" type="number" min="1" max="20" value={item.maxScore} onChange={e=>updateItem(d.id,item.id,"maxScore",parseInt(e.target.value)||1)} style={{width:60,textAlign:"center"}}/>
+                      <span style={{fontSize:12,color:"var(--TS)"}}>คะแนนเต็ม</span>
+                      <input className="inp" type="number" min="1" max="100" value={item.maxScore} onChange={e=>updateItem(d.id,item.id,"maxScore",parseInt(e.target.value)||1)} style={{width:60,textAlign:"center"}}/>
                     </div>
-                    <button onClick={()=>removeItem(d.id,item.id)} className="btn br" style={{padding:"6px 8px",fontSize:11}}>ลบ</button>
+                    <button onClick={()=>removeItem(d.id,item.id)} className="btn br" style={{padding:"6px 8px",fontSize:11}}>✕</button>
                   </div>
                 ))}
               </div>
-              <button onClick={()=>addDomain(d.id)} className="btn bx" style={{marginTop:10,fontSize:12}}>+ เพิ่มรายการ</button>
+              <button onClick={()=>addDomain(d.id)} className="btn bx" style={{marginTop:10,fontSize:12}}>➕ เพิ่มรายการประเมินย่อย</button>
             </div>
           ))}
-          <button onClick={addDomain2} className="btn bx" style={{marginBottom:16}}>+ เพิ่มหมวดใหม่</button>
+          <button onClick={addDomain2} className="btn bx" style={{marginBottom:16, width:"100%", padding:"12px", border:"2px dashed #C7D2FE"}}>➕ เพิ่มหมวดหมู่หลักใหม่</button>
           {strMsg&&<div style={{color:"var(--G)",fontWeight:700,fontSize:13,marginBottom:10}}>{strMsg}</div>}
-          <button onClick={saveStructure} disabled={strSaving} className="btn bp" style={{display:"block"}}>💾 {strSaving?"กำลังบันทึก...":"บันทึกโครงสร้าง"}</button>
+          <button onClick={saveStructure} disabled={strSaving} className="btn bg" style={{display:"block", width:"100%", padding:"12px", fontSize:15}}>💾 {strSaving?"กำลังบันทึก...":"บันทึกโครงสร้างเกณฑ์ประเมินทั้งหมด"}</button>
         </div>
       )}
 
