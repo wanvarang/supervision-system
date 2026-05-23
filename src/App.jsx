@@ -1319,9 +1319,6 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
 }
 
 // ═══════════════════════════════════════════════
-//  PROFILE TAB
-// ═══════════════════════════════════════════════
-// ═══════════════════════════════════════════════
 //  PROFILE TAB  (แทนที่โค้ดเดิมทั้งหมด)
 // ═══════════════════════════════════════════════
 function ProfileTab({ currentUser }) {
