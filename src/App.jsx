@@ -1356,55 +1356,386 @@ function ProfileTab({currentUser}){
 }
 
 // ═══════════════════════════════════════════════
-//  USERS TAB
+//  USERS TAB  — drop-in replacement
+//  ต้องการ: updateDoc, deleteDoc, userRef, addDoc / setDoc จาก Firebase
+//  และ createUserWithEmailAndPassword จาก Firebase Auth (ถ้าต้องการสร้าง Auth จริง)
+//  CSS variables: --P --A --W --BD --TS --BG (ใช้ตามระบบเดิม)
 // ═══════════════════════════════════════════════
-function UsersTab({users}){
-  const updateStatus = async (id,status) => await updateDoc(userRef(id),{approved:status});
-  const updateRole   = async (id,role)   => await updateDoc(userRef(id),{role});
-  const removeUser   = async (id)        => { if(confirm("ยืนยันการลบผู้ใช้งานรายนี้?")) await deleteDoc(userRef(id)); };
+import { useState } from "react";
 
-  const pending = users.filter(u=>!u.approved&&u.role!=="sysadmin");
-  const active  = users.filter(u=>u.approved||u.role==="sysadmin");
+/* ── palette helpers ────────────────────────── */
+const ROLE_META = {
+  admin:    { label:"ผู้บริหาร",    icon:"👔", color:"#6366f1", bg:"#eef2ff" },
+  teacher:  { label:"ครูผู้สอน",   icon:"👩‍🏫", color:"#0ea5e9", bg:"#e0f2fe" },
+  sysadmin: { label:"ผู้ดูแลระบบ", icon:"🔧", color:"#f59e0b", bg:"#fef9c3" },
+};
 
-  return(
-    <div>
-      <h3 style={{fontWeight:700,color:"var(--P)",fontSize:16,marginBottom:14}}>👥 จัดการผู้ใช้งานระบบ</h3>
-      {pending.length>0&&(
-        <div style={{marginBottom:24}}>
-          <h4 style={{fontWeight:700,color:"var(--A)",marginBottom:8,fontSize:14}}>⏳ รอการอนุมัติ ({pending.length})</h4>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
-            {pending.map(u=>(
-              <div key={u.id} className="card" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 14px",borderLeft:"4px solid var(--A)"}}>
-                <div style={{flex:1}}><div style={{fontWeight:700}}>{u.displayName}</div><div style={{fontSize:12,color:"var(--TS)"}}>{u.email}</div></div>
-                <button onClick={()=>updateStatus(u.id,true)} className="btn bg" style={{padding:"6px 12px"}}>อนุมัติ</button>
-                <button onClick={()=>removeUser(u.id)} className="btn br" style={{padding:"6px 12px"}}>ลบ</button>
-              </div>
+/* ── tiny avatar ────────────────────────────── */
+function Avatar({ name, role, size = 40 }) {
+  const m = ROLE_META[role] || ROLE_META.teacher;
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: "50%",
+      background: m.bg, border: `2px solid ${m.color}`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: m.color, fontWeight: 800, fontSize: size * 0.38, flexShrink: 0,
+    }}>
+      {name?.slice(0, 1)?.toUpperCase() || "?"}
+    </div>
+  );
+}
+
+/* ── role badge ─────────────────────────────── */
+function RoleBadge({ role }) {
+  const m = ROLE_META[role] || ROLE_META.teacher;
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      background: m.bg, color: m.color, border: `1px solid ${m.color}44`,
+      borderRadius: 20, padding: "2px 10px", fontSize: 11, fontWeight: 700,
+    }}>
+      {m.icon} {m.label}
+    </span>
+  );
+}
+
+/* ══ ADD / EDIT MODAL ════════════════════════ */
+function UserModal({ user, onClose, onSave }) {
+  const isEdit = !!user?.id;
+  const [form, setForm] = useState({
+    displayName: user?.displayName || "",
+    email:       user?.email       || "",
+    role:        user?.role        || "teacher",
+    password:    "",
+  });
+  const [loading, setLoading] = useState(false);
+  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }));
+
+  const handleSave = async () => {
+    if (!form.displayName.trim() || !form.email.trim()) return alert("กรุณากรอกชื่อและอีเมล");
+    setLoading(true);
+    await onSave({ ...form, id: user?.id });
+    setLoading(false);
+    onClose();
+  };
+
+  const inputStyle = {
+    width: "100%", padding: "9px 12px", borderRadius: 8,
+    border: "1.5px solid var(--BD)", fontSize: 14,
+    background: "var(--W)", color: "inherit", outline: "none",
+    boxSizing: "border-box",
+  };
+  const labelStyle = { fontSize: 12, fontWeight: 700, color: "var(--TS)", marginBottom: 4, display: "block" };
+
+  return (
+    <div style={{
+      position: "fixed", inset: 0, background: "#0007", zIndex: 9999,
+      display: "flex", alignItems: "center", justifyContent: "center", padding: 16,
+    }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{
+        background: "var(--W)", borderRadius: 16, width: "100%", maxWidth: 440,
+        boxShadow: "0 20px 60px #0003", overflow: "hidden",
+      }}>
+        {/* header */}
+        <div style={{
+          background: isEdit ? "#6366f1" : "#10b981",
+          padding: "18px 22px", color: "#fff",
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+        }}>
+          <div style={{ fontWeight: 800, fontSize: 16 }}>
+            {isEdit ? "✏️ แก้ไขผู้ใช้งาน" : "➕ เพิ่มผู้ใช้งานใหม่"}
+          </div>
+          <button onClick={onClose} style={{ background: "#fff3", border: "none", color: "#fff", borderRadius: 6, padding: "4px 10px", cursor: "pointer", fontSize: 16 }}>✕</button>
+        </div>
+
+        {/* body */}
+        <div style={{ padding: "22px 24px", display: "flex", flexDirection: "column", gap: 14 }}>
+          <div>
+            <label style={labelStyle}>ชื่อ-นามสกุล *</label>
+            <input style={inputStyle} value={form.displayName} onChange={set("displayName")} placeholder="ชื่อ นามสกุล" />
+          </div>
+          <div>
+            <label style={labelStyle}>อีเมล *</label>
+            <input style={inputStyle} type="email" value={form.email} onChange={set("email")} placeholder="example@school.ac.th" />
+          </div>
+          {!isEdit && (
+            <div>
+              <label style={labelStyle}>รหัสผ่านเริ่มต้น</label>
+              <input style={inputStyle} type="password" value={form.password} onChange={set("password")} placeholder="อย่างน้อย 6 ตัวอักษร" />
+            </div>
+          )}
+          <div>
+            <label style={labelStyle}>บทบาท</label>
+            <select style={{ ...inputStyle }} value={form.role} onChange={set("role")}>
+              <option value="teacher">👩‍🏫 ครูผู้สอน</option>
+              <option value="admin">👔 ผู้บริหาร</option>
+              <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
+            </select>
+          </div>
+
+          <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
+            <button onClick={onClose} style={{
+              flex: 1, padding: "10px", borderRadius: 9, border: "1.5px solid var(--BD)",
+              background: "transparent", cursor: "pointer", fontSize: 14, fontWeight: 600,
+            }}>ยกเลิก</button>
+            <button onClick={handleSave} disabled={loading} style={{
+              flex: 2, padding: "10px", borderRadius: 9, border: "none",
+              background: isEdit ? "#6366f1" : "#10b981", color: "#fff",
+              cursor: loading ? "wait" : "pointer", fontSize: 14, fontWeight: 700,
+            }}>
+              {loading ? "กำลังบันทึก…" : isEdit ? "💾 บันทึก" : "✅ เพิ่มผู้ใช้งาน"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══ PENDING CARD ════════════════════════════ */
+function PendingCard({ u, onApprove, onRemove }) {
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      background: "#fffbeb", border: "1.5px solid #fbbf24",
+      borderRadius: 12, padding: "12px 16px",
+    }}>
+      <Avatar name={u.displayName} role="teacher" size={42} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 14 }}>{u.displayName}</div>
+        <div style={{ fontSize: 12, color: "var(--TS)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
+      </div>
+      <div style={{ display: "flex", gap: 7, flexShrink: 0 }}>
+        <button onClick={() => onApprove(u.id)} style={{
+          padding: "6px 14px", borderRadius: 8, border: "none",
+          background: "#10b981", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer",
+        }}>อนุมัติ</button>
+        <button onClick={() => onRemove(u.id)} style={{
+          padding: "6px 12px", borderRadius: 8, border: "1.5px solid #f87171",
+          background: "transparent", color: "#ef4444", fontWeight: 700, fontSize: 12, cursor: "pointer",
+        }}>ลบ</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══ USER CARD ═══════════════════════════════ */
+function UserCard({ u, onEdit, onRemove, onRoleChange, isSA }) {
+  const m = ROLE_META[u.role] || ROLE_META.teacher;
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12,
+      background: "var(--W)", border: "1.5px solid var(--BD)",
+      borderRadius: 12, padding: "12px 16px",
+      borderLeft: `4px solid ${m.color}`,
+      transition: "box-shadow .15s",
+    }}
+    onMouseEnter={e => e.currentTarget.style.boxShadow = "0 4px 16px #0001"}
+    onMouseLeave={e => e.currentTarget.style.boxShadow = "none"}>
+
+      <Avatar name={u.displayName} role={u.role} size={44} />
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: 14, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+          {u.displayName}
+          {isSA && <span style={{ fontSize: 10, background: "#fef3c7", color: "#92400e", border: "1px solid #fbbf24", borderRadius: 4, padding: "1px 6px" }}>SYSTEM</span>}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--TS)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.email}</div>
+      </div>
+
+      {!isSA && (
+        <select value={u.role} onChange={e => onRoleChange(u.id, e.target.value)} style={{
+          padding: "6px 8px", borderRadius: 8, border: "1.5px solid var(--BD)",
+          fontSize: 12, background: m.bg, color: m.color, fontWeight: 700,
+          cursor: "pointer", outline: "none", flexShrink: 0,
+        }}>
+          <option value="teacher">👩‍🏫 ครูผู้สอน</option>
+          <option value="admin">👔 ผู้บริหาร</option>
+          <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
+        </select>
+      )}
+
+      {!isSA && (
+        <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          <button onClick={() => onEdit(u)} title="แก้ไข" style={{
+            padding: "6px 10px", borderRadius: 8,
+            border: "1.5px solid #6366f1", background: "#eef2ff",
+            color: "#6366f1", fontSize: 13, cursor: "pointer", fontWeight: 700,
+          }}>✏️</button>
+          <button onClick={() => onRemove(u.id)} title="ลบ" style={{
+            padding: "6px 10px", borderRadius: 8,
+            border: "1.5px solid #f87171", background: "#fff1f2",
+            color: "#ef4444", fontSize: 13, cursor: "pointer", fontWeight: 700,
+          }}>🗑️</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══ SECTION BOX ═════════════════════════════ */
+function Section({ title, icon, color, count, children, emptyText }) {
+  return (
+    <div style={{
+      background: "var(--BG,#f8fafc)", borderRadius: 14,
+      border: "1.5px solid var(--BD)", overflow: "hidden",
+    }}>
+      {/* section header */}
+      <div style={{
+        display: "flex", alignItems: "center", gap: 10,
+        padding: "13px 18px", borderBottom: "1.5px solid var(--BD)",
+        background: "var(--W)",
+      }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <span style={{ fontWeight: 800, fontSize: 15, color }}>{title}</span>
+        <span style={{
+          marginLeft: "auto", background: color + "22", color,
+          borderRadius: 20, padding: "1px 12px", fontSize: 12, fontWeight: 800,
+          border: `1px solid ${color}44`,
+        }}>{count}</span>
+      </div>
+
+      {/* cards */}
+      <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
+        {count === 0
+          ? <div style={{ textAlign: "center", color: "var(--TS)", fontSize: 13, padding: "16px 0" }}>{emptyText}</div>
+          : children}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   MAIN USERS TAB
+══════════════════════════════════════════════ */
+export default function UsersTab({ users, updateDoc, deleteDoc, userRef, addUserDirectly }) {
+  const [modal, setModal] = useState(null); // null | { user } | { user: {} } for new
+
+  /* ── firebase actions ───────────────────── */
+  const updateStatus  = (id) => updateDoc(userRef(id), { approved: true });
+  const updateRole    = (id, role) => updateDoc(userRef(id), { role });
+  const removeUser    = (id) => { if (confirm("ยืนยันการลบผู้ใช้งานรายนี้?")) deleteDoc(userRef(id)); };
+
+  const handleSave = async ({ id, displayName, email, role, password }) => {
+    if (id) {
+      // edit existing
+      await updateDoc(userRef(id), { displayName, email, role });
+    } else {
+      // add new — delegate to parent; parent creates Auth + Firestore doc
+      await addUserDirectly({ displayName, email, role, password });
+    }
+  };
+
+  /* ── derived lists ──────────────────────── */
+  const pending  = users.filter(u => !u.approved && u.role !== "sysadmin");
+  const admins   = users.filter(u => u.approved && u.role === "admin");
+  const teachers = users.filter(u => u.approved && u.role === "teacher");
+  const sysadms  = users.filter(u => u.role === "sysadmin");
+
+  const statItems = [
+    { label: "ผู้ใช้ทั้งหมด", value: users.length, color: "#6366f1" },
+    { label: "รอการอนุมัติ",  value: pending.length, color: "#f59e0b" },
+    { label: "ครูผู้สอน",     value: teachers.length, color: "#0ea5e9" },
+    { label: "ผู้บริหาร",    value: admins.length,  color: "#8b5cf6" },
+  ];
+
+  return (
+    <div style={{ maxWidth: 860, padding: "0 0 32px" }}>
+
+      {/* ── page title + add button ── */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h3 style={{ fontWeight: 800, fontSize: 20, margin: 0, color: "var(--P)" }}>👥 จัดการผู้ใช้งาน</h3>
+          <p style={{ margin: "2px 0 0", fontSize: 13, color: "var(--TS)" }}>เพิ่ม แก้ไข หรือลบบัญชีผู้ใช้ในระบบ</p>
+        </div>
+        <button onClick={() => setModal({ user: {} })} style={{
+          display: "flex", alignItems: "center", gap: 8,
+          padding: "10px 18px", borderRadius: 10, border: "none",
+          background: "#10b981", color: "#fff", fontWeight: 700, fontSize: 14,
+          cursor: "pointer", boxShadow: "0 2px 8px #10b98133",
+        }}>
+          ➕ เพิ่มผู้ใช้งาน
+        </button>
+      </div>
+
+      {/* ── stat strip ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10, marginBottom: 22 }}>
+        {statItems.map(s => (
+          <div key={s.label} style={{
+            background: "var(--W)", borderRadius: 12, padding: "12px 14px",
+            border: "1.5px solid var(--BD)", textAlign: "center",
+          }}>
+            <div style={{ fontSize: 24, fontWeight: 800, color: s.color }}>{s.value}</div>
+            <div style={{ fontSize: 11, color: "var(--TS)", marginTop: 2 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── pending ── */}
+      {pending.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{
+            display: "flex", alignItems: "center", gap: 8, marginBottom: 10,
+            padding: "10px 14px", background: "#fffbeb", borderRadius: 10,
+            border: "1.5px solid #fbbf24",
+          }}>
+            <span style={{ fontSize: 16 }}>⏳</span>
+            <span style={{ fontWeight: 800, fontSize: 14, color: "#92400e" }}>รอการอนุมัติ ({pending.length} คน)</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {pending.map(u => (
+              <PendingCard key={u.id} u={u}
+                onApprove={updateStatus}
+                onRemove={removeUser}
+              />
             ))}
           </div>
         </div>
       )}
-      {[["👔 ผู้บริหาร",active.filter(u=>u.role==="admin"),"admin"],["👩‍🏫 ครูผู้สอน",active.filter(u=>u.role==="teacher"),"teacher"],["🔧 ผู้ดูแลระบบ",active.filter(u=>u.role==="sysadmin"),"sysadmin"]].map(([title,grp,role])=>(
-        <div key={role} style={{marginBottom:16}}>
-          <h4 style={{fontWeight:700,color:ROLE_COLOR[role],marginBottom:8,fontSize:14}}>{title} ({grp.length})</h4>
-          <div style={{display:"flex",flexDirection:"column",gap:5}}>
-            {grp.map(u=>(
-              <div key={u.id} style={{display:"flex",alignItems:"center",gap:10,background:"var(--W)",borderRadius:9,padding:"9px 14px",border:"1px solid var(--BD)",flexWrap:"wrap"}}>
-                <div style={{width:36,height:36,borderRadius:"50%",background:ROLE_COLOR[u.role],display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:14,fontWeight:700}}>{u.displayName?.slice(0,1)||"?"}</div>
-                <div style={{flex:1,minWidth:100}}>
-                  <div style={{fontWeight:600,fontSize:14}}>{u.displayName}</div>
-                  <div style={{fontSize:12,color:"var(--TS)"}}>{u.email}</div>
-                </div>
-                {u.id!=="u_sa1"&&(<select className="inp" value={u.role} onChange={e=>updateRole(u.id,e.target.value)} style={{width:130,padding:"6px",fontSize:13}}>
-                  <option value="teacher">ครูผู้สอน</option>
-                  <option value="admin">ผู้บริหาร</option>
-                  <option value="sysadmin">ผู้ดูแลระบบ</option>
-                </select>)}
-                {u.id!=="u_sa1"&&<button onClick={()=>removeUser(u.id)} className="btn br" style={{padding:"6px 10px",fontSize:12}}>ลบ</button>}
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+
+      {/* ── sections ── */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+
+        <Section title="ผู้บริหาร" icon="👔" color="#8b5cf6" count={admins.length} emptyText="ยังไม่มีผู้บริหารในระบบ">
+          {admins.map(u => (
+            <UserCard key={u.id} u={u} isSA={u.id === "u_sa1"}
+              onEdit={u => setModal({ user: u })}
+              onRemove={removeUser}
+              onRoleChange={updateRole}
+            />
+          ))}
+        </Section>
+
+        <Section title="ครูผู้สอน" icon="👩‍🏫" color="#0ea5e9" count={teachers.length} emptyText="ยังไม่มีครูผู้สอนในระบบ">
+          {teachers.map(u => (
+            <UserCard key={u.id} u={u} isSA={false}
+              onEdit={u => setModal({ user: u })}
+              onRemove={removeUser}
+              onRoleChange={updateRole}
+            />
+          ))}
+        </Section>
+
+        <Section title="ผู้ดูแลระบบ" icon="🔧" color="#f59e0b" count={sysadms.length} emptyText="—">
+          {sysadms.map(u => (
+            <UserCard key={u.id} u={u} isSA={u.id === "u_sa1"}
+              onEdit={u => setModal({ user: u })}
+              onRemove={removeUser}
+              onRoleChange={updateRole}
+            />
+          ))}
+        </Section>
+
+      </div>
+
+      {/* ── modal ── */}
+      {modal && (
+        <UserModal
+          user={modal.user}
+          onClose={() => setModal(null)}
+          onSave={handleSave}
+        />
+      )}
     </div>
   );
 }
