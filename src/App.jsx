@@ -689,7 +689,7 @@ function ScheduleSummary({bookings,users}){
     <div>
       <div style={{marginBottom:18}}>
         <h2 style={{fontWeight:800,fontSize:21,color:"var(--P)"}}>
-          <span className="rt-dot"/>ตารางนิเทศ Real-time
+          <span className="rt-dot"/>ตารางนิเทศ ภาคเรียนที่ 1 ปีการศึกษา 2569
         </h2>
         <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>ข้อมูลอัปเดตทันทีเมื่อมีการจองใหม่</p>
       </div>
@@ -1321,44 +1321,200 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
 // ═══════════════════════════════════════════════
 //  PROFILE TAB
 // ═══════════════════════════════════════════════
-function ProfileTab({currentUser}){
-  const [displayName, setDisplayName] = useState(currentUser.displayName||"");
-  const [msg, setMsg] = useState("");
-  const [saving, setSaving] = useState(false);
+// ═══════════════════════════════════════════════
+//  PROFILE TAB  (แทนที่โค้ดเดิมทั้งหมด)
+// ═══════════════════════════════════════════════
+function ProfileTab({ currentUser }) {
+  // ── ข้อมูลส่วนตัว ──
+  const [displayName, setDisplayName] = useState(currentUser.displayName || "");
+  const [msg,         setMsg        ] = useState("");
+  const [saving,      setSaving     ] = useState(false);
 
+  // ── เปลี่ยนรหัสผ่าน ──
+  const [curPw,    setCurPw   ] = useState("");
+  const [newPw,    setNewPw   ] = useState("");
+  const [cfmPw,    setCfmPw   ] = useState("");
+  const [showPw,   setShowPw  ] = useState(false);
+  const [pwMsg,    setPwMsg   ] = useState("");
+  const [pwErr,    setPwErr   ] = useState("");
+  const [savingPw, setSavingPw] = useState(false);
+
+  // ── บันทึกชื่อ ──
   const saveProfile = async () => {
-    if(!displayName.trim()) return;
+    if (!displayName.trim()) return;
     setSaving(true);
     try {
       await updateDoc(userRef(currentUser.id), { displayName: displayName.trim() });
       setMsg("✅ อัปเดตข้อมูลเรียบร้อยแล้ว");
-      setTimeout(()=>setMsg(""),3000);
-    } catch(e){ console.error(e); }
+      setTimeout(() => setMsg(""), 3000);
+    } catch (e) { console.error(e); }
     setSaving(false);
   };
 
-  return(
-    <div className="card" style={{maxWidth:500}}>
-      <h3 style={{fontWeight:700,color:"var(--P)",marginBottom:18,fontSize:16}}>👤 ข้อมูลส่วนตัว</h3>
-      <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:20,padding:"14px 16px",background:"var(--PL)",borderRadius:8}}>
-        <div style={{width:52,height:52,borderRadius:"50%",background:ROLE_COLOR[currentUser.role],display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:20,fontWeight:700}}>
-          {currentUser.displayName?.slice(0,1)||"?"}
+  // ── เปลี่ยนรหัสผ่าน ──
+  const changePassword = async () => {
+    setPwErr(""); setPwMsg("");
+    if (!curPw)              { setPwErr("กรุณากรอกรหัสผ่านปัจจุบัน"); return; }
+    if (curPw !== currentUser.password) { setPwErr("รหัสผ่านปัจจุบันไม่ถูกต้อง"); return; }
+    if (newPw.length < 4)   { setPwErr("รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร"); return; }
+    if (newPw !== cfmPw)    { setPwErr("รหัสผ่านใหม่ไม่ตรงกัน"); return; }
+    setSavingPw(true);
+    try {
+      await updateDoc(userRef(currentUser.id), { password: newPw });
+      setPwMsg("✅ เปลี่ยนรหัสผ่านสำเร็จแล้ว");
+      setCurPw(""); setNewPw(""); setCfmPw("");
+      setTimeout(() => setPwMsg(""), 3000);
+    } catch (e) { setPwErr("เกิดข้อผิดพลาด กรุณาลองใหม่"); console.error(e); }
+    setSavingPw(false);
+  };
+
+  // ── style helpers ──
+  const inp = {
+    width: "100%", padding: "9px 12px", borderRadius: 8,
+    border: "1.5px solid var(--BD)", fontSize: 14, background: "var(--W)",
+    color: "inherit", outline: "none", boxSizing: "border-box",
+    fontFamily: "Sarabun,sans-serif",
+  };
+  const divider = {
+    margin: "22px 0", border: "none",
+    borderTop: "1.5px dashed var(--BD)",
+  };
+
+  return (
+    <div style={{ maxWidth: 500 }}>
+
+      {/* ── card: ข้อมูลส่วนตัว ── */}
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h3 style={{ fontWeight: 700, color: "var(--P)", marginBottom: 18, fontSize: 16 }}>
+          👤 ข้อมูลส่วนตัว
+        </h3>
+
+        {/* avatar strip */}
+        <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20,
+          padding:"14px 16px", background:"var(--PL)", borderRadius:8 }}>
+          <div style={{ width:52, height:52, borderRadius:"50%",
+            background: ROLE_COLOR[currentUser.role],
+            display:"flex", alignItems:"center", justifyContent:"center",
+            color:"#fff", fontSize:20, fontWeight:700 }}>
+            {currentUser.displayName?.slice(0,1) || "?"}
+          </div>
+          <div>
+            <div style={{ fontWeight:700, fontSize:16 }}>{currentUser.displayName}</div>
+            <div style={{ fontSize:13, color:"var(--TS)" }}>
+              {ROLES[currentUser.role]} · {currentUser.email}
+            </div>
+          </div>
         </div>
-        <div>
-          <div style={{fontWeight:700,fontSize:16}}>{currentUser.displayName}</div>
-          <div style={{fontSize:13,color:"var(--TS)"}}>{ROLES[currentUser.role]} · {currentUser.email}</div>
+
+        <div className="frow">
+          <label className="flbl">อีเมล (ไม่สามารถแก้ไขได้)</label>
+          <input className="inp" value={currentUser.email} disabled
+            style={{ background:"#F3F4F6", color:"#9CA3AF" }}/>
         </div>
+        <div className="frow">
+          <label className="flbl">ชื่อ-นามสกุล</label>
+          <input className="inp" value={displayName}
+            onChange={e => setDisplayName(e.target.value)}/>
+        </div>
+
+        {msg && (
+          <div style={{ color:"var(--G)", fontWeight:700, fontSize:13, marginBottom:10 }}>
+            {msg}
+          </div>
+        )}
+        <button onClick={saveProfile} disabled={saving} className="btn bp">
+          💾 {saving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}
+        </button>
       </div>
-      <div className="frow">
-        <label className="flbl">อีเมล (ไม่สามารถแก้ไขได้)</label>
-        <input className="inp" value={currentUser.email} disabled style={{background:"#F3F4F6",color:"#9CA3AF"}}/>
+
+      {/* ── card: เปลี่ยนรหัสผ่าน ── */}
+      <div className="card">
+        <h3 style={{ fontWeight:700, color:"var(--P)", marginBottom:6, fontSize:16 }}>
+          🔑 เปลี่ยนรหัสผ่าน
+        </h3>
+        <p style={{ fontSize:13, color:"var(--TS)", marginBottom:18, marginTop:0 }}>
+          ต้องการเปลี่ยนรหัสผ่าน กรอกรหัสเดิมก่อนแล้วตั้งรหัสใหม่
+        </p>
+
+        {/* รหัสผ่านปัจจุบัน */}
+        <div className="frow">
+          <label className="flbl">รหัสผ่านปัจจุบัน</label>
+          <div style={{ position:"relative" }}>
+            <input style={{ ...inp, paddingRight:44 }}
+              type={showPw ? "text" : "password"}
+              value={curPw}
+              onChange={e => { setCurPw(e.target.value); setPwErr(""); }}
+              placeholder="กรอกรหัสผ่านปัจจุบัน"/>
+            <button onClick={() => setShowPw(!showPw)}
+              style={{ position:"absolute", right:12, top:"50%",
+                transform:"translateY(-50%)", background:"none",
+                border:"none", cursor:"pointer", fontSize:17, padding:0, lineHeight:1 }}>
+              {showPw ? "🙈" : "👁️"}
+            </button>
+          </div>
+        </div>
+
+        <hr style={divider}/>
+
+        {/* รหัสผ่านใหม่ */}
+        <div className="frow">
+          <label className="flbl">รหัสผ่านใหม่</label>
+          <input style={inp}
+            type={showPw ? "text" : "password"}
+            value={newPw}
+            onChange={e => { setNewPw(e.target.value); setPwErr(""); }}
+            placeholder="อย่างน้อย 4 ตัวอักษร"/>
+        </div>
+
+        {/* ยืนยันรหัสผ่านใหม่ */}
+        <div className="frow">
+          <label className="flbl">ยืนยันรหัสผ่านใหม่</label>
+          <input style={{
+            ...inp,
+            borderColor: cfmPw && newPw && cfmPw !== newPw ? "#ef4444" : "var(--BD)",
+          }}
+            type={showPw ? "text" : "password"}
+            value={cfmPw}
+            onChange={e => { setCfmPw(e.target.value); setPwErr(""); }}
+            placeholder="กรอกรหัสผ่านใหม่อีกครั้ง"
+            onKeyDown={e => e.key === "Enter" && changePassword()}/>
+        </div>
+
+        {/* strength hint */}
+        {newPw.length > 0 && (
+          <div style={{ fontSize:12, marginBottom:12, color:
+            newPw.length < 4 ? "#ef4444" :
+            newPw.length < 8 ? "#f59e0b" : "#10b981" }}>
+            {newPw.length < 4 ? "⚠️ รหัสผ่านสั้นเกินไป" :
+             newPw.length < 8 ? "🟡 รหัสผ่านปานกลาง" : "🟢 รหัสผ่านแข็งแกร่ง"}
+          </div>
+        )}
+
+        {/* error / success */}
+        {pwErr && (
+          <div style={{ background:"#FEE2E2", color:"#991B1B", borderRadius:8,
+            padding:"9px 13px", marginBottom:12, fontSize:13, fontWeight:600,
+            border:"1px solid #FECACA" }}>
+            ⚠️ {pwErr}
+          </div>
+        )}
+        {pwMsg && (
+          <div style={{ background:"#D1FAE5", color:"#065F46", borderRadius:8,
+            padding:"9px 13px", marginBottom:12, fontSize:13, fontWeight:600,
+            border:"1px solid #A7F3D0" }}>
+            {pwMsg}
+          </div>
+        )}
+
+        <button onClick={changePassword} disabled={savingPw}
+          style={{ width:"100%", padding:"11px", borderRadius:9, border:"none",
+            background: savingPw ? "#94a3b8" : "#6366f1",
+            color:"#fff", fontWeight:700, fontSize:14, cursor: savingPw ? "wait" : "pointer",
+            fontFamily:"Sarabun,sans-serif", transition:"background .2s" }}>
+          🔐 {savingPw ? "กำลังบันทึก..." : "เปลี่ยนรหัสผ่าน"}
+        </button>
       </div>
-      <div className="frow">
-        <label className="flbl">ชื่อ-นามสกุล</label>
-        <input className="inp" value={displayName} onChange={e=>setDisplayName(e.target.value)}/>
-      </div>
-      {msg&&<div style={{color:"var(--G)",fontWeight:700,fontSize:13,marginBottom:10}}>{msg}</div>}
-      <button onClick={saveProfile} disabled={saving} className="btn bp">💾 {saving?"กำลังบันทึก...":"บันทึกข้อมูล"}</button>
+
     </div>
   );
 }
