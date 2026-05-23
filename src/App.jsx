@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
-  collection, onSnapshot
+  collection, onSnapshot, query, where
 } from "firebase/firestore";
 
 // ═══════════════════════════════════════════════
@@ -115,6 +115,14 @@ const isFullyEval    = b => { const ids=evalIds(b); return ids.length>0&&ids.eve
 const gradeOf        = pct => pct>=80?{label:"ดีมาก",color:"#14532D",bg:"#D1FAE5"}:pct>=70?{label:"ดี",color:"#166634",bg:"#DCFCE7"}:pct>=60?{label:"พอใช้",color:"#78350F",bg:"#FEF3C7"}:{label:"ควรปรับปรุง",color:"#7F1D1D",bg:"#FEE2E2"};
 const userBusy       = (uid2,date,time,bks,excId=null) => { if(!uid2) return false; return bks.some(b=>b.id!==excId&&b.date===date&&b.time===time&&(b.teacherId===uid2||b.adminId===uid2||b.teacher1Id===uid2||b.teacher2Id===uid2)); };
 const isEvaluator    = (userId,bookings) => bookings.some(b=>b.adminId===userId||b.teacher1Id===userId||b.teacher2Id===userId);
+// คำนวณหาวันที่ 1 พฤษภาคม ของปีการศึกษาปัจจุบัน
+const getStartOfAcademicYear = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  // ถ้าเปิดเว็บช่วง ม.ค. - เม.ย. ถือว่าเป็นเทอม 2 ของปีการศึกษาที่แล้ว
+  const startYear = now.getMonth() < 4 ? year - 1 : year; 
+  return `${startYear}-05-01`; // คืนค่าเช่น "2024-05-01"
+};
 
 // ═══════════════════════════════════════════════
 //  CSS
@@ -1655,8 +1663,15 @@ export default function App() {
   },[]);
 
   useEffect(()=>{
-    const unsub = onSnapshot(bkCol(),(snap)=>{
+    // 1. กำหนดเงื่อนไขการดึงข้อมูล
+    const startDate = getStartOfAcademicYear();
+    const recentBookingsQuery = query(bkCol(), where("date", ">=", startDate));
+
+    // 2. ใช้ query ที่สร้างไว้ แทนการดึงทั้ง collection
+    const unsub = onSnapshot(recentBookingsQuery, (snap)=>{
       const bks=snap.docs.map(d=>({...d.data(),id:d.id}));
+      
+      // เรียงลำดับข้อมูลฝั่ง Client เหมือนเดิม
       bks.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
       setBookings(bks);
     });
