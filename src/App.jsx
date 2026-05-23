@@ -53,7 +53,7 @@ const TIME_SLOTS  = [
   "16:00 - 16:50\n(คาบที่ 9)"
 ];
 const ROLES       = { sysadmin:"ผู้ดูแลระบบ", admin:"ผู้บริหาร", teacher:"ครูผู้สอน" };
-const ROLE_COLOR  = { sysadmin:"#4C1D95", admin:"#1E3A8A", teacher:"#166634" };
+const ROLE_COLOR  = { sysadmin:"#be0e0e", admin:"#1E3A8A", teacher:"#166634" };
 
 const DEF_SETTINGS = { schoolName:"โรงเรียนบ้านหมี่วิทยา", logo:null, domain:DEFAULT_DOMAIN };
 const DEF_STRUCTURE = [
@@ -122,43 +122,91 @@ const isEvaluator    = (userId,bookings) => bookings.some(b=>b.adminId===userId|
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-:root{--P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;--A:#F59E0B;--AD:#D97706;--G:#16A34A;--R:#DC2626;--T:#1F2937;--TS:#6B7280;--BD:#E5E7EB;--BG:#F1F5F9;--W:#FFFFFF;}
+:root{
+  --P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;
+  --A:#F59E0B;--AD:#D97706;
+  --G:#16A34A;--R:#DC2626;
+  --T:#1F2937;--TS:#6B7280;--BD:#E5E7EB;--BG:#F0F4FA;--W:#FFFFFF;
+}
 body,#root{font-family:'Sarabun',sans-serif;background:var(--BG);color:var(--T);min-height:100vh;}
-.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--W);outline:none;transition:border-color .2s;color:var(--T);}
-.inp:focus{border-color:var(--P);}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;}
-.btn:active{transform:scale(.97);}.btn:disabled{opacity:.45;cursor:not-allowed;}
-.bp{background:var(--P);color:#fff;}.bp:hover:not(:disabled){background:var(--PD);}
-.ba{background:var(--A);color:#1a0000;}.ba:hover:not(:disabled){background:var(--AD);}
-.bg{background:var(--G);color:#fff;}.bg:hover:not(:disabled){background:#15803D;}
-.br{background:var(--R);color:#fff;}.br:hover:not(:disabled){background:#B91C1C;}
-.bx{background:var(--PL);color:var(--P);border:1.5px solid #C7D2FE;}.bx:hover:not(:disabled){background:#C7D2FE;}
-.bo{background:var(--W);color:var(--T);border:1.5px solid var(--BD);}.bo:hover:not(:disabled){background:#F9FAFB;}
-.card{background:var(--W);border-radius:10px;box-shadow:0 2px 12px rgba(0,0,0,.08);padding:20px;}
+
+/* ── Inputs ── */
+.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
+.inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.10);}
+.inp:disabled{background:#F9FAFB;color:#9CA3AF;cursor:not-allowed;}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.bp{background:var(--P);color:#fff;box-shadow:0 2px 8px rgba(30,58,138,.25);}
+.bp:hover:not(:disabled){background:var(--PD);box-shadow:0 4px 14px rgba(30,58,138,.35);}
+.ba{background:var(--A);color:#422006;}
+.ba:hover:not(:disabled){background:var(--AD);}
+.bg{background:var(--G);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.22);}
+.bg:hover:not(:disabled){background:#15803D;}
+.br{background:var(--R);color:#fff;}
+.br:hover:not(:disabled){background:#B91C1C;}
+.bx{background:var(--PL);color:var(--P);border:1.5px solid #C7D2FE;}
+.bx:hover:not(:disabled){background:#C7D2FE;}
+.bo{background:var(--W);color:var(--T);border:1.5px solid var(--BD);}
+.bo:hover:not(:disabled){background:#F3F4F6;}
+
+/* ── Cards ── */
+.card{background:var(--W);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.07);padding:20px;border:1px solid rgba(0,0,0,.04);}
+
+/* ── Form ── */
 .frow{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
-.flbl{font-size:13px;font-weight:700;color:#374151;}
+.flbl{font-size:12.5px;font-weight:700;color:#4B5563;letter-spacing:.02em;}
+
+/* ── Grids ── */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;}
-.badge-p{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;background:#FEF3C7;color:#92400E;}
-.badge-d{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;background:#D1FAE5;color:#065F46;}
-.badge-part{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;background:#DBEAFE;color:#1E40AF;}
-.rt-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:5px;animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.score-btn{width:38px;height:38px;border-radius:50%;border:2px solid var(--BD);background:var(--W);cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
-.score-btn:hover{border-color:var(--P);color:var(--P);background:var(--PL);}
-.score-btn.active{background:var(--P);color:#fff;border-color:var(--P);}
-.progress-bar{height:8px;border-radius:4px;background:#E5E7EB;overflow:hidden;}
-.progress-fill{height:100%;border-radius:4px;transition:width .5s ease;}
-.stat-card{background:var(--W);border-radius:10px;padding:18px 20px;border:1px solid var(--BD);}
-.tab-btn{padding:8px 16px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--TS);border-bottom:2px solid transparent;transition:all .18s;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+
+/* ── Badges ── */
+.badge-p{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FEF3C7;color:#92400E;}
+.badge-d{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#D1FAE5;color:#065F46;}
+.badge-part{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#DBEAFE;color:#1E40AF;}
+
+/* ── Realtime dot ── */
+.rt-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:6px;box-shadow:0 0 0 2px rgba(34,197,94,.25);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px rgba(34,197,94,.25);}50%{opacity:.5;box-shadow:0 0 0 5px rgba(34,197,94,.05);}}
+
+/* ── Score buttons ── */
+.score-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--BD);background:var(--W);cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
+.score-btn:hover:not(:disabled){border-color:var(--P);color:var(--P);background:var(--PL);transform:scale(1.08);}
+.score-btn.active{background:var(--P);color:#fff;border-color:var(--P);box-shadow:0 2px 8px rgba(30,58,138,.3);}
+.score-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* ── Progress ── */
+.progress-bar{height:8px;border-radius:99px;background:#E5E7EB;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+
+/* ── Stat cards ── */
+.stat-card{border-radius:12px;padding:20px;border:1px solid transparent;}
+
+/* ── Tabs ── */
+.tab-btn{padding:9px 18px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--TS);border-bottom:2.5px solid transparent;transition:all .18s;}
 .tab-btn.active{color:var(--P);border-bottom-color:var(--P);}
-@media(max-width:640px){.g2{grid-template-columns:1fr!important;}.g3{grid-template-columns:1fr 1fr!important;}.g4{grid-template-columns:1fr 1fr!important;}.hsm{display:none!important;}}
+.tab-btn:hover:not(.active){color:var(--T);}
+
+/* ── Tables ── */
+.tbl-row:hover td{background:#F5F7FF!important;}
+
+/* ── Responsive ── */
+@media(max-width:640px){
+  .g2{grid-template-columns:1fr!important;}
+  .g3{grid-template-columns:1fr 1fr!important;}
+  .g4{grid-template-columns:1fr 1fr!important;}
+  .hsm{display:none!important;}
+}
+
+/* ── Print (ใช้เฉพาะ window.print ใน popup) ── */
 @media print{
   .np{display:none!important;}
-  body{background:white;font-size:12pt;}
+  body{background:white;}
   .card{box-shadow:none!important;border:1px solid #ddd!important;}
-  .print-break{page-break-before:always;}
 }
 `;
 
@@ -911,80 +959,137 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
   const printRef = useRef();
 
   const printReport = (b) => {
-    const sc = calcAvgScore(b,structure);
-    const win = window.open("","_blank");
-    const evalRows = evalIds(b).map(eid=>{
-      const ev=b.evals?.[eid];
-      const u=users.find(u=>u.id===eid);
-      const res=calcOneEval(ev,structure);
-      return `<tr><td>${u?.displayName||eid}</td><td>${ROLES[u?.role]||""}</td><td>${res?res.total+"/"+res.maxTotal:"—"}</td><td>${res?res.pct+"%":"—"}</td><td>${ev?.comments||"—"}</td></tr>`;
-    }).join("");
-    const dimRows = sc ? sc.dims.map(d=>`<tr><td>${d.name}</td><td>${d.score}/${d.max}</td><td>${Math.round(d.score/d.max*100)}%</td></tr>`).join("") : "";
+  const sc = calcAvgScore(b, structure);
+  const win = window.open("", "_blank");
 
-    win.document.write(`
-      <!DOCTYPE html><html><head>
-      <meta charset="utf-8">
-      <title>รายงานการนิเทศ - ${b.teacherName}</title>
-      <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap');
-        body{font-family:'Sarabun',sans-serif;padding:30px 40px;color:#1F2937;font-size:13pt;}
-        h1{font-size:18pt;color:#1E3A8A;margin-bottom:4px;}
-        h2{font-size:14pt;color:#1E3A8A;margin:20px 0 8px;border-bottom:2px solid #1E3A8A;padding-bottom:4px;}
-        h3{font-size:12pt;color:#374151;margin:16px 0 6px;}
-        table{width:100%;border-collapse:collapse;margin-bottom:14px;}
-        th{background:#1E3A8A;color:white;padding:8px 12px;text-align:left;font-size:12pt;}
-        td{padding:7px 12px;border-bottom:1px solid #E5E7EB;font-size:12pt;}
-        tr:nth-child(even) td{background:#F8FAFF;}
-        .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
-        .info-item{background:#F1F5F9;padding:8px 14px;border-radius:6px;}
-        .info-label{font-size:10pt;color:#6B7280;}
-        .info-value{font-weight:700;font-size:13pt;}
-        .score-box{background:#EEF2FF;border:2px solid #1E3A8A;border-radius:10px;padding:16px;text-align:center;margin-bottom:20px;}
-        .big-score{font-size:40pt;font-weight:800;color:#1E3A8A;}
-        .grade{display:inline-block;padding:4px 16px;border-radius:20px;font-weight:700;font-size:13pt;}
-        .footer{margin-top:40px;font-size:10pt;color:#9CA3AF;text-align:center;border-top:1px solid #E5E7EB;padding-top:12px;}
-      </style>
-      </head><body>
-      <h1>📋 รายงานผลการนิเทศการสอน</h1>
-      <p style="color:#6B7280;margin-bottom:20px;">${settings.schoolName} · พิมพ์วันที่ ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}</p>
-      
-      <div class="info-grid">
-        <div class="info-item"><div class="info-label">ชื่อ-สกุลครู</div><div class="info-value">${b.teacherName}</div></div>
-        <div class="info-item"><div class="info-label">รายวิชา</div><div class="info-value">${b.subject}</div></div>
-        <div class="info-item"><div class="info-label">ระดับชั้น/ห้อง</div><div class="info-value">${b.classRoom}</div></div>
-        <div class="info-item"><div class="info-label">วันที่/เวลา</div><div class="info-value">${fmtDate(b.date)} เวลา ${b.time} น.</div></div>
-        <div class="info-item"><div class="info-label">ผู้บริหาร</div><div class="info-value">${b.adminName}</div></div>
-        <div class="info-item"><div class="info-label">ครูกรรมการ</div><div class="info-value">${b.teacher1Name}, ${b.teacher2Name}</div></div>
-      </div>
+  const evalRows = evalIds(b).map(eid => {
+    const ev = b.evals?.[eid];
+    const u  = users.find(u => u.id === eid);
+    const res = calcOneEval(ev, structure);
+    return `
+      <tr>
+        <td>${u?.displayName || eid}</td>
+        <td style="text-align:center">${ROLES[u?.role] || ""}</td>
+        <td style="text-align:center">${res ? res.total + "/" + res.maxTotal : "—"}</td>
+        <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
+        <td style="font-size:9.5pt;color:#374151">${ev?.comments || "—"}</td>
+      </tr>`;
+  }).join("");
 
-      ${sc?`
-      <div class="score-box">
-        <div class="big-score">${sc.avgPct}%</div>
-        <div style="font-size:16pt;margin:4px 0;">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
-        <span class="grade" style="background:${gradeOf(sc.avgPct).bg};color:${gradeOf(sc.avgPct).color};">${gradeOf(sc.avgPct).label}</span>
-        <div style="font-size:11pt;color:#6B7280;margin-top:8px;">เฉลี่ยจาก ${sc.count} คนที่ประเมิน</div>
-      </div>
-      `:""}
+  const dimRows = sc ? sc.dims.map(d => {
+    const pct = Math.round(d.score / d.max * 100);
+    const g = gradeOf(pct);
+    const barW = pct;
+    return `
+      <tr>
+        <td>${d.name}</td>
+        <td style="text-align:center">${d.score}/${d.max}</td>
+        <td style="text-align:center;font-weight:700;color:${g.color}">${pct}%</td>
+        <td style="padding:4px 8px">
+          <div style="background:#E5E7EB;border-radius:4px;height:7px;overflow:hidden">
+            <div style="width:${barW}%;height:100%;background:${g.color};border-radius:4px"></div>
+          </div>
+        </td>
+      </tr>`;
+  }).join("") : "";
 
-      <h2>ผลการประเมินรายด้าน</h2>
-      <table>
-        <thead><tr><th>ด้านการประเมิน</th><th>คะแนนเฉลี่ย</th><th>ร้อยละ</th></tr></thead>
-        <tbody>${dimRows}</tbody>
-      </table>
+  const logoHtml = settings.logo
+    ? `<img src="${settings.logo}" style="width:52px;height:52px;border-radius:8px;object-fit:cover;border:1px solid #ddd" onerror="this.style.display='none'" />`
+    : `<div style="width:52px;height:52px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid #C7D2FE">🏫</div>`;
 
-      <h2>ผลการประเมินรายกรรมการ</h2>
-      <table>
-        <thead><tr><th>ชื่อ-สกุล</th><th>ตำแหน่ง</th><th>คะแนน</th><th>ร้อยละ</th><th>ข้อเสนอแนะ</th></tr></thead>
-        <tbody>${evalRows}</tbody>
-      </table>
+  const grade = sc ? gradeOf(sc.avgPct) : null;
 
-      <div class="footer">${settings.schoolName} · ระบบนิเทศการสอน · พิมพ์อัตโนมัติ</div>
-      </body></html>
-    `);
-    win.document.close();
-    win.focus();
-    setTimeout(()=>{win.print();},800);
-  };
+  win.document.write(`<!DOCTYPE html><html><head>
+  <meta charset="utf-8">
+  <title>รายงานนิเทศ — ${b.teacherName}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap');
+    @page{ size:A4 portrait; margin:12mm 14mm; }
+    *{ box-sizing:border-box; margin:0; padding:0; }
+    body{ font-family:'Sarabun',sans-serif; color:#1F2937; font-size:10pt; line-height:1.45; }
+
+    /* Header */
+    .hdr{ display:flex; align-items:center; gap:12px; padding-bottom:8px; border-bottom:2.5px solid #1E3A8A; margin-bottom:10px; }
+    .hdr-text h1{ font-size:14pt; font-weight:800; color:#1E3A8A; }
+    .hdr-text p{ font-size:9pt; color:#6B7280; margin-top:1px; }
+
+    /* Score box */
+    .score-box{ display:flex; align-items:center; gap:16px; background:#EEF2FF; border:1.5px solid #C7D2FE; border-radius:10px; padding:10px 16px; margin-bottom:10px; }
+    .score-big{ font-size:34pt; font-weight:800; color:#1E3A8A; line-height:1; }
+    .score-sub{ font-size:10pt; color:#4B5563; }
+    .grade-pill{ display:inline-block; padding:3px 12px; border-radius:20px; font-weight:700; font-size:10pt; }
+
+    /* Info grid */
+    .info-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+    .info-item{ background:#F8FAFF; border:1px solid #E0E7FF; border-radius:7px; padding:5px 10px; }
+    .info-lbl{ font-size:8pt; color:#6B7280; }
+    .info-val{ font-size:9.5pt; font-weight:700; color:#1F2937; }
+
+    /* Section title */
+    .sec{ font-size:10pt; font-weight:700; color:#1E3A8A; margin:9px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #BFDBFE; }
+
+    /* Tables */
+    table{ width:100%; border-collapse:collapse; font-size:9pt; }
+    th{ background:#1E3A8A; color:#fff; padding:5px 8px; font-weight:700; }
+    td{ padding:4px 8px; border-bottom:1px solid #E5E7EB; vertical-align:middle; }
+    tr:nth-child(even) td{ background:#F8FAFF; }
+
+    /* Footer */
+    .footer{ margin-top:10px; font-size:8pt; color:#9CA3AF; text-align:center; border-top:1px solid #E5E7EB; padding-top:6px; display:flex; justify-content:space-between; }
+  </style>
+  </head><body>
+
+  <!-- Header -->
+  <div class="hdr">
+    ${logoHtml}
+    <div class="hdr-text">
+      <h1>รายงานผลการนิเทศการสอน</h1>
+      <p>${settings.schoolName} &nbsp;·&nbsp; พิมพ์วันที่ ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}</p>
+    </div>
+    ${grade ? `
+    <div style="margin-left:auto;text-align:center">
+      <div class="score-big">${sc.avgPct}%</div>
+      <div style="font-size:9pt;color:#6B7280">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
+      <span class="grade-pill" style="background:${grade.bg};color:${grade.color}">${grade.label}</span>
+    </div>` : ""}
+  </div>
+
+  <!-- Info Grid -->
+  <div class="info-grid">
+    <div class="info-item"><div class="info-lbl">ชื่อ-สกุลครู</div><div class="info-val">${b.teacherName}</div></div>
+    <div class="info-item"><div class="info-lbl">รายวิชา</div><div class="info-val">${b.subject}</div></div>
+    <div class="info-item"><div class="info-lbl">ระดับชั้น / ห้อง</div><div class="info-val">${b.classRoom}</div></div>
+    <div class="info-item"><div class="info-lbl">วันที่นิเทศ</div><div class="info-val">${fmtDate(b.date)}</div></div>
+    <div class="info-item"><div class="info-lbl">คาบเรียน</div><div class="info-val">${b.time}</div></div>
+    <div class="info-item"><div class="info-lbl">ผู้บริหาร</div><div class="info-val">${b.adminName}</div></div>
+    <div class="info-item" style="grid-column:span 2"><div class="info-lbl">ครูกรรมการ</div><div class="info-val">${b.teacher1Name} &nbsp;|&nbsp; ${b.teacher2Name}</div></div>
+    <div class="info-item"><div class="info-lbl">สถานะ</div><div class="info-val" style="color:#065F46">✅ ประเมินครบแล้ว (${sc?.count || 0} คน)</div></div>
+  </div>
+
+  <!-- Dimension scores -->
+  <div class="sec">ผลการประเมินรายด้าน</div>
+  <table>
+    <thead><tr><th style="text-align:left">ด้านการประเมิน</th><th style="width:70px">คะแนน</th><th style="width:55px">ร้อยละ</th><th style="width:120px">กราฟ</th></tr></thead>
+    <tbody>${dimRows}</tbody>
+  </table>
+
+  <!-- Per-evaluator -->
+  <div class="sec">ผลการประเมินรายกรรมการ</div>
+  <table>
+    <thead><tr><th style="text-align:left">ชื่อ-สกุล</th><th style="width:80px;text-align:center">ตำแหน่ง</th><th style="width:70px;text-align:center">คะแนน</th><th style="width:55px;text-align:center">ร้อยละ</th><th>ข้อเสนอแนะ</th></tr></thead>
+    <tbody>${evalRows}</tbody>
+  </table>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>${settings.schoolName} · ระบบนิเทศการสอน</span>
+    <span>พิมพ์อัตโนมัติ · เอกสารนี้ไม่ต้องลงนาม</span>
+  </div>
+
+  <script>window.onload=()=>{ setTimeout(()=>window.print(), 600); }</script>
+  </body></html>`);
+  win.document.close();
+};
 
   return(
     <div>
