@@ -552,7 +552,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
           <button onClick={()=>setSelected(null)} className="btn bo" style={{padding:"8px 14px"}}>← กลับ</button>
           <div>
             <h2 style={{fontWeight:800,fontSize:18,color:"var(--P)"}}>📝 แบบประเมินการนิเทศ</h2>
-            <p style={{color:"var(--TS)",fontSize:13}}>{selected.teacherName} — {selected.subject} ({selected.classRoom}) — {fmtDate(selected.date)} {selected.time} น.</p>
+            <p style={{color:"var(--TS)",fontSize:13}}>{selected.teacherName} — {selected.subject} ({selected.classRoom}) — {fmtDate(selected.date)} {selected.time} </p>
           </div>
         </div>
 
@@ -628,7 +628,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
               <div key={b.id} className="card" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"14px 16px",borderLeft:"4px solid var(--A)"}}>
                 <div>
                   <div style={{fontWeight:700,fontSize:15}}>{b.teacherName}</div>
-                  <div style={{fontSize:12,color:"var(--TS)",marginTop:2}}>{b.subject} · {b.classRoom} · {fmtDate(b.date)} {b.time} น.</div>
+                  <div style={{fontSize:12,color:"var(--TS)",marginTop:2}}>{b.subject} · {b.classRoom} · {fmtDate(b.date)} {b.time} </div>
                   <div style={{fontSize:11,color:"#9CA3AF",marginTop:4}}>👔 {b.adminName} · 👩‍🏫 {b.teacher1Name}, {b.teacher2Name}</div>
                 </div>
                 <button onClick={()=>openEval(b)} className="btn bp" style={{padding:"10px 18px",whiteSpace:"nowrap"}}>กรอกประเมิน →</button>
@@ -649,7 +649,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
                 <div key={b.id} className="card" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"12px 16px",opacity:.85}}>
                   <div>
                     <div style={{fontWeight:600,fontSize:14}}>{b.teacherName} — {b.subject}</div>
-                    <div style={{fontSize:12,color:"var(--TS)"}}>{fmtDate(b.date)} {b.time} น.</div>
+                    <div style={{fontSize:12,color:"var(--TS)"}}>{fmtDate(b.date)} {b.time} </div>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
                     {res&&<span style={{fontWeight:800,color:gradeOf(res.pct).color}}>{res.total}/{res.maxTotal} ({res.pct}%)</span>}
@@ -821,7 +821,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
         date:selDate,time:selTime,evals:{},createdAt:new Date().toISOString()
       };
       await onSave(nb);
-      setMsg({t:"s",s:`✅ จองสำเร็จ! ${fmtDate(selDate)} ${selTime} น.`});
+      setMsg({t:"s",s:`✅ จองสำเร็จ! ${fmtDate(selDate)} ${selTime} `});
       
       // เคลียร์ค่าฟอร์มทั้งหมดหลังจากบันทึกเสร็จ
       setSubject("");setGrade("");setRoomNum("");setPhysRoom("");
@@ -935,7 +935,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
              {myBookings.map(b => (
                 <div key={b.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#F9FAFB",borderRadius:8,borderLeft:"4px solid var(--A)",flexWrap:"wrap"}}>
                    <div>
-                     <div style={{fontWeight:700,fontSize:14,color:"var(--P)"}}>{fmtDate(b.date)} — เวลา {b.time} น.</div>
+                     <div style={{fontWeight:700,fontSize:14,color:"var(--P)"}}>{fmtDate(b.date)} — เวลา {b.time} </div>
                      <div style={{fontSize:13,color:"var(--T)",marginTop:4}}>{b.subject} ({b.classRoom})</div>
                      <div style={{fontSize:12,color:"#6B7280",marginTop:4}}>กรรมการ: {b.adminName}, {b.teacher1Name}, {b.teacher2Name}</div>
                    </div>
