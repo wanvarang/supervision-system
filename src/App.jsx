@@ -1959,7 +1959,7 @@ const handleLogout = () => { setCurrentUser(null); setPage(""); };
         {currentUser&&page==="booking"   &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
         {currentUser&&page==="summary"                                    &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings} onDeleteBooking={deleteBooking}/>}        {currentUser&&page==="evaluate"                                   &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
         {currentUser&&page==="schedule"                                   &&<ScheduleSummary bookings={bookings} users={users}/>}
-        {ccurrentUser&&page==="users"    &&hasRole(currentUser,"sysadmin")  &&<UsersTab users={users}/>}
+        {currentUser&&page==="users"    &&hasRole(currentUser,"sysadmin")  &&<UsersTab users={users}/>}
         {currentUser&&page==="settings" &&hasRole(currentUser,"sysadmin") &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
         {currentUser&&page==="profile"                                    &&<ProfileTab currentUser={currentUser}/>}
       </main>
