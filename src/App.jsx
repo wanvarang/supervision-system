@@ -1543,14 +1543,21 @@ function UAvatar({ name, role, size=40 }) {
 
 function UserModal({ user, onClose, onSave }) {
   const isEdit = !!user?.id;
-  const [form, setForm] = useState({
-    displayName: user?.displayName||"",
-    email:       user?.email||"",
-    role:        user?.role||"teacher",
-    password:    "",
-  });
-  const [loading, setLoading] = useState(false);
-  const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
+  const initRoles = Array.isArray(user?.roles)&&user.roles.length
+  ? user.roles : user?.role ? [user.role] : ["teacher"];
+const [form, setForm] = useState({
+  displayName: user?.displayName||"",
+  email:       user?.email||"",
+  roles:       initRoles,
+  password:    "",
+});
+const [loading, setLoading] = useState(false);
+const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
+const toggleRole = (role) => setForm(f => {
+  const has = f.roles.includes(role);
+  if (has && f.roles.length === 1) return f;
+  return { ...f, roles: has ? f.roles.filter(r=>r!==role) : [...f.roles, role] };
+});
 
   const handleSave = async () => {
     if(!form.displayName.trim()||!form.email.trim()) { alert("กรุณากรอกชื่อและอีเมล"); return; }
