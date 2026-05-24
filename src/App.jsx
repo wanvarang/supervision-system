@@ -783,6 +783,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [adminId,setAdminId]=useState("");
   const [t1Id,setT1Id]=useState("");
   const [t2Id,setT2Id]=useState("");
+  const [teacherSearch, setTeacherSearch] = useState("");
   const [selDate,setSelDate]=useState("");
   const [selTime,setSelTime]=useState("");
   const [calY,setCalY]=useState(new Date().getFullYear());
@@ -807,6 +808,26 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
     if(!t1Id){setT1Id(tid);return;}
     if(!t2Id){setT2Id(tid);return;}
   };
+  const addTeacher = (tid) => {
+    if (!t1Id) setT1Id(tid);
+    else if (!t2Id) setT2Id(tid);
+    setTeacherSearch(""); 
+  };
+
+  const removeTeacher = (tid) => {
+    if (t1Id === tid) setT1Id("");
+    if (t2Id === tid) setT2Id("");
+  };
+
+  const availableTeachers = teachers.filter(t => 
+    t.id !== t1Id && t.id !== t2Id &&
+    t.displayName.toLowerCase().includes(teacherSearch.toLowerCase())
+  );
+
+  const selectedTeachers = [
+    teachers.find(t => t.id === t1Id),
+    teachers.find(t => t.id === t2Id)
+  ].filter(Boolean);
 
   const submit=async()=>{
     if(!selDate||!selTime){setMsg({t:"e",s:"กรุณาเลือกวันที่และเวลา"});return;}
@@ -888,14 +909,59 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
           </div>
         </div>
         <div style={{background:"#F0FDF4",borderRadius:10,padding:"14px 16px",marginBottom:18}}>
-          <div style={{fontWeight:700,color:"#166634",marginBottom:10,fontSize:14}}>② ครูกรรมการ (2 คน) {t1Id&&t2Id&&<span style={{fontWeight:500,fontSize:12,color:"#16A34A"}}>— เลือกครบแล้ว ✓</span>}</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(185px,1fr))",gap:7}}>
-            {teachers.map(t=>{const sn=t1Id===t.id?1:t2Id===t.id?2:0,active=sn>0,full=!active&&t1Id&&t2Id;
-              return <button key={t.id} disabled={!!full} onClick={()=>pickT(t.id)}
-                style={{padding:"10px 12px",borderRadius:8,border:`2px solid ${active?"var(--G)":"#BBF7D0"}`,background:active?"var(--G)":"var(--W)",color:active?"#fff":"var(--T)",cursor:full?"not-allowed":"pointer",fontFamily:"Sarabun,sans-serif",textAlign:"left",opacity:full?.4:1}}>
-                <div style={{fontWeight:600,fontSize:13}}>{active&&`[${sn}] `}{t.displayName}</div>
-              </button>;})}
+          <div style={{fontWeight:700,color:"#166634",marginBottom:10,fontSize:14}}>
+            ② ครูกรรมการ (2 คน) {t1Id&&t2Id&&<span style={{fontWeight:500,fontSize:12,color:"#16A34A"}}>— เลือกครบแล้ว ✓</span>}
           </div>
+
+          {selectedTeachers.length > 0 && (
+            <div style={{display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap"}}>
+              {selectedTeachers.map((t, index) => (
+                <div key={t.id} style={{display: "flex", alignItems: "center", gap: 6, background: "var(--G)", color: "#fff", padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 700, boxShadow: "0 2px 4px rgba(22,163,74,0.2)"}}>
+                  <span>[{index + 1}] {t.displayName}</span>
+                  <button onClick={() => removeTeacher(t.id)} style={{background: "none", border: "none", color: "#fff", cursor: "pointer", padding: 0, fontSize: 18, lineHeight: 1, opacity: 0.8}} title="ลบออก">×</button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {(!t1Id || !t2Id) && (
+            <div style={{position: "relative"}}>
+              <input
+                type="text"
+                className="inp"
+                placeholder="🔍 พิมพ์ค้นหาชื่อครูกรรมการ..."
+                value={teacherSearch}
+                onChange={(e) => setTeacherSearch(e.target.value)}
+                style={{borderColor: "#BBF7D0", background: "#fff"}}
+              />
+              
+              {teacherSearch.trim() !== "" && (
+                <div style={{position: "absolute", top: "100%", left: 0, right: 0, background: "#fff", border: "1px solid #BBF7D0", borderRadius: 8, marginTop: 4, maxHeight: 220, overflowY: "auto", zIndex: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.1)"}}>
+                  {availableTeachers.length > 0 ? availableTeachers.map(t => (
+                    <div 
+                      key={t.id} 
+                      onClick={() => addTeacher(t.id)} 
+                      style={{padding: "10px 14px", cursor: "pointer", borderBottom: "1px solid #f1f5f9", fontSize: 14, transition: "background 0.2s"}}
+                      onMouseEnter={e => e.currentTarget.style.background = "#F0FDF4"}
+                      onMouseLeave={e => e.currentTarget.style.background = "#fff"}
+                    >
+                      <span style={{fontWeight: 600, color: "var(--T)"}}>{t.displayName}</span>
+                    </div>
+                  )) : (
+                    <div style={{padding: "12px", color: "var(--TS)", fontSize: 13, textAlign: "center"}}>
+                      ❌ ไม่พบชื่อครูที่ค้นหา
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {!teacherSearch && availableTeachers.length > 0 && (
+                <div style={{fontSize: 12, color: "#9CA3AF", marginTop: 8}}>
+                  💡 พิมพ์ชื่อเพื่อค้นหาจากรายชื่อครูทั้งหมด {teachers.length} ท่าน
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <button onClick={()=>setStep(2)} disabled={!canStep2} className="btn bp" style={{width:"100%",padding:"12px",fontSize:15}}>ถัดไป: เลือกวันที่และเวลา →</button>
       </div>}
