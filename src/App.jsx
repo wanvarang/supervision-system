@@ -1602,13 +1602,32 @@ const toggleRole = (role) => setForm(f => {
             </div>
           )}
           <div>
-            <label style={lbl}>บทบาท</label>
-            <select style={{...inp}} value={form.role} onChange={set("role")}>
-              <option value="teacher">👩‍🏫 ครูผู้สอน</option>
-              <option value="admin">👔 ผู้บริหาร</option>
-              <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
-            </select>
-          </div>
+  <label style={lbl}>
+    บทบาท <span style={{fontWeight:400,color:"#94a3b8"}}>(เลือกได้หลายบทบาท)</span>
+  </label>
+  <div style={{display:"flex",flexDirection:"column",gap:6,padding:"10px 12px",
+    border:"1.5px solid var(--BD)",borderRadius:8,background:"var(--W)"}}>
+    {[
+      {v:"teacher",  icon:"👩‍🏫", label:"ครูผู้สอน",   color:"#0ea5e9", bg:"#e0f2fe"},
+      {v:"admin",    icon:"👔",   label:"ผู้บริหาร",   color:"#6366f1", bg:"#eef2ff"},
+      {v:"sysadmin", icon:"🔧",   label:"ผู้ดูแลระบบ", color:"#f59e0b", bg:"#fef9c3"},
+    ].map(({v,icon,label:rl,color,bg})=>{
+      const on = form.roles.includes(v);
+      return(
+        <label key={v} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",
+          padding:"7px 10px",borderRadius:7,transition:"all .15s",
+          background:on?bg:"transparent",
+          border:`1.5px solid ${on?color:"var(--BD)"}`}}>
+          <input type="checkbox" checked={on} onChange={()=>toggleRole(v)}
+            style={{width:15,height:15,accentColor:color,cursor:"pointer",flexShrink:0}}/>
+          <span style={{fontSize:16}}>{icon}</span>
+          <span style={{fontSize:14,fontWeight:on?700:400,
+            color:on?color:"inherit",fontFamily:"Sarabun,sans-serif"}}>{rl}</span>
+        </label>
+      );
+    })}
+  </div>
+</div>
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:9,
               border:"1.5px solid var(--BD)",background:"transparent",cursor:"pointer",
