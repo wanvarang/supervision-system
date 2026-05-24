@@ -53,8 +53,13 @@ const TIME_SLOTS  = [
   "16:00 - 16:50\n(คาบที่ 9)"
 ];
 const ROLES       = { sysadmin:"ผู้ดูแลระบบ", admin:"ผู้บริหาร", teacher:"ครูผู้สอน" };
-const ROLE_COLOR  = { sysadmin:"#be0e0e", admin:"#1E3A8A", teacher:"#166634" };
+const ROLE_COLOR = { sysadmin:"#be0e0e", admin:"#1E3A8A", teacher:"#166634" };
 
+// ── multi-role helpers ──
+const getRoles       = (u) => { if(!u) return []; if(Array.isArray(u.roles)&&u.roles.length) return u.roles; if(u.role) return [u.role]; return []; };
+const hasRole        = (u,r) => getRoles(u).includes(r);
+const getPrimaryRole = (u) => { const rs=getRoles(u); return ["sysadmin","admin","teacher"].find(r=>rs.includes(r))||rs[0]||"teacher"; };
+const getRoleLabel   = (u) => getRoles(u).map(r=>ROLES[r]||r).join(" / ");
 const DEF_SETTINGS = { schoolName:"โรงเรียนบ้านหมี่วิทยา", logo:null, domain:DEFAULT_DOMAIN };
 const DEF_STRUCTURE = [
   { id:"ds1", name:"การวางแผนการจัดการเรียนรู้", items:[
@@ -1390,7 +1395,7 @@ function ProfileTab({ currentUser }) {
         <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20,
           padding:"14px 16px", background:"var(--PL)", borderRadius:8 }}>
           <div style={{ width:52, height:52, borderRadius:"50%",
-            background: ROLE_COLOR[currentUser.role],
+            background: ROLE_COLOR[getPrimaryRole(currentUser)],
             display:"flex", alignItems:"center", justifyContent:"center",
             color:"#fff", fontSize:20, fontWeight:700 }}>
             {currentUser.displayName?.slice(0,1) || "?"}
@@ -1398,7 +1403,7 @@ function ProfileTab({ currentUser }) {
           <div>
             <div style={{ fontWeight:700, fontSize:16 }}>{currentUser.displayName}</div>
             <div style={{ fontSize:13, color:"var(--TS)" }}>
-              {ROLES[currentUser.role]} · {currentUser.email}
+              {getRoleLabel(currentUser)} · {currentUser.email}
             </div>
           </div>
         </div>
@@ -1884,28 +1889,35 @@ export default function App() {
   const saveStructure = async (st) => { setStructure(st); await fsSet("structure",st); };
   const saveBlocked   = async (bd) => { setBlockedDates(bd); await fsSet("blockedDates",bd); };
 
-  const handleLogin  = u => { setCurrentUser(u); setPage(u.role==="teacher"?"booking":u.role==="sysadmin"?"dashboard":"summary"); };
-  const handleLogout = () => { setCurrentUser(null); setPage(""); };
+const handleLogin = u => {
+  setCurrentUser(u);
+  setPage(hasRole(u,"sysadmin")?"dashboard":hasRole(u,"admin")&&!hasRole(u,"teacher")?"summary":"booking");
+};  
+const handleLogout = () => { setCurrentUser(null); setPage(""); };
 
   const getNav = useCallback(()=>{
-    if(!currentUser) return [];
-    if(currentUser.role==="sysadmin") return [
-      ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
-      ["schedule","🗓️","ตาราง"],["users","👥","ผู้ใช้"],["settings","⚙️","ตั้งค่า"],["profile","👤","โปรไฟล์"]
-    ];
-    if(currentUser.role==="admin") return [
-      ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
-      ["schedule","🗓️","ตาราง"],["profile","👤","โปรไฟล์"]
-    ];
-    const nav=[["booking","📅","จองเวลา"],["summary","📋","ผลของฉัน"],["profile","👤","โปรไฟล์"]];
-    if(isEvaluator(currentUser.id,bookings)) nav.splice(2,0,["evaluate","📝","ประเมิน"]);
-    return nav;
-  },[currentUser,bookings]);
+  if(!currentUser) return [];
+  if(hasRole(currentUser,"sysadmin")) return [
+    ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
+    ["schedule","🗓️","ตาราง"],["users","👥","ผู้ใช้"],["settings","⚙️","ตั้งค่า"],["profile","👤","โปรไฟล์"]
+  ];
+  if(hasRole(currentUser,"admin")&&!hasRole(currentUser,"teacher")) return [
+    ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
+    ["schedule","🗓️","ตาราง"],["profile","👤","โปรไฟล์"]
+  ];
+  // teacher เดียว หรือ teacher+admin
+  const nav=[["booking","📅","จองเวลา"]];
+  if(hasRole(currentUser,"admin")) nav.push(...[["dashboard","📊","Dashboard"],["schedule","🗓️","ตาราง"]]);
+  nav.push(["summary","📋","สรุปผล / ผลของฉัน"]);
+  if(isEvaluator(currentUser.id,bookings)||hasRole(currentUser,"admin")) nav.push(["evaluate","📝","ประเมิน"]);
+  nav.push(["profile","👤","โปรไฟล์"]);
+  return nav;
+},[currentUser,bookings]);
 
   const navItems=getNav();
   const pendingCount=currentUser?bookings.filter(b=>
     !b.evals?.[currentUser.id]?.submitted&&
-    (currentUser.role==="sysadmin"||b.adminId===currentUser.id||b.teacher1Id===currentUser.id||b.teacher2Id===currentUser.id)
+    (hasRole(currentUser,"sysadmin")||b.adminId===currentUser.id||b.teacher1Id===currentUser.id||b.teacher2Id===currentUser.id)
   ).length:0;
 
   if(!loaded) return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontSize:17,fontFamily:"Sarabun,sans-serif"}}>⏳ กำลังเชื่อมต่อ Firebase...</div>);
@@ -1922,7 +1934,7 @@ export default function App() {
             <div style={{minWidth:0,marginRight:4,flexShrink:0}}>
               <div style={{fontWeight:800,fontSize:14}}>{settings.schoolName}</div>
               <div style={{fontSize:11,opacity:.75,display:"flex",alignItems:"center",gap:5}}>
-                {currentUser.displayName}&nbsp;<span style={{background:"rgba(255,255,255,.2)",padding:"1px 7px",borderRadius:20,fontSize:10}}>{ROLES[currentUser.role]}</span>
+                {currentUser.displayName}&nbsp;<span style={{background:"rgba(255,255,255,.2)",padding:"1px 7px",borderRadius:20,fontSize:10}}>{getRoleLabel(currentUser)}</span>
               </div>
             </div>
             <nav style={{display:"flex",gap:2,flexWrap:"wrap",flex:1}}>
