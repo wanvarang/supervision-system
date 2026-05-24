@@ -1956,11 +1956,11 @@ const handleLogout = () => { setCurrentUser(null); setPage(""); };
       <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"22px 14px 56px":"0"}}>
         {!currentUser&&<LoginPage users={users} settings={settings} onLogin={handleLogin}/>}
         {currentUser&&page==="dashboard"                                  &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
-        {currentUser&&page==="booking"   &&currentUser.role==="teacher"   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
+        {currentUser&&page==="booking"   &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
         {currentUser&&page==="summary"                                    &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings} onDeleteBooking={deleteBooking}/>}        {currentUser&&page==="evaluate"                                   &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
         {currentUser&&page==="schedule"                                   &&<ScheduleSummary bookings={bookings} users={users}/>}
-        {currentUser&&page==="users"     &&currentUser.role==="sysadmin"  &&<UsersTab users={users}/>}
-        {currentUser&&page==="settings"  &&currentUser.role==="sysadmin"  &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
+        {ccurrentUser&&page==="users"    &&hasRole(currentUser,"sysadmin")  &&<UsersTab users={users}/>}
+        {currentUser&&page==="settings" &&hasRole(currentUser,"sysadmin") &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
         {currentUser&&page==="profile"                                    &&<ProfileTab currentUser={currentUser}/>}
       </main>
     </div>
