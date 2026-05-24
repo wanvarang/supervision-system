@@ -1560,12 +1560,19 @@ const toggleRole = (role) => setForm(f => {
 });
 
   const handleSave = async () => {
-    if(!form.displayName.trim()||!form.email.trim()) { alert("กรุณากรอกชื่อและอีเมล"); return; }
-    setLoading(true);
+  if(!form.displayName.trim()||!form.email.trim()) {
+    alert("กรุณากรอกชื่อและอีเมล"); return;
+  }
+  setLoading(true);
+  try {
     await onSave({...form, id:user?.id});
-    setLoading(false);
     onClose();
-  };
+  } catch(e) {
+    alert("เกิดข้อผิดพลาด: " + e.message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const inp = { width:"100%", padding:"9px 12px", borderRadius:8,
     border:"1.5px solid var(--BD)", fontSize:14, background:"var(--W)",
@@ -1672,20 +1679,22 @@ function UsersTab({ users }) {
     if(confirm("ยืนยันการลบผู้ใช้งานรายนี้?")) deleteDoc(userRef(id));
   };
 
-  const handleSave = async ({ id, displayName, email, role, password }) => {
-    if(id) {
-      await updateDoc(userRef(id),{displayName, email, role});
-    } else {
-      const newId = uid();
-      await setDoc(doc(db,"sv_users",newId),{
-        email: email.trim().toLowerCase(),
-        displayName: displayName.trim(),
-        password: password||"school1234",
-        role, approved:true,
-        createdAt: new Date().toISOString(),
-      });
-    }
-  };
+  const handleSave = async ({ id, displayName, email, roles, password }) => {
+  const ra = Array.isArray(roles) && roles.length ? roles : ["teacher"];
+  if(id) {
+    await updateDoc(userRef(id), { displayName, email, roles: ra, role: ra[0] });
+  } else {
+    const newId = uid();
+    await setDoc(doc(db,"sv_users",newId), {
+      email:       email.trim().toLowerCase(),
+      displayName: displayName.trim(),
+      password:    password || "school1234",
+      roles: ra, role: ra[0],
+      approved: true,
+      createdAt: new Date().toISOString(),
+    });
+  }
+};
 
   const pending  = users.filter(u=>!u.approved&&u.role!=="sysadmin");
   const admins   = users.filter(u=>u.approved&&u.role==="admin");
