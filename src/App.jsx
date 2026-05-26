@@ -1041,19 +1041,27 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
   const sc = calcAvgScore(b, structure);
   const win = window.open("", "_blank");
 
-  const evalRows = evalIds(b).map(eid => {
-    const ev = b.evals?.[eid];
-    const u  = users.find(u => u.id === eid);
-    const res = calcOneEval(ev, structure);
+  const isTeacher = currentUser.role === "teacher";
+
+const evalRows = evalIds(b).map((eid, idx) => {
+  const ev = b.evals?.[eid];
+  const u  = users.find(u => u.id === eid);
+  const res = calcOneEval(ev, structure);
+  if (isTeacher) {
     return `
       <tr>
-        <td>${u?.displayName || eid}</td>
-        <td style="text-align:center">${ROLES[u?.role] || ""}</td>
-        <td style="text-align:center">${res ? res.total + "/" + res.maxTotal : "—"}</td>
-        <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
-        <td style="font-size:9.5pt;color:#374151">${ev?.comments || "—"}</td>
+        <td style="font-size:9.5pt;color:#374151;padding:8px">${ev?.comments || "<em style='color:#9CA3AF'>ไม่มีข้อเสนอแนะ</em>"}</td>
       </tr>`;
-  }).join("");
+  }
+  return `
+    <tr>
+      <td>${u?.displayName || eid}</td>
+      <td style="text-align:center">${ROLES[u?.role] || ""}</td>
+      <td style="text-align:center">${res ? res.total + "/" + res.maxTotal : "—"}</td>
+      <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
+      <td style="font-size:9.5pt;color:#374151">${ev?.comments || "—"}</td>
+    </tr>`;
+}).join("");
 
   const dimRows = sc ? sc.dims.map(d => {
     const pct = Math.round(d.score / d.max * 100);
@@ -1125,12 +1133,12 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       <h1>รายงานผลการนิเทศการสอน</h1>
       <p>${settings.schoolName} &nbsp;·&nbsp; พิมพ์วันที่ ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}</p>
     </div>
-    ${grade ? `
-    <div style="margin-left:auto;text-align:center">
-      <div class="score-big">${sc.avgPct}%</div>
-      <div style="font-size:9pt;color:#6B7280">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
-      <span class="grade-pill" style="background:${grade.bg};color:${grade.color}">${grade.label}</span>
-    </div>` : ""}
+    ${(grade && !isTeacher) ?
+`<div style="margin-left:auto;text-align:center">
+  <div class="score-big">${sc.avgPct}%</div>
+  <div style="font-size:9pt;color:#6B7280">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
+  <span class="grade-pill" style="background:${grade.bg};color:${grade.color}">${grade.label}</span>
+</div>` : ""}
   </div>
 
   <!-- Info Grid -->
@@ -1158,6 +1166,14 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
     <thead><tr><th style="text-align:left">ชื่อ-สกุล</th><th style="width:80px;text-align:center">ตำแหน่ง</th><th style="width:70px;text-align:center">คะแนน</th><th style="width:55px;text-align:center">ร้อยละ</th><th>ข้อเสนอแนะ</th></tr></thead>
     <tbody>${evalRows}</tbody>
   </table>
+` : `
+  <!-- Teacher view: comments only, anonymous -->
+  <div class="sec">💬 ข้อเสนอแนะจากคณะกรรมการ</div>
+  <table>
+    <thead><tr><th style="text-align:left">ข้อเสนอแนะ / ความคิดเห็น</th></tr></thead>
+    <tbody>${evalRows}</tbody>
+  </table>
+`}
 
   <!-- Footer -->
   <div class="footer">
@@ -1180,27 +1196,29 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead><tr style={{background:"var(--P)",color:"#fff"}}>
-              {["#","ชื่อ-สกุล","วิชา","ชั้น","วันที่","เวลา","สถานะ","คะแนน",""].map((h,i)=>(
-                <th key={i} style={{padding:"10px",textAlign:"left",whiteSpace:"nowrap",fontWeight:700}}>{h}</th>
-              ))}
+              {(currentUser.role==="teacher"
+  ? ["#","วิชา","ชั้น","วันที่","เวลา","สถานะ",""]
+  : ["#","ชื่อ-สกุล","วิชา","ชั้น","วันที่","เวลา","สถานะ","คะแนน",""]
+).map((h,i)=>(
+  <th key={i} style={{padding:"10px",textAlign:"left",whiteSpace:"nowrap",fontWeight:700}}>{h}</th>
+))}
             </tr></thead>
             <tbody>
-              {sorted.length===0&&<tr><td colSpan={9} style={{padding:36,textAlign:"center",color:"#D1D5DB"}}>ไม่มีข้อมูล</td></tr>}
-              {sorted.map((b,idx)=>{const sc=calcAvgScore(b,structure);return(
-                <tr key={b.id} style={{background:idx%2?"#F9FAFB":"var(--W)",borderBottom:"1px solid var(--BD)"}}>
-                  <td style={{padding:"9px 10px"}}>{idx+1}</td>
-                  <td style={{padding:"9px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{b.teacherName}</td>
-                  <td style={{padding:"9px 10px"}}>{b.subject}</td>
-                  <td style={{padding:"9px 10px"}}>{b.classRoom}</td>
-                  <td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{fmtDate(b.date)}</td>
-                  <td style={{padding:"9px 10px"}}>{b.time}</td>
-                  <td style={{padding:"9px 10px"}}>{isFullyEval(b)?<span className="badge-d">✅ ครบ</span>:<span className="badge-part">⏳ {submittedCount(b)}/{evalIds(b).length}</span>}</td>
-                  <td style={{padding:"9px 10px"}}>{sc?<span style={{fontWeight:700,color:gradeOf(sc.avgPct).color}}>{sc.avgTotal}/{sc.maxTotal} ({sc.avgPct}%)</span>:<span style={{color:"#D1D5DB"}}>—</span>}</td>
-                  <td style={{padding:"9px 10px"}}>
-                    {isFullyEval(b)&&<button onClick={()=>printReport(b)} className="btn bo" style={{padding:"5px 10px",fontSize:11,gap:3}}>🖨️ พิมพ์</button>}
-                  </td>
-                </tr>
-              );})}
+{sorted.map((b,idx)=>{const sc=calcAvgScore(b,structure);return(
+  <tr key={b.id} style={{background:idx%2?"#F9FAFB":"var(--W)",borderBottom:"1px solid var(--BD)"}}>
+    <td style={{padding:"9px 10px"}}>{idx+1}</td>
+    {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{b.teacherName}</td>}
+    <td style={{padding:"9px 10px"}}>{b.subject}</td>
+    <td style={{padding:"9px 10px"}}>{b.classRoom}</td>
+    <td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{fmtDate(b.date)}</td>
+    <td style={{padding:"9px 10px"}}>{b.time}</td>
+    <td style={{padding:"9px 10px"}}>{isFullyEval(b)?<span className="badge-d">✅ ครบ</span>:<span className="badge-part">⏳ {submittedCount(b)}/{evalIds(b).length}</span>}</td>
+    {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px"}}>{sc?<span style={{fontWeight:700,color:gradeOf(sc.avgPct).color}}>{sc.avgTotal}/{sc.maxTotal} ({sc.avgPct}%)</span>:<span style={{color:"#D1D5DB"}}>—</span>}</td>}
+    <td style={{padding:"9px 10px"}}>
+      {isFullyEval(b)&&<button onClick={()=>printReport(b)} className="btn bo" style={{padding:"5px 10px",fontSize:11,gap:3}}>🖨️ พิมพ์</button>}
+    </td>
+  </tr>
+);})}
             </tbody>
           </table>
         </div>
