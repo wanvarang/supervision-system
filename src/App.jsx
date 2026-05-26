@@ -1001,9 +1001,10 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       <div class="info-item"><div class="info-lbl">ระดับชั้น / ห้อง</div><div class="info-val">${b.classRoom}</div></div>
       <div class="info-item"><div class="info-lbl">วันที่นิเทศ</div><div class="info-val">${fmtDate(b.date)}</div></div>
       <div class="info-item"><div class="info-lbl">คาบเรียน</div><div class="info-val">${b.time}</div></div>
-      <div class="info-item"><div class="info-lbl">ผู้บริหาร</div><div class="info-val">${b.adminName}</div></div>
-      <div class="info-item" style="grid-column:span 2"><div class="info-lbl">ครูกรรมการ</div><div class="info-val">${b.teacher1Name} | ${b.teacher2Name}</div></div>
-      <div class="info-item"><div class="info-lbl">สถานะ</div><div class="info-val" style="color:#065F46">✅ ประเมินครบแล้ว (${sc?.count || 0} คน)</div></div>
+${!isTeacher ? `
+<div class="info-item"><div class="info-lbl">ผู้บริหาร</div><div class="info-val">${b.adminName}</div></div>
+<div class="info-item" style="grid-column:span 2"><div class="info-lbl">ครูกรรมการ</div><div class="info-val">${b.teacher1Name} | ${b.teacher2Name}</div></div>
+` : ""}      <div class="info-item"><div class="info-lbl">สถานะ</div><div class="info-val" style="color:#065F46">✅ ประเมินครบแล้ว (${sc?.count || 0} คน)</div></div>
     </div>
     ${!isTeacher ? `
     <div class="sec">ผลการประเมินรายด้าน</div>
