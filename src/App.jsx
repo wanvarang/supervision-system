@@ -1006,22 +1006,40 @@ ${!isTeacher ? `
 <div class="info-item" style="grid-column:span 2"><div class="info-lbl">ครูกรรมการ</div><div class="info-val">${b.teacher1Name} | ${b.teacher2Name}</div></div>
 ` : ""}      <div class="info-item"><div class="info-lbl">สถานะ</div><div class="info-val" style="color:#065F46">✅ ประเมินครบแล้ว (${sc?.count || 0} คน)</div></div>
     </div>
-    ${!isTeacher ? `
+    <!-- คะแนนรายด้าน (ครูเห็นได้ แต่ไม่เห็นชื่อกรรมการ) -->
     <div class="sec">ผลการประเมินรายด้าน</div>
     <table>
-      <thead><tr><th style="text-align:left">ด้านการประเมิน</th><th style="width:70px">คะแนน</th><th style="width:55px">ร้อยละ</th><th style="width:120px">กราฟ</th></tr></thead>
+      <thead><tr>
+        <th style="text-align:left">ด้านการประเมิน</th>
+        <th style="width:70px">คะแนน</th>
+        <th style="width:55px">ร้อยละ</th>
+        <th style="width:120px">กราฟ</th>
+      </tr></thead>
       <tbody>${dimRows}</tbody>
     </table>
+
+    <!-- ข้อเสนอแนะ: ครูไม่เห็นชื่อ, admin เห็นทุกอย่าง -->
+    ${!isTeacher ? `
     <div class="sec">ผลการประเมินรายกรรมการ</div>
     <table>
-      <thead><tr><th style="text-align:left">ชื่อ-สกุล</th><th style="width:80px;text-align:center">ตำแหน่ง</th><th style="width:70px;text-align:center">คะแนน</th><th style="width:55px;text-align:center">ร้อยละ</th><th>ข้อเสนอแนะ</th></tr></thead>
+      <thead><tr>
+        <th style="text-align:left">ชื่อ-สกุล</th>
+        <th style="width:80px;text-align:center">ตำแหน่ง</th>
+        <th style="width:70px;text-align:center">คะแนน</th>
+        <th style="width:55px;text-align:center">ร้อยละ</th>
+        <th>ข้อเสนอแนะ</th>
+      </tr></thead>
       <tbody>${evalRows}</tbody>
-    </table>` : `
+    </table>
+    ` : `
     <div class="sec">💬 ข้อเสนอแนะจากคณะกรรมการ</div>
     <table>
-      <thead><tr><th style="text-align:left">ข้อเสนอแนะ / ความคิดเห็น</th></tr></thead>
+      <thead><tr>
+        <th style="text-align:left">ข้อเสนอแนะ / ความคิดเห็น</th>
+      </tr></thead>
       <tbody>${evalRows}</tbody>
-    </table>`}
+    </table>
+    `}
     <div class="footer">
       <span>${settings.schoolName} · ระบบนิเทศการสอน</span>
       <span>พิมพ์อัตโนมัติ · เอกสารนี้ไม่ต้องลงนาม</span>
