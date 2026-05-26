@@ -989,7 +989,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         <h1>รายงานผลการนิเทศการสอน</h1>
         <p>${settings.schoolName} · พิมพ์วันที่ ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}</p>
       </div>
-      ${(grade && !isTeacher) ? `<div style="margin-left:auto;text-align:center">
+      ${(grade) ? `<div style="margin-left:auto;text-align:center">
         <div style="font-size:34pt;font-weight:800;color:#1E3A8A">${sc.avgPct}%</div>
         <div style="font-size:9pt;color:#6B7280">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
         <span style="display:inline-block;padding:3px 12px;border-radius:20px;font-weight:700;background:${grade.bg};color:${grade.color}">${grade.label}</span>
