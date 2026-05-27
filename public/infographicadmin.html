@@ -141,7 +141,7 @@
     padding:18px 20px;margin-bottom:24px;
   }
   .eval-box-title{font-size:14px;font-weight:800;color:#1E3A8A;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
-  .eval-dims{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .eval-dims{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
   .eval-dim{
     background:white;border:1.5px solid #BFDBFE;border-radius:8px;
     padding:10px 14px;display:flex;align-items:center;gap:10px;
@@ -336,34 +336,41 @@
     <!-- EVAL FORM -->
     <div class="section-title">📝 แบบประเมินที่ผู้บริหารต้องกรอก</div>
     <div class="eval-box">
-      <div class="eval-box-title">🎯 เกณฑ์การประเมิน 4 ด้าน — ให้คะแนน 0 ถึง 5 คะแนน/รายการ</div>
+      <div class="eval-box-title">🎯 เกณฑ์การประเมิน 5 ด้าน — ให้คะแนน 0 ถึง 5 คะแนน/รายการ</div>
       <div class="eval-dims">
         <div class="eval-dim">
-          <div class="eval-dim-icon">📋</div>
+          <div class="eval-dim-icon">🎯</div>
           <div class="eval-dim-text">
-            <div class="dim-name">1. การวางแผนการจัดการเรียนรู้</div>
-            <div class="dim-items">จุดประสงค์ · กิจกรรม · สื่อ (3 รายการ × 5 = 15 คะแนน)</div>
+            <div class="dim-name">1. จุดประสงค์/เป้าหมายการจัดการเรียนรู้</div>
+            <div class="dim-items">มาตรฐาน/ตัวชี้วัด · Active Learning (2 รายการ × 5 = 10 คะแนน)</div>
+          </div>
+        </div>
+        <div class="eval-dim">
+          <div class="eval-dim-icon">📖</div>
+          <div class="eval-dim-text">
+            <div class="dim-name">2. เนื้อหา</div>
+            <div class="dim-items">สอดคล้องจุดประสงค์ · ถูกต้องวิชาการ · ลำดับเหมาะสม (3 × 5 = 15 คะแนน)</div>
           </div>
         </div>
         <div class="eval-dim">
           <div class="eval-dim-icon">🎓</div>
           <div class="eval-dim-text">
-            <div class="dim-name">2. การจัดกิจกรรมการเรียนรู้</div>
-            <div class="dim-items">นำเข้า · ดำเนิน · สื่อ · กระตุ้น · ชั้นเรียน (5 × 5 = 25 คะแนน)</div>
+            <div class="dim-name">3. กิจกรรมการเรียนรู้</div>
+            <div class="dim-items">ความรู้เดิม · เชื่อมโยง · ปฏิสัมพันธ์ · ปฏิบัติ · หลากหลาย · คิดวิเคราะห์ · เสริมแรง · สรุป (8 × 5 = 40 คะแนน)</div>
+          </div>
+        </div>
+        <div class="eval-dim">
+          <div class="eval-dim-icon">📺</div>
+          <div class="eval-dim-text">
+            <div class="dim-name">4. การใช้สื่อ/แหล่งเรียนรู้</div>
+            <div class="dim-items">จัดห้องเรียน · สื่อหลากหลาย · สื่อเหมาะสม · เทคโนโลยี (4 × 5 = 20 คะแนน)</div>
           </div>
         </div>
         <div class="eval-dim">
           <div class="eval-dim-icon">📏</div>
           <div class="eval-dim-text">
-            <div class="dim-name">3. การวัดและประเมินผล</div>
-            <div class="dim-items">เครื่องมือ · ตามจุดประสงค์ · นำไปพัฒนา (3 × 5 = 15 คะแนน)</div>
-          </div>
-        </div>
-        <div class="eval-dim">
-          <div class="eval-dim-icon">👤</div>
-          <div class="eval-dim-text">
-            <div class="dim-name">4. คุณลักษณะของผู้สอน</div>
-            <div class="dim-items">บุคลิกภาพ · ความรู้ · ความกระตือรือร้น (3 × 5 = 15 คะแนน)</div>
+            <div class="dim-name">5. การวัดและประเมินผล</div>
+            <div class="dim-items">วิธีการ/เกณฑ์ · ประเมินระหว่างเรียน · ครอบคลุมจุดประสงค์ (3 × 5 = 15 คะแนน)</div>
           </div>
         </div>
       </div>
@@ -371,7 +378,7 @@
         <div style="font-size:12px;color:#4B5563;">
           💬 กรอก<strong>ข้อเสนอแนะ/ความคิดเห็น</strong>สำหรับครูในช่องข้อความ (ครูจะเห็นข้อเสนอแนะ แต่ไม่เห็นชื่อกรรมการ)
         </div>
-        <div style="font-size:14px;font-weight:900;color:#1E3A8A;">รวม 60 คะแนน</div>
+        <div style="font-size:14px;font-weight:900;color:#1E3A8A;">รวม 100 คะแนน</div>
       </div>
     </div>
 
@@ -412,6 +419,7 @@
         <div style="background:rgba(255,255,255,.12);border-radius:8px;padding:10px;">
           <div style="font-size:11px;opacity:.75;margin-bottom:4px;">🏅 ระดับคุณภาพ</div>
           <div style="display:flex;flex-direction:column;gap:3px;">
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:50%;height:7px;background:#34D399;border-radius:4px;"></div><span style="font-size:9px;opacity:.75;">ดีเยี่ยม</span></div>
             <div style="display:flex;align-items:center;gap:4px;"><div style="width:40%;height:7px;background:#6EE7B7;border-radius:4px;"></div><span style="font-size:9px;opacity:.75;">ดีมาก</span></div>
             <div style="display:flex;align-items:center;gap:4px;"><div style="width:30%;height:7px;background:#86EFAC;border-radius:4px;"></div><span style="font-size:9px;opacity:.75;">ดี</span></div>
             <div style="display:flex;align-items:center;gap:4px;"><div style="width:20%;height:7px;background:#FDE68A;border-radius:4px;"></div><span style="font-size:9px;opacity:.75;">พอใช้</span></div>
