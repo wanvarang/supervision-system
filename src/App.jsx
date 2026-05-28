@@ -140,15 +140,16 @@ const getStartOfAcademicYear = () => {
 //  CSS
 // ═══════════════════════════════════════════════
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
+  --font-th: 'Noto Sans Thai', 'Sarabun', sans-serif;
   --P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;
   --A:#F59E0B;--AD:#D97706;
   --G:#16A34A;--R:#DC2626;
   --T:#1F2937;--TS:#6B7280;--BD:#E5E7EB;--BG:#F0F4FA;--W:#FFFFFF;
 }
-body,#root{font-family:'Sarabun',sans-serif;background:var(--BG);color:var(--T);min-height:100vh;}
+body,#rootbody,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-height:100vh;}
 .inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
 .inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.10);}
 .inp:disabled{background:#F9FAFB;color:#9CA3AF;cursor:not-allowed;}
@@ -249,7 +250,7 @@ function LoginPage({users,settings,onLogin}){
     if(!u.approved && u.role !== "sysadmin"){setErr("บัญชียังไม่ได้รับการอนุมัติ กรุณารอผู้ดูแลระบบ");return;}
     onLogin(u);
   };
-
+ 
   const doRegister=async()=>{
     const em=email.trim().toLowerCase();
     if(!displayName.trim()){setErr("กรุณากรอกชื่อ-สกุล");return;}
@@ -267,35 +268,359 @@ function LoginPage({users,settings,onLogin}){
       setIsRegister(false); setErr(""); setPw("");
     } catch (error) { setErr("เกิดข้อผิดพลาดในการลงทะเบียน"); }
   };
-
+ 
   return(
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:20,background:"linear-gradient(135deg,#EEF2FF 0%,#F1F5F9 100%)"}}>
-      <div style={{width:"100%",maxWidth:420}}>
-        <div className="card" style={{padding:"44px 36px 36px",boxShadow:"0 8px 32px rgba(30,58,138,.15)"}}>
-          <div style={{textAlign:"center",marginBottom:28}}>
-            {settings.logo?<img src={settings.logo} style={{width:70,height:70,borderRadius:12,objectFit:"cover",marginBottom:12}}/>:<div style={{fontSize:52,marginBottom:10}}>🏫</div>}
-            <h1 style={{fontWeight:800,fontSize:22,color:"var(--P)",marginBottom:4}}>{settings.schoolName}</h1>
-            <p style={{color:"var(--TS)",fontSize:13,marginBottom:6}}>ระบบนิเทศการสอน</p>
-            {!isRegister && <span style={{display:"inline-block",background:"#EEF2FF",color:"var(--P)",padding:"3px 14px",borderRadius:20,fontSize:12,fontWeight:700}}>@{domain}</span>}
+    <div style={{
+      display:"flex",
+      alignItems:"center",
+      justifyContent:"center",
+      minHeight:"100vh",
+      padding:"20px",
+      background:"linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+      fontFamily: "var(--font-th)",
+      position:"relative",
+      overflow:"hidden"
+    }}>
+      {/* Background decorative circles */}
+      <div style={{position:"absolute",top:"-50%",right:"-10%",width:"500px",height:"500px",background:"rgba(255,255,255,0.1)",borderRadius:"50%",filter:"blur(40px)"}}/>
+      <div style={{position:"absolute",bottom:"-30%",left:"-5%",width:"400px",height:"400px",background:"rgba(255,255,255,0.08)",borderRadius:"50%",filter:"blur(40px)"}}/>
+ 
+      <div style={{width:"100%",maxWidth:420,position:"relative",zIndex:1}}>
+        {/* Main Card */}
+        <div style={{
+          background:"#ffffff",
+          borderRadius:"20px",
+          boxShadow:"0 20px 60px rgba(102,126,234,0.4), 0 0 0 1px rgba(0,0,0,0.05)",
+          padding:"48px 32px 40px",
+          backdropFilter:"blur(10px)",
+          border:"1px solid rgba(255,255,255,0.8)",
+          animation:"slideUp 0.6s ease-out"
+        }}>
+          {/* Header Section */}
+          <div style={{textAlign:"center",marginBottom:32}}>
+            {/* Logo/Icon */}
+            <div style={{
+              width:80,
+              height:80,
+              margin:"0 auto 16px",
+              borderRadius:16,
+              background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              display:"flex",
+              alignItems:"center",
+              justifyContent:"center",
+              fontSize:40,
+              fontWeight:800,
+              color:"#fff",
+              boxShadow:"0 10px 30px rgba(102,126,234,0.3)"
+            }}>
+              {settings.logo ? (
+                <img src={settings.logo} style={{width:"100%",height:"100%",borderRadius:16,objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+              ) : "🏫"}
+            </div>
+ 
+            {/* Title */}
+            <h1 style={{
+              fontWeight:900,
+              fontSize:28,
+              color:"#1a202c",
+              margin:"0 0 6px 0",
+              letterSpacing:"-0.5px",
+              fontFamily:"var(--font-th)"
+            }}>
+              {settings.schoolName}
+            </h1>
+ 
+            {/* Subtitle */}
+            <p style={{
+              color:"#718096",
+              fontSize:14,
+              margin:"0 0 16px 0",
+              fontFamily:"var(--font-th)",
+              fontWeight:500
+            }}>
+              ระบบนิเทศการสอน
+            </p>
+ 
+            {/* Domain Badge */}
+            {!isRegister && (
+              <span style={{
+                display:"inline-block",
+                background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color:"#fff",
+                padding:"6px 18px",
+                borderRadius:20,
+                fontSize:12,
+                fontWeight:700,
+                boxShadow:"0 4px 15px rgba(102,126,234,0.2)"
+              }}>
+                @{domain}
+              </span>
+            )}
           </div>
-          {err&&<div style={{background:"#FEE2E2",color:"#991B1B",borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,fontWeight:600,border:"1px solid #FECACA"}}>⚠️ {err}</div>}
-          {msg&&<div style={{background:"#D1FAE5",color:"#065F46",borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,fontWeight:600,border:"1px solid #A7F3D0"}}>✅ {msg}</div>}
-          {isRegister && (<div className="frow"><label className="flbl">ชื่อ-สกุล</label><input className="inp" type="text" value={displayName} onChange={e=>{setDisplayName(e.target.value);setErr("");}} placeholder="เช่น ครูนภา สวัสดี"/></div>)}
-          <div className="frow"><label className="flbl">อีเมลโรงเรียน</label><input className="inp" type="email" value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} placeholder={`yourname@${domain}`}/></div>
-          <div className="frow"><label className="flbl">รหัสผ่าน</label>
+ 
+          {/* Error Message */}
+          {err&&(
+            <div style={{
+              background:"#fed7d7",
+              color:"#742a2a",
+              borderRadius:12,
+              padding:"12px 16px",
+              marginBottom:18,
+              fontSize:13,
+              fontWeight:600,
+              border:"1px solid #fc8181",
+              display:"flex",
+              alignItems:"center",
+              gap:8,
+              animation:"shake 0.5s"
+            }}>
+              <span style={{fontSize:16}}>⚠️</span>
+              {err}
+            </div>
+          )}
+ 
+          {/* Success Message */}
+          {msg&&(
+            <div style={{
+              background:"#c6f6d5",
+              color:"#22543d",
+              borderRadius:12,
+              padding:"12px 16px",
+              marginBottom:18,
+              fontSize:13,
+              fontWeight:600,
+              border:"1px solid #9ae6b4",
+              display:"flex",
+              alignItems:"center",
+              gap:8
+            }}>
+              <span style={{fontSize:16}}>✅</span>
+              {msg}
+            </div>
+          )}
+ 
+          {/* Name Field - ปรากฏเมื่อลงทะเบียน */}
+          {isRegister && (
+            <div style={{marginBottom:16}}>
+              <label style={{
+                fontSize:12,
+                fontWeight:700,
+                color:"#4a5568",
+                display:"block",
+                marginBottom:6,
+                letterSpacing:"0.5px",
+                fontFamily:"var(--font-th)"
+              }}>
+                ชื่อ-สกุล
+              </label>
+              <input 
+                type="text" 
+                value={displayName} 
+                onChange={e=>{setDisplayName(e.target.value);setErr("");}} 
+                placeholder="เช่น ครูนภา สวัสดี"
+                style={{
+                  width:"100%",
+                  padding:"12px 14px",
+                  border:"2px solid #e2e8f0",
+                  borderRadius:12,
+                  fontSize:14,
+                  fontFamily:"var(--font-th)",
+                  background:"#f7fafc",
+                  transition:"all 0.3s",
+                  outline:"none"
+                }}
+                onFocus={e=>{e.target.style.borderColor="#667eea";e.target.style.background="#fff"}}
+                onBlur={e=>{e.target.style.borderColor="#e2e8f0";e.target.style.background="#f7fafc"}}
+              />
+            </div>
+          )}
+ 
+          {/* Email Field */}
+          <div style={{marginBottom:16}}>
+            <label style={{
+              fontSize:12,
+              fontWeight:700,
+              color:"#4a5568",
+              display:"block",
+              marginBottom:6,
+              letterSpacing:"0.5px",
+              fontFamily:"var(--font-th)"
+            }}>
+              อีเมลโรงเรียน
+            </label>
+            <input 
+              type="email" 
+              value={email} 
+              onChange={e=>{setEmail(e.target.value);setErr("");}} 
+              onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
+              placeholder={`yourname@${domain}`}
+              style={{
+                width:"100%",
+                padding:"12px 14px",
+                border:"2px solid #e2e8f0",
+                borderRadius:12,
+                fontSize:14,
+                fontFamily:"var(--font-th)",
+                background:"#f7fafc",
+                transition:"all 0.3s",
+                outline:"none"
+              }}
+              onFocus={e=>{e.target.style.borderColor="#667eea";e.target.style.background="#fff"}}
+              onBlur={e=>{e.target.style.borderColor="#e2e8f0";e.target.style.background="#f7fafc"}}
+            />
+          </div>
+ 
+          {/* Password Field */}
+          <div style={{marginBottom:20}}>
+            <label style={{
+              fontSize:12,
+              fontWeight:700,
+              color:"#4a5568",
+              display:"block",
+              marginBottom:6,
+              letterSpacing:"0.5px",
+              fontFamily:"var(--font-th)"
+            }}>
+              รหัสผ่าน
+            </label>
             <div style={{position:"relative"}}>
-              <input className="inp" type={show?"text":"password"} value={pw} onChange={e=>{setPw(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} placeholder="กรอกรหัสผ่าน" style={{paddingRight:44}}/>
-              <button onClick={()=>setShow(!show)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:18,padding:0,lineHeight:1}}>{show?"🙈":"👁️"}</button>
+              <input 
+                type={show?"text":"password"} 
+                value={pw} 
+                onChange={e=>{setPw(e.target.value);setErr("");}} 
+                onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
+                placeholder="กรอกรหัสผ่าน"
+                style={{
+                  width:"100%",
+                  padding:"12px 14px",
+                  paddingRight:44,
+                  border:"2px solid #e2e8f0",
+                  borderRadius:12,
+                  fontSize:14,
+                  fontFamily:"var(--font-th)",
+                  background:"#f7fafc",
+                  transition:"all 0.3s",
+                  outline:"none"
+                }}
+                onFocus={e=>{e.target.style.borderColor="#667eea";e.target.style.background="#fff"}}
+                onBlur={e=>{e.target.style.borderColor="#e2e8f0";e.target.style.background="#f7fafc"}}
+              />
+              <button 
+                onClick={()=>setShow(!show)} 
+                style={{
+                  position:"absolute",
+                  right:14,
+                  top:"50%",
+                  transform:"translateY(-50%)",
+                  background:"none",
+                  border:"none",
+                  cursor:"pointer",
+                  fontSize:18,
+                  padding:0,
+                  lineHeight:1,
+                  opacity:0.6,
+                  transition:"opacity 0.2s"
+                }}
+                onMouseEnter={e=>e.target.style.opacity="1"}
+                onMouseLeave={e=>e.target.style.opacity="0.6"}
+              >
+                {show?"🙈":"👁️"}
+              </button>
             </div>
           </div>
-          {isRegister?(<button onClick={doRegister} className="btn bg" style={{width:"100%",padding:"12px",fontSize:16,marginTop:4}}>📝 ลงทะเบียน</button>):(<button onClick={doLogin} className="btn bp" style={{width:"100%",padding:"12px",fontSize:16,marginTop:4}}>🔐 เข้าสู่ระบบ</button>)}
+ 
+          {/* Submit Button */}
+          {isRegister?(
+            <button 
+              onClick={doRegister} 
+              style={{
+                width:"100%",
+                padding:"14px",
+                fontSize:15,
+                fontWeight:700,
+                fontFamily:"var(--font-th)",
+                background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color:"#fff",
+                border:"none",
+                borderRadius:12,
+                cursor:"pointer",
+                transition:"all 0.3s",
+                boxShadow:"0 10px 25px rgba(102,126,234,0.3)",
+                letterSpacing:"0.5px"
+              }}
+              onMouseEnter={e=>{e.target.style.transform="translateY(-2px)";e.target.style.boxShadow="0 15px 35px rgba(102,126,234,0.4)"}}
+              onMouseLeave={e=>{e.target.style.transform="translateY(0)";e.target.style.boxShadow="0 10px 25px rgba(102,126,234,0.3)"}}
+            >
+              📝 ลงทะเบียน
+            </button>
+          ):(
+            <button 
+              onClick={doLogin} 
+              style={{
+                width:"100%",
+                padding:"14px",
+                fontSize:15,
+                fontWeight:700,
+                fontFamily:"var(--font-th)",
+                background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color:"#fff",
+                border:"none",
+                borderRadius:12,
+                cursor:"pointer",
+                transition:"all 0.3s",
+                boxShadow:"0 10px 25px rgba(102,126,234,0.3)",
+                letterSpacing:"0.5px"
+              }}
+              onMouseEnter={e=>{e.target.style.transform="translateY(-2px)";e.target.style.boxShadow="0 15px 35px rgba(102,126,234,0.4)"}}
+              onMouseLeave={e=>{e.target.style.transform="translateY(0)";e.target.style.boxShadow="0 10px 25px rgba(102,126,234,0.3)"}}
+            >
+              🔐 เข้าสู่ระบบ
+            </button>
+          )}
+ 
+          {/* Toggle Register/Login Link */}
           <div style={{marginTop:20,textAlign:"center"}}>
-            <button onClick={()=>{setIsRegister(!isRegister);setErr("");setMsg("");}} style={{background:"none",border:"none",color:"var(--P)",textDecoration:"underline",fontSize:13,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>
+            <button 
+              onClick={()=>{setIsRegister(!isRegister);setErr("");setMsg("");}} 
+              style={{
+                background:"none",
+                border:"none",
+                color:"#667eea",
+                fontSize:13,
+                cursor:"pointer",
+                fontFamily:"var(--font-th)",
+                fontWeight:600,
+                transition:"all 0.2s",
+                textDecoration:"none",
+                padding:0
+              }}
+              onMouseEnter={e=>{e.target.style.color="#764ba2";e.target.style.textDecoration="underline"}}
+              onMouseLeave={e=>{e.target.style.color="#667eea";e.target.style.textDecoration="none"}}
+            >
               {isRegister?"มีบัญชีแล้ว? เข้าสู่ระบบ":"ยังไม่มีบัญชี? ลงทะเบียนที่นี่"}
             </button>
           </div>
         </div>
       </div>
+ 
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-5px); }
+          75% { transform: translateX(5px); }
+        }
+      `}</style>
     </div>
   );
 }
