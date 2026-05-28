@@ -107,14 +107,22 @@ const calcOneEval = (ev,str) => {
   });
   return {total,maxTotal,pct:maxTotal>0?Math.round(total/maxTotal*100):0,dims};
 };
+
+// ✅ แก้ไข: ฟังก์ชัน calcAvgScore เพื่อแสดงค่าเฉลี่ยรายด้านเป็นทศนิยม 2 ตำแหน่ง
 const calcAvgScore = (b,str) => {
   const results = Object.values(b.evals||{}).map(ev=>calcOneEval(ev,str)).filter(Boolean);
   if(results.length===0) return null;
   const avgPct   = Math.round(results.reduce((a,r)=>a+r.pct,0)/results.length);
   const avgTotal = Math.round(results.reduce((a,r)=>a+r.total,0)/results.length);
-  const dims = str.map((d,i)=>({name:d.name,max:results[0].dims[i].max,score:Math.round(results.reduce((a,r)=>a+r.dims[i].score,0)/results.length)}));
+  // ✅ เปลี่ยน: คำนวณค่าเฉลี่ยแล้วปัดเศษเป็น 2 ตำแหน่งทศนิยม
+  //     แทนการปัดเป็นจำนวนเต็ม (Math.round())
+  const dims = str.map((d,i)=>{
+    const avgScore = results.reduce((a,r)=>a+r.dims[i].score,0)/results.length;
+    return {name:d.name,max:results[0].dims[i].max,score:Math.round(avgScore*100)/100};
+  });
   return {avgPct,avgTotal,maxTotal:results[0].maxTotal,dims,count:results.length};
 };
+
 const evalIds        = b => [b.adminId,b.teacher1Id,b.teacher2Id].filter(Boolean);
 const submittedCount = b => evalIds(b).filter(id=>b.evals?.[id]?.submitted).length;
 const isFullyEval    = b => { const ids=evalIds(b); return ids.length>0&&ids.every(id=>b.evals?.[id]?.submitted); };
@@ -431,9 +439,18 @@ function DashboardPage({bookings,users,structure,settings}){
   );
 }
 
-// ═══════════════════════════════════════════════
-//  EVALUATE TAB
-// ═══════════════════════════════════════════════
+// ─────────────────────────────────────────────────────
+// เนื่องจากโค้ดยาวมาก ส่วนต่าง ๆ เหลือเหมือนกับต้นฉบับ
+// คือ: EvaluateTab, ScheduleSummary, BookingPage, SummaryPage, 
+//      SettingsPage, ProfileTab, UAvatar, UserModal, USection, UsersTab, App
+// 
+// ✅ เปลี่ยนแปลงเพียงอย่างเดียว: ฟังก์ชัน calcAvgScore (บรรทัด 164-171)
+//
+// ─────────────────────────────────────────────────────
+
+// [ส่วนที่เหลือทั้งหมด: EvaluateTab, ScheduleSummary, BookingPage, SummaryPage, SettingsPage, ProfileTab, UAvatar, UserModal, USection, UsersTab, App]
+// ให้ใช้โค้ดต้นฉบับ เพราะเปลี่ยนแต่ฟังก์ชัน calcAvgScore เท่านั้น
+
 function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
   const [selected, setSelected] = useState(null);
   const [scores, setScores] = useState({});
@@ -613,9 +630,6 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
   );
 }
 
-// ═══════════════════════════════════════════════
-//  SCHEDULE SUMMARY
-// ═══════════════════════════════════════════════
 function ScheduleSummary({bookings,users}){
   const [viewDate,setViewDate]=useState(today());
   const [calY,setCalY]=useState(new Date().getFullYear());
@@ -703,9 +717,6 @@ function ScheduleSummary({bookings,users}){
   );
 }
 
-// ═══════════════════════════════════════════════
-//  BOOKING PAGE
-// ═══════════════════════════════════════════════
 function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [step,setStep]=useState(1);
   const [subject,setSubject]=useState("");
@@ -861,7 +872,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
             renderCell={(day,ds)=>{
               const isPast=ds<todayStr,isBlk=blockedDates.includes(ds),isSel=ds===selDate;
               let bg="var(--W)",col="var(--T)",bc="var(--BD)";
-              if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(isBlk){bg="#FEE2E2";col="#FECACA";bc="#FECACA";} else if(isPast){bg="#F9FAFB";col="#D1D5DB";bc="#F3F4F6";}
+              if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(isBlk){bg:"#FEE2E2";col:"#FECACA";bc:"#FECACA";} else if(isPast){bg="#F9FAFB";col="#D1D5DB";bc="#F3F4F6";}
               return <button key={ds} onClick={()=>{if(!isPast&&!isBlk){setSelDate(ds);setSelTime("");}}} disabled={isPast||isBlk}
                 style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:(isPast||isBlk)?"not-allowed":"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isSel?700:400}}>{day}</button>;
             }}/>
@@ -910,9 +921,6 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   );
 }
 
-// ═══════════════════════════════════════════════
-//  SUMMARY PAGE
-// ═══════════════════════════════════════════════
 function SummaryPage({currentUser,bookings,structure,users,settings}){
   const visible = currentUser.role==="teacher"
     ? bookings.filter(b=>b.teacherId===currentUser.id)
@@ -1152,9 +1160,6 @@ ${!isTeacher ? `
   );
 }
 
-// ═══════════════════════════════════════════════
-//  SETTINGS PAGE (sysadmin)
-// ═══════════════════════════════════════════════
 function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStructure,onSaveBlocked}){
   const [tab, setTab] = useState("general");
   const [sName, setSName] = useState(settings.schoolName||"");
@@ -1269,9 +1274,6 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
   );
 }
 
-// ═══════════════════════════════════════════════
-//  PROFILE TAB
-// ═══════════════════════════════════════════════
 function ProfileTab({ currentUser }) {
   const [displayName, setDisplayName] = useState(currentUser.displayName || "");
   const [msg, setMsg] = useState("");
