@@ -7,7 +7,7 @@ import {
 
 // ═══════════════════════════════════════════════
 //  FIREBASE CONFIG
-// ═══════════════════════════════════════════════
+//═══════════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyCznDK8W_347IlLgvEWH4j5rOPKitHAHmo",
   authDomain: "supervisionbm-a4543.firebaseapp.com",
@@ -230,758 +230,237 @@ function MiniCal({year,month,onPrev,onNext,renderCell}){
 // ═══════════════════════════════════════════════
 //  LOGIN & REGISTER
 // ═══════════════════════════════════════════════
-From abd60d1deadc5502081762c6d219c5056a5ca7aa Mon Sep 17 00:00:00 2001
-From: Claude <noreply@anthropic.com>
-Date: Thu, 28 May 2026 06:04:42 +0000
-Subject: [PATCH 1/2] Redesign login page with split-panel blue/white theme
+function LoginPage({users,settings,onLogin}){
+  const [isRegister, setIsRegister] = useState(false);
+  const [email,setEmail] = useState("");
+  const [pw,setPw] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [show,setShow] = useState(false);
+  const [err,setErr] = useState("");
+  const [msg,setMsg] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const domain=settings.domain||DEFAULT_DOMAIN;
 
-Replace single centered card with a two-panel layout:
-- Left panel: blue gradient with school branding, icon, and welcome text
-- Right panel: clean white form with name/email/password fields,
-  terms checkbox (register mode), and paired Sign Up / Sign In buttons
-- Responsive: stacks vertically on mobile via media query
-- Retains all existing auth logic (login, register, validation)
+  const doLogin=()=>{
+    const em=email.trim().toLowerCase();
+    if(!em){setErr("กรุณากรอกอีเมล");return;}
+    if(!pw){setErr("กรุณากรอกรหัสผ่าน");return;}
+    const u=users.find(u=>u.email.toLowerCase()===em);
+    if(!u){setErr("ไม่พบอีเมลนี้ในระบบ กรุณาลงทะเบียน");return;}
+    if(u.password!==pw){setErr("รหัสผ่านไม่ถูกต้อง");return;}
+    if(!u.approved && u.role !== "sysadmin"){setErr("บัญชียังไม่ได้รับการอนุมัติ กรุณารอผู้ดูแลระบบ");return;}
+    onLogin(u);
+  };
 
-https://claude.ai/code/session_01Rjf75AH2CRHWvob5e6J4Ec
----
- src/App.jsx | 525 +++++++++++++++++-----------------------------------
- 1 file changed, 169 insertions(+), 356 deletions(-)
+  const doRegister=async()=>{
+    const em=email.trim().toLowerCase();
+    if(!displayName.trim()){setErr("กรุณากรอกชื่อ-สกุล");return;}
+    if(!em){setErr("กรุณากรอกอีเมล");return;}
+    if(!em.endsWith("@"+domain)){setErr(`อีเมลต้องเป็น @${domain} เท่านั้น`);return;}
+    if(pw.length<4){setErr("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร");return;}
+    if(!agreed){setErr("กรุณายอมรับเงื่อนไขการใช้งาน");return;}
+    if(users.find(u=>u.email.toLowerCase()===em)){setErr("อีเมลนี้มีในระบบแล้ว");return;}
+    try {
+      const newId = uid();
+      await setDoc(doc(getFirestore(), "sv_users", newId), {
+        email: em, displayName: displayName.trim(), password: pw,
+        role: "teacher", approved: false, createdAt: new Date().toISOString()
+      });
+      setMsg("ลงทะเบียนสำเร็จ! กรุณารอผู้ดูแลระบบอนุมัติบัญชี");
+      setIsRegister(false); setErr(""); setPw(""); setAgreed(false);
+    } catch (error) { setErr("เกิดข้อผิดพลาดในการลงทะเบียน"); }
+  };
 
-diff --git a/src/App.jsx b/src/App.jsx
-index b23e206..290eaed 100644
---- a/src/App.jsx
-+++ b/src/App.jsx
-@@ -238,6 +238,7 @@ function LoginPage({users,settings,onLogin}){
-   const [show,setShow] = useState(false);
-   const [err,setErr] = useState("");
-   const [msg,setMsg] = useState("");
-+  const [agreed, setAgreed] = useState(false);
-   const domain=settings.domain||DEFAULT_DOMAIN;
- 
-   const doLogin=()=>{
-@@ -250,13 +251,14 @@ function LoginPage({users,settings,onLogin}){
-     if(!u.approved && u.role !== "sysadmin"){setErr("บัญชียังไม่ได้รับการอนุมัติ กรุณารอผู้ดูแลระบบ");return;}
-     onLogin(u);
-   };
-- 
-+
-   const doRegister=async()=>{
-     const em=email.trim().toLowerCase();
-     if(!displayName.trim()){setErr("กรุณากรอกชื่อ-สกุล");return;}
-     if(!em){setErr("กรุณากรอกอีเมล");return;}
-     if(!em.endsWith("@"+domain)){setErr(`อีเมลต้องเป็น @${domain} เท่านั้น`);return;}
-     if(pw.length<4){setErr("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร");return;}
-+    if(!agreed){setErr("กรุณายอมรับเงื่อนไขการใช้งาน");return;}
-     if(users.find(u=>u.email.toLowerCase()===em)){setErr("อีเมลนี้มีในระบบแล้ว");return;}
-     try {
-       const newId = uid();
-@@ -265,386 +267,197 @@ function LoginPage({users,settings,onLogin}){
-         role: "teacher", approved: false, createdAt: new Date().toISOString()
-       });
-       setMsg("ลงทะเบียนสำเร็จ! กรุณารอผู้ดูแลระบบอนุมัติบัญชี");
--      setIsRegister(false); setErr(""); setPw("");
-+      setIsRegister(false); setErr(""); setPw(""); setAgreed(false);
-     } catch (error) { setErr("เกิดข้อผิดพลาดในการลงทะเบียน"); }
-   };
-- 
-+
-+  const inputStyle = {
-+    width:"100%", padding:"10px 12px",
-+    border:"1.5px solid #D1D5DB", borderRadius:8,
-+    fontSize:14, fontFamily:"var(--font-th)",
-+    background:"#fff", color:"#1F2937",
-+    outline:"none", transition:"border-color .2s, box-shadow .2s"
-+  };
-+
-   return(
-     <div style={{
--      display:"flex",
--      alignItems:"center",
--      justifyContent:"center",
--      minHeight:"100vh",
--      padding:"20px",
--      background:"linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
--      fontFamily: "var(--font-th)",
--      position:"relative",
--      overflow:"hidden"
-+      display:"flex", alignItems:"center", justifyContent:"center",
-+      minHeight:"100vh", background:"#EEF2FF",
-+      fontFamily:"var(--font-th)", padding:"20px"
-     }}>
--      {/* Background decorative circles */}
--      <div style={{position:"absolute",top:"-50%",right:"-10%",width:"500px",height:"500px",background:"rgba(255,255,255,0.1)",borderRadius:"50%",filter:"blur(40px)"}}/>
--      <div style={{position:"absolute",bottom:"-30%",left:"-5%",width:"400px",height:"400px",background:"rgba(255,255,255,0.08)",borderRadius:"50%",filter:"blur(40px)"}}/>
-- 
--      <div style={{width:"100%",maxWidth:420,position:"relative",zIndex:1}}>
--        {/* Main Card */}
--        <div style={{
--          background:"#ffffff",
--          borderRadius:"20px",
--          boxShadow:"0 20px 60px rgba(102,126,234,0.4), 0 0 0 1px rgba(0,0,0,0.05)",
--          padding:"48px 32px 40px",
--          backdropFilter:"blur(10px)",
--          border:"1px solid rgba(255,255,255,0.8)",
--          animation:"slideUp 0.6s ease-out"
-+      <style>{`
-+        @keyframes loginFadeIn {
-+          from { opacity:0; transform:translateY(18px); }
-+          to   { opacity:1; transform:translateY(0); }
-+        }
-+        @keyframes shake {
-+          0%,100% { transform:translateX(0); }
-+          25%     { transform:translateX(-5px); }
-+          75%     { transform:translateX(5px); }
-+        }
-+        .lp-input:focus { border-color:#1E3A8A !important; box-shadow:0 0 0 3px rgba(30,58,138,.12) !important; }
-+        @media(max-width:600px){
-+          .lp-card { flex-direction:column !important; }
-+          .lp-left { min-height:180px !important; flex:none !important; border-radius:16px 16px 0 0 !important; padding:28px 24px !important; }
-+          .lp-right { padding:28px 24px !important; }
-+        }
-+      `}</style>
-+
-+      <div className="lp-card" style={{
-+        display:"flex", width:"100%", maxWidth:820,
-+        borderRadius:20, overflow:"hidden",
-+        boxShadow:"0 24px 64px rgba(30,58,138,.18)",
-+        animation:"loginFadeIn .5s ease-out"
-+      }}>
-+
-+        {/* ── Left blue panel ── */}
-+        <div className="lp-left" style={{
-+          flex:"0 0 40%", minHeight:520,
-+          background:"linear-gradient(160deg, #1E3A8A 0%, #1E2F6B 100%)",
-+          display:"flex", flexDirection:"column",
-+          alignItems:"center", justifyContent:"center",
-+          padding:"40px 28px", color:"#fff",
-+          position:"relative", overflow:"hidden"
-         }}>
--          {/* Header Section */}
--          <div style={{textAlign:"center",marginBottom:32}}>
--            {/* Logo/Icon */}
--            <div style={{
--              width:80,
--              height:80,
--              margin:"0 auto 16px",
--              borderRadius:16,
--              background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
--              display:"flex",
--              alignItems:"center",
--              justifyContent:"center",
--              fontSize:40,
--              fontWeight:800,
--              color:"#fff",
--              boxShadow:"0 10px 30px rgba(102,126,234,0.3)"
--            }}>
--              {settings.logo ? (
--                <img src={settings.logo} style={{width:"100%",height:"100%",borderRadius:16,objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
--              ) : "🏫"}
--            </div>
-- 
--            {/* Title */}
--            <h1 style={{
--              fontWeight:900,
--              fontSize:28,
--              color:"#1a202c",
--              margin:"0 0 6px 0",
--              letterSpacing:"-0.5px",
--              fontFamily:"var(--font-th)"
--            }}>
--              {settings.schoolName}
--            </h1>
-- 
--            {/* Subtitle */}
--            <p style={{
--              color:"#718096",
--              fontSize:14,
--              margin:"0 0 16px 0",
--              fontFamily:"var(--font-th)",
--              fontWeight:500
--            }}>
--              ระบบนิเทศการสอน
--            </p>
-- 
--            {/* Domain Badge */}
--            {!isRegister && (
--              <span style={{
--                display:"inline-block",
--                background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
--                color:"#fff",
--                padding:"6px 18px",
--                borderRadius:20,
--                fontSize:12,
--                fontWeight:700,
--                boxShadow:"0 4px 15px rgba(102,126,234,0.2)"
--              }}>
--                @{domain}
--              </span>
--            )}
-+          <div style={{position:"absolute",top:"-60px",right:"-60px",width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
-+          <div style={{position:"absolute",bottom:"-80px",left:"-40px",width:240,height:240,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}/>
-+
-+          <p style={{fontSize:13,fontWeight:400,opacity:.75,marginBottom:2,letterSpacing:1}}>Hello,</p>
-+          <p style={{fontSize:20,fontWeight:700,marginBottom:24}}>ยินดีต้อนรับ!</p>
-+
-+          <div style={{
-+            width:76, height:76, borderRadius:"50%",
-+            background:"rgba(255,255,255,.15)", border:"2px solid rgba(255,255,255,.35)",
-+            display:"flex", alignItems:"center", justifyContent:"center",
-+            marginBottom:16, fontSize:34, flexShrink:0
-+          }}>
-+            {settings.logo
-+              ? <img src={settings.logo} style={{width:56,height:56,borderRadius:"50%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
-+              : "✈️"}
-           </div>
-- 
--          {/* Error Message */}
-+
-+          <p style={{fontWeight:700,fontSize:16,textAlign:"center",marginBottom:6,lineHeight:1.4}}>
-+            {settings.schoolName}
-+          </p>
-+          <p style={{fontSize:12,opacity:.65,textAlign:"center",lineHeight:1.7,maxWidth:190,marginBottom:28}}>
-+            ระบบนิเทศการสอน<br/>โรงเรียนบ้านหมี่วิทยา
-+          </p>
-+
-+          <button
-+            onClick={()=>{setIsRegister(false);setErr("");setMsg("");}}
-+            style={{
-+              background:"none", border:"1.5px solid rgba(255,255,255,.5)",
-+              color:"#fff", padding:"8px 20px", borderRadius:8,
-+              cursor:"pointer", fontFamily:"var(--font-th)", fontSize:13,
-+              fontWeight:600, letterSpacing:.5, transition:"background .2s",
-+              display:"flex", alignItems:"center", gap:6
-+            }}
-+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.15)"}
-+            onMouseLeave={e=>e.currentTarget.style.background="none"}
-+          >
-+            เข้าสู่ระบบ ▶
-+          </button>
-+        </div>
-+
-+        {/* ── Right white form panel ── */}
-+        <div className="lp-right" style={{
-+          flex:1, background:"#fff",
-+          display:"flex", flexDirection:"column",
-+          justifyContent:"center", padding:"36px 36px"
-+        }}>
-+          <h2 style={{fontSize:19,fontWeight:700,color:"#1F2937",marginBottom:22}}>
-+            {isRegister ? "สร้างบัญชีใหม่" : "เข้าสู่ระบบ"}
-+          </h2>
-+
-           {err&&(
--            <div style={{
--              background:"#fed7d7",
--              color:"#742a2a",
--              borderRadius:12,
--              padding:"12px 16px",
--              marginBottom:18,
--              fontSize:13,
--              fontWeight:600,
--              border:"1px solid #fc8181",
--              display:"flex",
--              alignItems:"center",
--              gap:8,
--              animation:"shake 0.5s"
--            }}>
--              <span style={{fontSize:16}}>⚠️</span>
--              {err}
-+            <div style={{background:"#FEE2E2",color:"#991B1B",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,fontWeight:600,border:"1px solid #FCA5A5",animation:"shake .4s"}}>
-+              ⚠️ {err}
-             </div>
-           )}
-- 
--          {/* Success Message */}
-           {msg&&(
--            <div style={{
--              background:"#c6f6d5",
--              color:"#22543d",
--              borderRadius:12,
--              padding:"12px 16px",
--              marginBottom:18,
--              fontSize:13,
--              fontWeight:600,
--              border:"1px solid #9ae6b4",
--              display:"flex",
--              alignItems:"center",
--              gap:8
--            }}>
--              <span style={{fontSize:16}}>✅</span>
--              {msg}
-+            <div style={{background:"#D1FAE5",color:"#065F46",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,fontWeight:600,border:"1px solid #6EE7B7"}}>
-+              ✅ {msg}
-             </div>
-           )}
-- 
--          {/* Name Field - ปรากฏเมื่อลงทะเบียน */}
-+
-           {isRegister && (
--  <div style={{marginBottom:16}}>
--    <label style={{
--      fontSize:12,
--      fontWeight:700,
--      color:"#4a5568",
--      display:"block",
--      marginBottom:6,
--      letterSpacing:"0.5px",
--      fontFamily:"var(--font-th)"
--    }}>
--      ชื่อ-สกุล
--    </label>
--    <input 
--      type="text" 
--      value={displayName} 
--      onChange={e=>{setDisplayName(e.target.value);setErr("");}} 
--      placeholder="เช่น ครูนภา สวัสดี"
--      style={{
--        width:"100%",
--        padding:"12px 14px",
--        border:"2px solid #e2e8f0",
--        borderRadius:12,
--        fontSize:14,
--        fontFamily:"var(--font-th)",
--        background:"#f7fafc",
--        color:"#1a202c",              // ✅ เพิ่ม: สีตัวอักษร เข้มชัด
--        caret:"#667eea",              // ✅ เพิ่ม: สีเคอร์เซอร์ ม่วง
--        transition:"all 0.3s",
--        outline:"none"
--      }}
--      onFocus={e=>{
--        e.target.style.borderColor="#667eea";
--        e.target.style.background="#fff"
--      }}
--      onBlur={e=>{
--        e.target.style.borderColor="#e2e8f0";
--        e.target.style.background="#f7fafc"
--      }}
--    />
--  </div>
--)}
-- 
--{/* Email Field */}
--<div style={{marginBottom:16}}>
--  <label style={{
--    fontSize:12,
--    fontWeight:700,
--    color:"#4a5568",
--    display:"block",
--    marginBottom:6,
--    letterSpacing:"0.5px",
--    fontFamily:"var(--font-th)"
--  }}>
--    อีเมลโรงเรียน
--  </label>
--  <input 
--    type="email" 
--    value={email} 
--    onChange={e=>{setEmail(e.target.value);setErr("");}} 
--    onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
--    placeholder={`yourname@${domain}`}
--    style={{
--      width:"100%",
--      padding:"12px 14px",
--      border:"2px solid #e2e8f0",
--      borderRadius:12,
--      fontSize:14,
--      fontFamily:"var(--font-th)",
--      background:"#f7fafc",
--      color:"#1a202c",              // ✅ เพิ่ม: สีตัวอักษร เข้มชัด
--      caret:"#667eea",              // ✅ เพิ่ม: สีเคอร์เซอร์ ม่วง
--      transition:"all 0.3s",
--      outline:"none"
--    }}
--    onFocus={e=>{
--      e.target.style.borderColor="#667eea";
--      e.target.style.background="#fff"
--    }}
--    onBlur={e=>{
--      e.target.style.borderColor="#e2e8f0";
--      e.target.style.background="#f7fafc"
--    }}
--  />
--</div>
-- 
--{/* Password Field */}
--<div style={{marginBottom:20}}>
--  <label style={{
--    fontSize:12,
--    fontWeight:700,
--    color:"#4a5568",
--    display:"block",
--    marginBottom:6,
--    letterSpacing:"0.5px",
--    fontFamily:"var(--font-th)"
--  }}>
--    รหัสผ่าน
--  </label>
--  <div style={{position:"relative"}}>
--    <input 
--      type={show?"text":"password"} 
--      value={pw} 
--      onChange={e=>{setPw(e.target.value);setErr("");}} 
--      onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
--      placeholder="กรอกรหัสผ่าน"
--      style={{
--        width:"100%",
--        padding:"12px 14px",
--        paddingRight:44,
--        border:"2px solid #e2e8f0",
--        borderRadius:12,
--        fontSize:14,
--        fontFamily:"var(--font-th)",
--        background:"#f7fafc",
--        color:"#1a202c",              // ✅ เพิ่ม: สีตัวอักษร เข้มชัด
--        caret:"#667eea",              // ✅ เพิ่ม: สีเคอร์เซอร์ ม่วง
--        transition:"all 0.3s",
--        outline:"none"
--      }}
--      onFocus={e=>{
--        e.target.style.borderColor="#667eea";
--        e.target.style.background="#fff"
--      }}
--      onBlur={e=>{
--        e.target.style.borderColor="#e2e8f0";
--        e.target.style.background="#f7fafc"
--      }}
--    />
--    <button 
--      onClick={()=>setShow(!show)} 
--      style={{
--        position:"absolute",
--        right:14,
--        top:"50%",
--        transform:"translateY(-50%)",
--        background:"none",
--        border:"none",
--        cursor:"pointer",
--        fontSize:18,
--        padding:0,
--        lineHeight:1,
--        opacity:0.6,
--        transition:"opacity 0.2s"
--      }}
--      onMouseEnter={e=>e.target.style.opacity="1"}
--      onMouseLeave={e=>e.target.style.opacity="0.6"}
--    >
--      {show?"🙈":"👁️"}
--    </button>
--  </div>
--</div>
-- 
--          {/* Submit Button */}
--          {isRegister?(
--            <button 
--              onClick={doRegister} 
--              style={{
--                width:"100%",
--                padding:"14px",
--                fontSize:15,
--                fontWeight:700,
--                fontFamily:"var(--font-th)",
--                background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
--                color:"#fff",
--                border:"none",
--                borderRadius:12,
--                cursor:"pointer",
--                transition:"all 0.3s",
--                boxShadow:"0 10px 25px rgba(102,126,234,0.3)",
--                letterSpacing:"0.5px"
--              }}
--              onMouseEnter={e=>{e.target.style.transform="translateY(-2px)";e.target.style.boxShadow="0 15px 35px rgba(102,126,234,0.4)"}}
--              onMouseLeave={e=>{e.target.style.transform="translateY(0)";e.target.style.boxShadow="0 10px 25px rgba(102,126,234,0.3)"}}
--            >
--              📝 ลงทะเบียน
--            </button>
--          ):(
--            <button 
--              onClick={doLogin} 
-+            <div style={{marginBottom:13}}>
-+              <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>ชื่อ-สกุล</label>
-+              <input className="lp-input" type="text" value={displayName}
-+                onChange={e=>{setDisplayName(e.target.value);setErr("");}}
-+                placeholder="เช่น ครูนภา สวัสดี"
-+                style={inputStyle}/>
-+            </div>
-+          )}
-+
-+          <div style={{marginBottom:13}}>
-+            <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>อีเมลโรงเรียน</label>
-+            <input className="lp-input" type="email" value={email}
-+              onChange={e=>{setEmail(e.target.value);setErr("");}}
-+              onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())}
-+              placeholder={`yourname@${domain}`}
-+              style={inputStyle}/>
-+          </div>
-+
-+          <div style={{marginBottom:isRegister?13:18}}>
-+            <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>รหัสผ่าน</label>
-+            <div style={{position:"relative"}}>
-+              <input className="lp-input" type={show?"text":"password"} value={pw}
-+                onChange={e=>{setPw(e.target.value);setErr("");}}
-+                onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())}
-+                placeholder="กรอกรหัสผ่าน"
-+                style={{...inputStyle,paddingRight:40}}/>
-+              <button onClick={()=>setShow(!show)} style={{
-+                position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
-+                background:"none",border:"none",cursor:"pointer",fontSize:16,opacity:.5,padding:0,lineHeight:1
-+              }}>{show?"🙈":"👁️"}</button>
-+            </div>
-+          </div>
-+
-+          {isRegister && (
-+            <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:18}}>
-+              <input type="checkbox" id="lp-terms" checked={agreed} onChange={e=>setAgreed(e.target.checked)}
-+                style={{marginTop:2,accentColor:"#1E3A8A",cursor:"pointer",flexShrink:0}}/>
-+              <label htmlFor="lp-terms" style={{fontSize:12,color:"#6B7280",cursor:"pointer",lineHeight:1.5}}>
-+                ฉันยอมรับ <span style={{color:"#1E3A8A",fontWeight:600}}>เงื่อนไขการใช้งาน</span>
-+              </label>
-+            </div>
-+          )}
-+
-+          <div style={{display:"flex",gap:10}}>
-+            <button
-+              onClick={()=>{setIsRegister(!isRegister);setErr("");setMsg("");}}
-               style={{
--                width:"100%",
--                padding:"14px",
--                fontSize:15,
--                fontWeight:700,
--                fontFamily:"var(--font-th)",
--                background:"linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
--                color:"#fff",
--                border:"none",
--                borderRadius:12,
--                cursor:"pointer",
--                transition:"all 0.3s",
--                boxShadow:"0 10px 25px rgba(102,126,234,0.3)",
--                letterSpacing:"0.5px"
-+                flex:1, padding:"11px", fontSize:14, fontWeight:600,
-+                fontFamily:"var(--font-th)", background:"#fff", color:"#374151",
-+                border:"1.5px solid #D1D5DB", borderRadius:8, cursor:"pointer",
-+                transition:"background .18s"
-               }}
--              onMouseEnter={e=>{e.target.style.transform="translateY(-2px)";e.target.style.boxShadow="0 15px 35px rgba(102,126,234,0.4)"}}
--              onMouseLeave={e=>{e.target.style.transform="translateY(0)";e.target.style.boxShadow="0 10px 25px rgba(102,126,234,0.3)"}}
-+              onMouseEnter={e=>e.currentTarget.style.background="#F9FAFB"}
-+              onMouseLeave={e=>e.currentTarget.style.background="#fff"}
-             >
--              🔐 เข้าสู่ระบบ
-+              {isRegister ? "เข้าสู่ระบบ" : "ลงทะเบียน"}
-             </button>
--          )}
-- 
--          {/* Toggle Register/Login Link */}
--          <div style={{marginTop:20,textAlign:"center"}}>
--            <button 
--              onClick={()=>{setIsRegister(!isRegister);setErr("");setMsg("");}} 
-+            <button
-+              onClick={isRegister?doRegister:doLogin}
-               style={{
--                background:"none",
--                border:"none",
--                color:"#667eea",
--                fontSize:13,
--                cursor:"pointer",
--                fontFamily:"var(--font-th)",
--                fontWeight:600,
--                transition:"all 0.2s",
--                textDecoration:"none",
--                padding:0
-+                flex:1, padding:"11px", fontSize:14, fontWeight:700,
-+                fontFamily:"var(--font-th)", background:"#1E3A8A", color:"#fff",
-+                border:"none", borderRadius:8, cursor:"pointer",
-+                boxShadow:"0 4px 14px rgba(30,58,138,.3)", transition:"background .18s"
-               }}
--              onMouseEnter={e=>{e.target.style.color="#764ba2";e.target.style.textDecoration="underline"}}
--              onMouseLeave={e=>{e.target.style.color="#667eea";e.target.style.textDecoration="none"}}
-+              onMouseEnter={e=>e.currentTarget.style.background="#1E2F6B"}
-+              onMouseLeave={e=>e.currentTarget.style.background="#1E3A8A"}
-             >
--              {isRegister?"มีบัญชีแล้ว? เข้าสู่ระบบ":"ยังไม่มีบัญชี? ลงทะเบียนที่นี่"}
-+              {isRegister ? "ลงทะเบียน" : "เข้าสู่ระบบ"}
-             </button>
-           </div>
-+
-+          <p style={{marginTop:14,fontSize:11,color:"#9CA3AF",textAlign:"center"}}>
-+            สำหรับบุคลากร @{domain} เท่านั้น
-+          </p>
-         </div>
-       </div>
-- 
--      {/* CSS Animations */}
--      <style>{`
--        @keyframes slideUp {
--          from {
--            opacity: 0;
--            transform: translateY(20px);
--          }
--          to {
--            opacity: 1;
--            transform: translateY(0);
--          }
--        }
--        @keyframes shake {
--          0%, 100% { transform: translateX(0); }
--          25% { transform: translateX(-5px); }
--          75% { transform: translateX(5px); }
--        }
--      `}</style>
-     </div>
-   );
- }
--- 
-2.43.0
+  const inputStyle = {
+    width:"100%", padding:"10px 12px",
+    border:"1.5px solid #D1D5DB", borderRadius:8,
+    fontSize:14, fontFamily:"var(--font-th)",
+    background:"#fff", color:"#1F2937",
+    outline:"none", transition:"border-color .2s, box-shadow .2s"
+  };
 
+  return(
+    <div style={{
+      display:"flex", alignItems:"center", justifyContent:"center",
+      minHeight:"100vh", background:"#EEF2FF",
+      fontFamily:"var(--font-th)", padding:"20px"
+    }}>
+      <style>{`
+        @keyframes loginFadeIn {
+          from { opacity:0; transform:translateY(18px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes shake {
+          0%,100% { transform:translateX(0); }
+          25%     { transform:translateX(-5px); }
+          75%     { transform:translateX(5px); }
+        }
+        .lp-input:focus { border-color:#1E3A8A !important; box-shadow:0 0 0 3px rgba(30,58,138,.12) !important; }
+        @media(max-width:600px){
+          .lp-card { flex-direction:column !important; }
+          .lp-left { min-height:180px !important; flex:none !important; border-radius:16px 16px 0 0 !important; padding:28px 24px !important; }
+          .lp-right { padding:28px 24px !important; }
+        }
+      `}</style>
 
-From 10c98a1a2f140e2fa74fef178a846d8ac1395ceb Mon Sep 17 00:00:00 2001
-From: Claude <noreply@anthropic.com>
-Date: Thu, 28 May 2026 06:08:08 +0000
-Subject: [PATCH 2/2] Update package-lock.json after npm install
+      <div className="lp-card" style={{
+        display:"flex", width:"100%", maxWidth:820,
+        borderRadius:20, overflow:"hidden",
+        boxShadow:"0 24px 64px rgba(30,58,138,.18)",
+        animation:"loginFadeIn .5s ease-out"
+      }}>
 
-https://claude.ai/code/session_01Rjf75AH2CRHWvob5e6J4Ec
----
- package-lock.json | 36 +++++++++++++++++++++++-------------
- 1 file changed, 23 insertions(+), 13 deletions(-)
+        {/* ── Left blue panel ── */}
+        <div className="lp-left" style={{
+          flex:"0 0 40%", minHeight:520,
+          background:"linear-gradient(160deg, #1E3A8A 0%, #1E2F6B 100%)",
+          display:"flex", flexDirection:"column",
+          alignItems:"center", justifyContent:"center",
+          padding:"40px 28px", color:"#fff",
+          position:"relative", overflow:"hidden"
+        }}>
+          <div style={{position:"absolute",top:"-60px",right:"-60px",width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+          <div style={{position:"absolute",bottom:"-80px",left:"-40px",width:240,height:240,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}/>
 
-diff --git a/package-lock.json b/package-lock.json
-index ab05f9c..794368e 100644
---- a/package-lock.json
-+++ b/package-lock.json
-@@ -55,7 +55,6 @@
-       "integrity": "sha512-CGOfOJqWjg2qW/Mb6zNsDm+u5vFQ8DxXfbM09z69p5Z6+mE1ikP2jUXw+j42Pf1XTYED2Rni5f95npYeuwMDQA==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "dependencies": {
-         "@babel/code-frame": "^7.29.0",
-         "@babel/generator": "^7.29.0",
-@@ -265,6 +264,29 @@
-         "node": ">=6.9.0"
-       }
-     },
-+    "node_modules/@emnapi/core": {
-+      "version": "1.10.0",
-+      "resolved": "https://registry.npmjs.org/@emnapi/core/-/core-1.10.0.tgz",
-+      "integrity": "sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==",
-+      "dev": true,
-+      "license": "MIT",
-+      "optional": true,
-+      "dependencies": {
-+        "@emnapi/wasi-threads": "1.2.1",
-+        "tslib": "^2.4.0"
-+      }
-+    },
-+    "node_modules/@emnapi/runtime": {
-+      "version": "1.10.0",
-+      "resolved": "https://registry.npmjs.org/@emnapi/runtime/-/runtime-1.10.0.tgz",
-+      "integrity": "sha512-ewvYlk86xUoGI0zQRNq/mC+16R1QeDlKQy21Ki3oSYXNgLb45GV1P6A0M+/s6nyCuNDqe5VpaY84BzXGwVbwFA==",
-+      "dev": true,
-+      "license": "MIT",
-+      "optional": true,
-+      "dependencies": {
-+        "tslib": "^2.4.0"
-+      }
-+    },
-     "node_modules/@emnapi/wasi-threads": {
-       "version": "1.2.1",
-       "resolved": "https://registry.npmjs.org/@emnapi/wasi-threads/-/wasi-threads-1.2.1.tgz",
-@@ -467,7 +489,6 @@
-       "resolved": "https://registry.npmjs.org/@firebase/app/-/app-0.14.12.tgz",
-       "integrity": "sha512-FT+HoNp1NdaZ/N26hCwV3WbxS1m6gTn3p2QRBQ3KH7YqyCQqJx0iT7126RgVk68/Rq+9DeL/zCFnHZ0C4u1nLQ==",
-       "license": "Apache-2.0",
--      "peer": true,
-       "dependencies": {
-         "@firebase/component": "0.7.3",
-         "@firebase/logger": "0.5.1",
-@@ -534,7 +555,6 @@
-       "resolved": "https://registry.npmjs.org/@firebase/app-compat/-/app-compat-0.5.12.tgz",
-       "integrity": "sha512-Pe513OBerK/CIBxz4/za9atd5MsZtd6DzHz4cmqkvkrcDWhQChAoHBpZ3McuZNuSP8YZiKwfX/J1frR07l15/w==",
-       "license": "Apache-2.0",
--      "peer": true,
-       "dependencies": {
-         "@firebase/app": "0.14.12",
-         "@firebase/component": "0.7.3",
-@@ -551,7 +571,6 @@
-       "resolved": "https://registry.npmjs.org/@firebase/app-types/-/app-types-0.9.5.tgz",
-       "integrity": "sha512-YevqTjvo7Iujsa9Dwowmd6dSoElhzmD63ZSrq6bzjvQ6POjYgNjOFHLmNIgJs48eNO093NCERibuFnxbfOvU7A==",
-       "license": "Apache-2.0",
--      "peer": true,
-       "dependencies": {
-         "@firebase/logger": "0.5.1"
-       }
-@@ -1005,7 +1024,6 @@
-       "integrity": "sha512-LUdM4Wg7YM9Pq/49nGYySJA0CSQEKnGffFzWV8+6gXN7mGxn+FL1IqvFbuZUtAQcfZgHYDwCE1wwlK7rB7gl2g==",
-       "hasInstallScript": true,
-       "license": "Apache-2.0",
--      "peer": true,
-       "dependencies": {
-         "tslib": "^2.1.0"
-       },
-@@ -1569,7 +1587,6 @@
-       "integrity": "sha512-eRwcGNHve+E8qtEQSSRl6urh+rFop4v8gm6O8rGv25CodbvFdLjA1vVQ1KkiFE0w0UPOnb8tDiFKL5lp0rtY5Q==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "dependencies": {
-         "csstype": "^3.2.2"
-       }
-@@ -1616,7 +1633,6 @@
-       "integrity": "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "bin": {
-         "acorn": "bin/acorn"
-       },
-@@ -1731,7 +1747,6 @@
-         }
-       ],
-       "license": "MIT",
--      "peer": true,
-       "dependencies": {
-         "baseline-browser-mapping": "^2.10.12",
-         "caniuse-lite": "^1.0.30001782",
-@@ -1904,7 +1919,6 @@
-       "integrity": "sha512-loXy6bWOoP3EP6JA7jo6p5jMpBJmHmsNZM5SFRHLdh1MGOPurMnNBj4ZlAbaqUAaQWbCr7jHV4P7gzAyryZWkQ==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "dependencies": {
-         "@eslint-community/eslint-utils": "^4.8.0",
-         "@eslint-community/regexpp": "^4.12.2",
-@@ -2886,7 +2900,6 @@
-       "integrity": "sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "engines": {
-         "node": ">=12"
-       },
-@@ -2972,7 +2985,6 @@
-       "resolved": "https://registry.npmjs.org/react/-/react-19.2.6.tgz",
-       "integrity": "sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==",
-       "license": "MIT",
--      "peer": true,
-       "engines": {
-         "node": ">=0.10.0"
-       }
-@@ -3216,7 +3228,6 @@
-       "integrity": "sha512-s4BJJ+5y1pYL6Otw51FHhVJQhPnuRinKig64g/1+EUNaJsd3gCKdD31IPFvswUgW9/60QT9oFHbZHbQK5imcxw==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "dependencies": {
-         "lightningcss": "^1.32.0",
-         "picomatch": "^4.0.4",
-@@ -3423,7 +3434,6 @@
-       "integrity": "sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==",
-       "dev": true,
-       "license": "MIT",
--      "peer": true,
-       "funding": {
-         "url": "https://github.com/sponsors/colinhacks"
-       }
--- 
-2.43.0
+          <p style={{fontSize:13,fontWeight:400,opacity:.75,marginBottom:2,letterSpacing:1}}>Hello,</p>
+          <p style={{fontSize:20,fontWeight:700,marginBottom:24}}>ยินดีต้อนรับ!</p>
+
+          <div style={{
+            width:76, height:76, borderRadius:"50%",
+            background:"rgba(255,255,255,.15)", border:"2px solid rgba(255,255,255,.35)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            marginBottom:16, fontSize:34, flexShrink:0
+          }}>
+            {settings.logo
+              ? <img src={settings.logo} style={{width:56,height:56,borderRadius:"50%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+              : "✈️"}
+          </div>
+
+          <p style={{fontWeight:700,fontSize:16,textAlign:"center",marginBottom:6,lineHeight:1.4}}>
+            {settings.schoolName}
+          </p>
+          <p style={{fontSize:12,opacity:.65,textAlign:"center",lineHeight:1.7,maxWidth:190,marginBottom:28}}>
+            ระบบนิเทศการสอน<br/>โรงเรียนบ้านหมี่วิทยา
+          </p>
+
+          <button
+            onClick={()=>{setIsRegister(false);setErr("");setMsg("");}}
+            style={{
+              background:"none", border:"1.5px solid rgba(255,255,255,.5)",
+              color:"#fff", padding:"8px 20px", borderRadius:8,
+              cursor:"pointer", fontFamily:"var(--font-th)", fontSize:13,
+              fontWeight:600, letterSpacing:.5, transition:"background .2s",
+              display:"flex", alignItems:"center", gap:6
+            }}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.15)"}
+            onMouseLeave={e=>e.currentTarget.style.background="none"}
+          >
+            เข้าสู่ระบบ ▶
+          </button>
+        </div>
+
+        {/* ── Right white form panel ── */}
+        <div className="lp-right" style={{
+          flex:1, background:"#fff",
+          display:"flex", flexDirection:"column",
+          justifyContent:"center", padding:"36px 36px"
+        }}>
+          <h2 style={{fontSize:19,fontWeight:700,color:"#1F2937",marginBottom:22}}>
+            {isRegister ? "สร้างบัญชีใหม่" : "เข้าสู่ระบบ"}
+          </h2>
+
+          {err&&(
+            <div style={{background:"#FEE2E2",color:"#991B1B",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,fontWeight:600,border:"1px solid #FCA5A5",animation:"shake .4s"}}>
+              ⚠️ {err}
+            </div>
+          )}
+          {msg&&(
+            <div style={{background:"#D1FAE5",color:"#065F46",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,fontWeight:600,border:"1px solid #6EE7B7"}}>
+              ✅ {msg}
+            </div>
+          )}
+
+          {isRegister && (
+            <div style={{marginBottom:13}}>
+              <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>ชื่อ-สกุล</label>
+              <input className="lp-input" type="text" value={displayName}
+                onChange={e=>{setDisplayName(e.target.value);setErr("");}}
+                placeholder="เช่น ครูนภา สวัสดี"
+                style={inputStyle}/>
+            </div>
+          )}
+
+          <div style={{marginBottom:13}}>
+            <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>อีเมลโรงเรียน</label>
+            <input className="lp-input" type="email" value={email}
+              onChange={e=>{setEmail(e.target.value);setErr("");}}
+              onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())}
+              placeholder={`yourname@${domain}`}
+              style={inputStyle}/>
+          </div>
+
+          <div style={{marginBottom:isRegister?13:18}}>
+            <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>รหัสผ่าน</label>
+            <div style={{position:"relative"}}>
+              <input className="lp-input" type={show?"text":"password"} value={pw}
+                onChange={e=>{setPw(e.target.value);setErr("");}}
+                onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())}
+                placeholder="กรอกรหัสผ่าน"
+                style={{...inputStyle,paddingRight:40}}/>
+              <button onClick={()=>setShow(!show)} style={{
+                position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                background:"none",border:"none",cursor:"pointer",fontSize:16,opacity:.5,padding:0,lineHeight:1
+              }}>{show?"🙈":"👁️"}</button>
+            </div>
+          </div>
+
+          {isRegister && (
+            <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:18}}>
+              <input type="checkbox" id="lp-terms" checked={agreed} onChange={e=>setAgreed(e.target.checked)}
+                style={{marginTop:2,accentColor:"#1E3A8A",cursor:"pointer",flexShrink:0}}/>
+              <label htmlFor="lp-terms" style={{fontSize:12,color:"#6B7280",cursor:"pointer",lineHeight:1.5}}>
+                ฉันยอมรับ <span style={{color:"#1E3A8A",fontWeight:600}}>เงื่อนไขการใช้งาน</span>
+              </label>
+            </div>
+          )}
+
+          <div style={{display:"flex",gap:10}}>
+            <button
+              onClick={()=>{setIsRegister(!isRegister);setErr("");setMsg("");}}
+              style={{
+                flex:1, padding:"11px", fontSize:14, fontWeight:600,
+                fontFamily:"var(--font-th)", background:"#fff", color:"#374151",
+                border:"1.5px solid #D1D5DB", borderRadius:8, cursor:"pointer",
+                transition:"background .18s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background="#F9FAFB"}
+              onMouseLeave={e=>e.currentTarget.style.background="#fff"}
+            >
+              {isRegister ? "เข้าสู่ระบบ" : "ลงทะเบียน"}
+            </button>
+            <button
+              onClick={isRegister?doRegister:doLogin}
+              style={{
+                flex:1, padding:"11px", fontSize:14, fontWeight:700,
+                fontFamily:"var(--font-th)", background:"#1E3A8A", color:"#fff",
+                border:"none", borderRadius:8, cursor:"pointer",
+                boxShadow:"0 4px 14px rgba(30,58,138,.3)", transition:"background .18s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background="#1E2F6B"}
+              onMouseLeave={e=>e.currentTarget.style.background="#1E3A8A"}
+            >
+              {isRegister ? "ลงทะเบียน" : "เข้าสู่ระบบ"}
+            </button>
+          </div>
+
+          <p style={{marginTop:14,fontSize:11,color:"#9CA3AF",textAlign:"center"}}>
+            สำหรับบุคลากร @{domain} เท่านั้น
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 
 
