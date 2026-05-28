@@ -228,6 +228,32 @@ function MiniCal({year,month,onPrev,onNext,renderCell}){
 }
 
 // ═══════════════════════════════════════════════
+//  PAGE HEADER
+// ═══════════════════════════════════════════════
+function PageHeader({icon,title,subtitle,right}){
+  return(
+    <div style={{
+      background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",
+      borderRadius:16,padding:"22px 26px",marginBottom:24,
+      color:"#fff",position:"relative",overflow:"hidden"
+    }}>
+      <div style={{position:"absolute",top:-50,right:-50,width:160,height:160,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}/>
+      <div style={{position:"absolute",bottom:-70,left:-30,width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative",flexWrap:"wrap"}}>
+        <div style={{width:48,height:48,borderRadius:12,background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+          {icon}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontWeight:800,fontSize:19,lineHeight:1.2}}>{title}</div>
+          {subtitle&&<div style={{fontSize:13,opacity:.78,marginTop:3}}>{subtitle}</div>}
+        </div>
+        {right&&<div style={{flexShrink:0}}>{right}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
 //  LOGIN & REGISTER
 // ═══════════════════════════════════════════════
 function LoginPage({users,settings,onLogin}){
@@ -501,10 +527,7 @@ function DashboardPage({bookings,users,structure,settings}){
 
   return(
     <div>
-      <div style={{marginBottom:20}}>
-        <h2 style={{fontWeight:800,fontSize:22,color:"var(--P)"}}>📊 Dashboard ภาพรวมการนิเทศ</h2>
-        <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>{settings.schoolName} — ปีการศึกษา {new Date().getFullYear()+543}</p>
-      </div>
+      <PageHeader icon="📊" title="Dashboard ภาพรวมการนิเทศ" subtitle={\${settings.schoolName} — ปีการศึกษา ${new Date().getFullYear()+543}`}/>`
       <div className="g4" style={{marginBottom:20}}>
         {[
           {label:"การนิเทศทั้งหมด",value:total,icon:"📋",color:"#EEF2FF",tc:"var(--P)"},
@@ -740,10 +763,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
 
   return(
     <div>
-      <div style={{marginBottom:18}}>
-        <h2 style={{fontWeight:800,fontSize:21,color:"var(--P)"}}>📝 แบบประเมินการนิเทศ</h2>
-        <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>กรอกคะแนนรายด้านพร้อมข้อเสนอแนะ</p>
-      </div>
+      <PageHeader icon="📝" title="แบบประเมินการนิเทศ" subtitle="กรอกคะแนนรายด้านพร้อมข้อเสนอแนะ"/>
       {pending.length>0&&(
         <div style={{marginBottom:24}}>
           <h3 style={{fontWeight:700,color:"#92400E",marginBottom:10,fontSize:15}}>⏳ รอการประเมิน ({pending.length})</h3>
@@ -806,12 +826,7 @@ function ScheduleSummary({bookings,users}){
 
   return(
     <div>
-      <div style={{marginBottom:18}}>
-        <h2 style={{fontWeight:800,fontSize:21,color:"var(--P)"}}>
-          <span className="rt-dot"/>ตารางนิเทศ ภาคเรียนที่ 1 ปีการศึกษา 2569
-        </h2>
-        <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>ข้อมูลอัปเดตทันทีเมื่อมีการจองใหม่</p>
-      </div>
+      <PageHeader icon="🗓️" title="ตารางนิเทศ ภาคเรียนที่ 1 ปีการศึกษา 2569" subtitle="● ข้อมูลอัปเดตทันทีเมื่อมีการจองใหม่"/>
       <div className="g2" style={{alignItems:"start",marginBottom:20}}>
         <div className="card">
           <h4 style={{fontWeight:700,fontSize:14,marginBottom:12}}>เลือกวันที่</h4>
@@ -950,10 +965,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
 
   return(
     <div>
-      <div style={{marginBottom:20}}>
-        <h2 style={{fontWeight:800,fontSize:21,color:"var(--P)"}}>📅 จองเวลารับการนิเทศ</h2>
-        <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>สวัสดี <b>{currentUser.displayName}</b> — เลือกกรรมการ 3 ท่าน และระบุวันเวลา</p>
-      </div>
+      <PageHeader icon="📅" title="จองเวลารับการนิเทศ" subtitle={\สวัสดี ${currentUser.displayName} — เลือกกรรมการ 3 ท่าน และระบุวันเวลา`}/>`
       {msg&&<div style={{padding:"12px 16px",borderRadius:9,marginBottom:18,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B",border:`1.5px solid ${msg.t==="s"?"#A7F3D0":"#FECACA"}`}}>{msg.s}</div>}
 
       {step===1&&<div className="card">
@@ -1223,10 +1235,7 @@ ${!isTeacher ? `
 
   return(
     <div>
-      <div style={{marginBottom:18}}>
-        <h2 style={{fontWeight:800,fontSize:21,color:"var(--P)"}}>{currentUser.role==="teacher"?"📊 ผลการนิเทศของฉัน":"📊 สรุปผลการนิเทศทั้งหมด"}</h2>
-        <p style={{color:"var(--TS)",fontSize:13,marginTop:3}}>ทั้งหมด {sorted.length} รายการ | ประเมินครบ {sorted.filter(isFullyEval).length} รายการ</p>
-      </div>
+      <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={\ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>`
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
@@ -1358,7 +1367,7 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
 
   return(
     <div>
-      <div style={{marginBottom:18}}><h2 style={{fontWeight:800,fontSize:21,color:"var(--P)"}}>⚙️ ตั้งค่าระบบ</h2></div>
+      <PageHeader icon="⚙️" title="ตั้งค่าระบบ" subtitle="จัดการข้อมูลโรงเรียน โครงสร้างการประเมิน และวันหยุด"/>
       <div style={{display:"flex",gap:0,borderBottom:"2px solid var(--BD)",marginBottom:20}}>
         {[["general","🏫 ทั่วไป"],["structure","📋 โครงสร้างการประเมิน"],["blocked","🗓️ วันหยุด/ปิดทำการ"]].map(([k,lb])=>(
           <button key={k} className={`tab-btn${tab===k?" active":""}`} onClick={()=>setTab(k)}>{lb}</button>
@@ -1478,7 +1487,8 @@ function ProfileTab({ currentUser }) {
   };
 
   return (
-    <div style={{ maxWidth: 500 }}>
+    <div style={{ maxWidth: 540 }}>
+  <PageHeader icon="👤" title="โปรไฟล์ของฉัน" subtitle={currentUser.email}/>
       <div className="card" style={{ marginBottom: 16 }}>
         <h3 style={{ fontWeight: 700, color: "var(--P)", marginBottom: 18, fontSize: 16 }}>👤 ข้อมูลส่วนตัว</h3>
         <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20, padding:"14px 16px", background:"var(--PL)", borderRadius:8 }}>
@@ -1640,15 +1650,11 @@ function UsersTab({ users }) {
   ];
   return (
     <div style={{maxWidth:860,padding:"0 0 32px"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:20,flexWrap:"wrap",gap:12}}>
-        <div>
-          <h3 style={{fontWeight:800,fontSize:20,margin:0,color:"var(--P)"}}>👥 จัดการผู้ใช้งาน</h3>
-          <p style={{margin:"2px 0 0",fontSize:13,color:"var(--TS)"}}>เพิ่ม แก้ไข หรือลบบัญชีผู้ใช้ในระบบ</p>
-        </div>
-        <button onClick={()=>setModal({user:{}})} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",borderRadius:10,border:"none",background:"#10b981",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>
-          ➕ เพิ่มผู้ใช้งาน
-        </button>
-      </div>
+      <PageHeader icon="👥" title="จัดการผู้ใช้งาน" subtitle="เพิ่ม แก้ไข หรือลบบัญชีผู้ใช้ในระบบ" right={
+  <button onClick={()=>setModal({user:{}})} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",borderRadius:10,border:"1.5px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"Sarabun,sans-serif",whiteSpace:"nowrap"}}>
+    ➕ เพิ่มผู้ใช้งาน
+  </button>
+}/>
       <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:22}}>
         {stats.map(s=>(
           <div key={s.label} style={{background:"var(--W)",borderRadius:12,padding:"12px 14px",border:"1.5px solid var(--BD)",textAlign:"center"}}>
