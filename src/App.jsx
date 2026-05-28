@@ -401,133 +401,157 @@ function LoginPage({users,settings,onLogin}){
  
           {/* Name Field - ปรากฏเมื่อลงทะเบียน */}
           {isRegister && (
-            <div style={{marginBottom:16}}>
-              <label style={{
-                fontSize:12,
-                fontWeight:700,
-                color:"#4a5568",
-                display:"block",
-                marginBottom:6,
-                letterSpacing:"0.5px",
-                fontFamily:"var(--font-th)"
-              }}>
-                ชื่อ-สกุล
-              </label>
-              <input 
-                type="text" 
-                value={displayName} 
-                onChange={e=>{setDisplayName(e.target.value);setErr("");}} 
-                placeholder="เช่น ครูนภา สวัสดี"
-                style={{
-                  width:"100%",
-                  padding:"12px 14px",
-                  border:"2px solid #e2e8f0",
-                  borderRadius:12,
-                  fontSize:14,
-                  fontFamily:"var(--font-th)",
-                  background:"#f7fafc",
-                  transition:"all 0.3s",
-                  outline:"none"
-                }}
-                onFocus={e=>{e.target.style.borderColor="#667eea";e.target.style.background="#fff"}}
-                onBlur={e=>{e.target.style.borderColor="#e2e8f0";e.target.style.background="#f7fafc"}}
-              />
-            </div>
-          )}
+  <div style={{marginBottom:16}}>
+    <label style={{
+      fontSize:12,
+      fontWeight:700,
+      color:"#4a5568",
+      display:"block",
+      marginBottom:6,
+      letterSpacing:"0.5px",
+      fontFamily:"var(--font-th)"
+    }}>
+      ชื่อ-สกุล
+    </label>
+    <input 
+      type="text" 
+      value={displayName} 
+      onChange={e=>{setDisplayName(e.target.value);setErr("");}} 
+      placeholder="เช่น ครูนภา สวัสดี"
+      style={{
+        width:"100%",
+        padding:"12px 14px",
+        border:"2px solid #e2e8f0",
+        borderRadius:12,
+        fontSize:14,
+        fontFamily:"var(--font-th)",
+        background:"#f7fafc",
+        color:"#1a202c",              // ✅ เพิ่ม: สีตัวอักษร เข้มชัด
+        caret:"#667eea",              // ✅ เพิ่ม: สีเคอร์เซอร์ ม่วง
+        transition:"all 0.3s",
+        outline:"none"
+      }}
+      onFocus={e=>{
+        e.target.style.borderColor="#667eea";
+        e.target.style.background="#fff"
+      }}
+      onBlur={e=>{
+        e.target.style.borderColor="#e2e8f0";
+        e.target.style.background="#f7fafc"
+      }}
+    />
+  </div>
+)}
  
-          {/* Email Field */}
-          <div style={{marginBottom:16}}>
-            <label style={{
-              fontSize:12,
-              fontWeight:700,
-              color:"#4a5568",
-              display:"block",
-              marginBottom:6,
-              letterSpacing:"0.5px",
-              fontFamily:"var(--font-th)"
-            }}>
-              อีเมลโรงเรียน
-            </label>
-            <input 
-              type="email" 
-              value={email} 
-              onChange={e=>{setEmail(e.target.value);setErr("");}} 
-              onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
-              placeholder={`yourname@${domain}`}
-              style={{
-                width:"100%",
-                padding:"12px 14px",
-                border:"2px solid #e2e8f0",
-                borderRadius:12,
-                fontSize:14,
-                fontFamily:"var(--font-th)",
-                background:"#f7fafc",
-                transition:"all 0.3s",
-                outline:"none"
-              }}
-              onFocus={e=>{e.target.style.borderColor="#667eea";e.target.style.background="#fff"}}
-              onBlur={e=>{e.target.style.borderColor="#e2e8f0";e.target.style.background="#f7fafc"}}
-            />
-          </div>
+{/* Email Field */}
+<div style={{marginBottom:16}}>
+  <label style={{
+    fontSize:12,
+    fontWeight:700,
+    color:"#4a5568",
+    display:"block",
+    marginBottom:6,
+    letterSpacing:"0.5px",
+    fontFamily:"var(--font-th)"
+  }}>
+    อีเมลโรงเรียน
+  </label>
+  <input 
+    type="email" 
+    value={email} 
+    onChange={e=>{setEmail(e.target.value);setErr("");}} 
+    onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
+    placeholder={`yourname@${domain}`}
+    style={{
+      width:"100%",
+      padding:"12px 14px",
+      border:"2px solid #e2e8f0",
+      borderRadius:12,
+      fontSize:14,
+      fontFamily:"var(--font-th)",
+      background:"#f7fafc",
+      color:"#1a202c",              // ✅ เพิ่ม: สีตัวอักษร เข้มชัด
+      caret:"#667eea",              // ✅ เพิ่ม: สีเคอร์เซอร์ ม่วง
+      transition:"all 0.3s",
+      outline:"none"
+    }}
+    onFocus={e=>{
+      e.target.style.borderColor="#667eea";
+      e.target.style.background="#fff"
+    }}
+    onBlur={e=>{
+      e.target.style.borderColor="#e2e8f0";
+      e.target.style.background="#f7fafc"
+    }}
+  />
+</div>
  
-          {/* Password Field */}
-          <div style={{marginBottom:20}}>
-            <label style={{
-              fontSize:12,
-              fontWeight:700,
-              color:"#4a5568",
-              display:"block",
-              marginBottom:6,
-              letterSpacing:"0.5px",
-              fontFamily:"var(--font-th)"
-            }}>
-              รหัสผ่าน
-            </label>
-            <div style={{position:"relative"}}>
-              <input 
-                type={show?"text":"password"} 
-                value={pw} 
-                onChange={e=>{setPw(e.target.value);setErr("");}} 
-                onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
-                placeholder="กรอกรหัสผ่าน"
-                style={{
-                  width:"100%",
-                  padding:"12px 14px",
-                  paddingRight:44,
-                  border:"2px solid #e2e8f0",
-                  borderRadius:12,
-                  fontSize:14,
-                  fontFamily:"var(--font-th)",
-                  background:"#f7fafc",
-                  transition:"all 0.3s",
-                  outline:"none"
-                }}
-                onFocus={e=>{e.target.style.borderColor="#667eea";e.target.style.background="#fff"}}
-                onBlur={e=>{e.target.style.borderColor="#e2e8f0";e.target.style.background="#f7fafc"}}
-              />
-              <button 
-                onClick={()=>setShow(!show)} 
-                style={{
-                  position:"absolute",
-                  right:14,
-                  top:"50%",
-                  transform:"translateY(-50%)",
-                  background:"none",
-                  border:"none",
-                  cursor:"pointer",
-                  fontSize:18,
-                  padding:0,
-                  lineHeight:1,
-                  opacity:0.6,
-                  transition:"opacity 0.2s"
-                }}
-                onMouseEnter={e=>e.target.style.opacity="1"}
-                onMouseLeave={e=>e.target.style.opacity="0.6"}
-              >
-                {show?"🙈":"👁️"}
-              </button>
-            </div>
-          </div>
+{/* Password Field */}
+<div style={{marginBottom:20}}>
+  <label style={{
+    fontSize:12,
+    fontWeight:700,
+    color:"#4a5568",
+    display:"block",
+    marginBottom:6,
+    letterSpacing:"0.5px",
+    fontFamily:"var(--font-th)"
+  }}>
+    รหัสผ่าน
+  </label>
+  <div style={{position:"relative"}}>
+    <input 
+      type={show?"text":"password"} 
+      value={pw} 
+      onChange={e=>{setPw(e.target.value);setErr("");}} 
+      onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())} 
+      placeholder="กรอกรหัสผ่าน"
+      style={{
+        width:"100%",
+        padding:"12px 14px",
+        paddingRight:44,
+        border:"2px solid #e2e8f0",
+        borderRadius:12,
+        fontSize:14,
+        fontFamily:"var(--font-th)",
+        background:"#f7fafc",
+        color:"#1a202c",              // ✅ เพิ่ม: สีตัวอักษร เข้มชัด
+        caret:"#667eea",              // ✅ เพิ่ม: สีเคอร์เซอร์ ม่วง
+        transition:"all 0.3s",
+        outline:"none"
+      }}
+      onFocus={e=>{
+        e.target.style.borderColor="#667eea";
+        e.target.style.background="#fff"
+      }}
+      onBlur={e=>{
+        e.target.style.borderColor="#e2e8f0";
+        e.target.style.background="#f7fafc"
+      }}
+    />
+    <button 
+      onClick={()=>setShow(!show)} 
+      style={{
+        position:"absolute",
+        right:14,
+        top:"50%",
+        transform:"translateY(-50%)",
+        background:"none",
+        border:"none",
+        cursor:"pointer",
+        fontSize:18,
+        padding:0,
+        lineHeight:1,
+        opacity:0.6,
+        transition:"opacity 0.2s"
+      }}
+      onMouseEnter={e=>e.target.style.opacity="1"}
+      onMouseLeave={e=>e.target.style.opacity="0.6"}
+    >
+      {show?"🙈":"👁️"}
+    </button>
+  </div>
+</div>
  
           {/* Submit Button */}
           {isRegister?(
