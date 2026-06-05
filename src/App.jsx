@@ -965,7 +965,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
 
   return(
     <div>
-      <PageHeader icon="📅" title="จองเวลารับการนิเทศ" subtitle={\สวัสดี ${currentUser.displayName} — เลือกกรรมการ 3 ท่าน และระบุวันเวลา`}/>`
+      <PageHeader icon="📅" title="จองเวลารับการนิเทศ" subtitle={`สวัสดี ${currentUser.displayName} — เลือกกรรมการ 3 ท่าน และระบุวันเวลา`}/>
       {msg&&<div style={{padding:"12px 16px",borderRadius:9,marginBottom:18,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B",border:`1.5px solid ${msg.t==="s"?"#A7F3D0":"#FECACA"}`}}>{msg.s}</div>}
 
       {step===1&&<div className="card">
