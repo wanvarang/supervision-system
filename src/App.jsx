@@ -55,6 +55,17 @@ const TIME_SLOTS  = [
 const ROLES      = { sysadmin:"ผู้ดูแลระบบ", admin:"ผู้บริหาร", teacher:"ครูผู้สอน" };
 const ROLE_COLOR = { sysadmin:"#be0e0e", admin:"#1E3A8A", teacher:"#166634" };
 
+const SUBJECT_GROUPS = [
+  "ภาษาไทย",
+  "คณิตศาสตร์",
+  "วิทยาศาสตร์และเทคโนโลยี",
+  "สังคมศึกษา ศาสนา และวัฒนธรรม",
+  "สุขศึกษาและพลศึกษา",
+  "ศิลปะ",
+  "การงานอาชีพ",
+  "ภาษาต่างประเทศ",
+];
+
 // ── multi-role helpers ──
 const getRoles       = (u) => { if(!u) return []; if(Array.isArray(u.roles)&&u.roles.length) return u.roles; if(u.role) return [u.role]; return []; };
 const hasRole        = (u,r) => getRoles(u).includes(r);
@@ -1554,7 +1565,7 @@ function UAvatar({ name, role, size=40 }) {
 function UserModal({ user, onClose, onSave }) {
   const isEdit = !!user?.id;
   const initRoles = Array.isArray(user?.roles)&&user.roles.length ? user.roles : user?.role ? [user.role] : ["teacher"];
-  const [form, setForm] = useState({ displayName:user?.displayName||"", email:user?.email||"", roles:initRoles, password:"" });
+  const [form, setForm] = useState({ displayName:user?.displayName||"", email:user?.email||"", roles:initRoles, password:"", subjectGroup:user?.subjectGroup||"" });
   const [loading, setLoading] = useState(false);
   const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
   const toggleRole = (role) => setForm(f => {
@@ -1597,6 +1608,15 @@ function UserModal({ user, onClose, onSave }) {
               })}
             </div>
           </div>
+          {form.roles.includes("teacher")&&(
+            <div>
+              <label style={lbl}>กลุ่มสาระการเรียนรู้</label>
+              <select style={inp} value={form.subjectGroup} onChange={set("subjectGroup")}>
+                <option value="">-- ไม่ระบุ --</option>
+                {SUBJECT_GROUPS.map(g=><option key={g} value={g}>{g}</option>)}
+              </select>
+            </div>
+          )}
           <div style={{display:"flex",gap:10,marginTop:4}}>
             <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:9,border:"1.5px solid var(--BD)",background:"transparent",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"Sarabun,sans-serif"}}>ยกเลิก</button>
             <button onClick={handleSave} disabled={loading} style={{flex:2,padding:"10px",borderRadius:9,border:"none",background:isEdit?"#6366f1":"#10b981",color:"#fff",cursor:loading?"wait":"pointer",fontSize:14,fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>
@@ -1629,13 +1649,14 @@ function UsersTab({ users }) {
   const updateStatus = id => updateDoc(userRef(id),{approved:true});
   const updateRole   = (id,role) => updateDoc(userRef(id),{role});
   const removeUser   = id => { if(confirm("ยืนยันการลบผู้ใช้งานรายนี้?")) deleteDoc(userRef(id)); };
-  const handleSave = async ({ id, displayName, email, roles, password }) => {
+  const handleSave = async ({ id, displayName, email, roles, password, subjectGroup }) => {
     const ra = Array.isArray(roles) && roles.length ? roles : ["teacher"];
+    const sg = ra.includes("teacher") ? (subjectGroup||"") : "";
     if(id) {
-      await updateDoc(userRef(id), { displayName, email, roles: ra, role: ra[0] });
+      await updateDoc(userRef(id), { displayName, email, roles: ra, role: ra[0], subjectGroup: sg });
     } else {
       const newId = uid();
-      await setDoc(doc(db,"sv_users",newId), { email:email.trim().toLowerCase(), displayName:displayName.trim(), password:password||"school1234", roles:ra, role:ra[0], approved:true, createdAt:new Date().toISOString() });
+      await setDoc(doc(db,"sv_users",newId), { email:email.trim().toLowerCase(), displayName:displayName.trim(), password:password||"school1234", roles:ra, role:ra[0], subjectGroup:sg, approved:true, createdAt:new Date().toISOString() });
     }
   };
   const pending  = users.filter(u=>!u.approved&&u.role!=="sysadmin");
@@ -1689,7 +1710,6 @@ function UsersTab({ users }) {
       <div style={{display:"flex",flexDirection:"column",gap:16}}>
         {[
           {title:"ผู้บริหาร",icon:"👔",color:"#8b5cf6",grp:admins,empty:"ยังไม่มีผู้บริหารในระบบ"},
-          {title:"ครูผู้สอน",icon:"👩‍🏫",color:"#0ea5e9",grp:teachers,empty:"ยังไม่มีครูผู้สอนในระบบ"},
           {title:"ผู้ดูแลระบบ",icon:"🔧",color:"#f59e0b",grp:sysadms,empty:"—"},
         ].map(({title,icon,color,grp,empty})=>(
           <USection key={title} title={title} icon={icon} color={color} count={grp.length} emptyText={empty}>
@@ -1722,6 +1742,62 @@ function UsersTab({ users }) {
             })}
           </USection>
         ))}
+        <div style={{background:"var(--BG,#f8fafc)",borderRadius:14,border:"1.5px solid var(--BD)",overflow:"hidden"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,padding:"13px 18px",borderBottom:"1.5px solid var(--BD)",background:"var(--W)"}}>
+            <span style={{fontSize:18}}>👩‍🏫</span>
+            <span style={{fontWeight:800,fontSize:15,color:"#0ea5e9"}}>ครูผู้สอน</span>
+            <span style={{marginLeft:"auto",background:"#0ea5e922",color:"#0ea5e9",borderRadius:20,padding:"1px 12px",fontSize:12,fontWeight:800,border:"1px solid #0ea5e944"}}>{teachers.length}</span>
+          </div>
+          <div style={{padding:"12px 14px",display:"flex",flexDirection:"column",gap:12}}>
+            {teachers.length===0 ? (
+              <div style={{textAlign:"center",color:"var(--TS)",fontSize:13,padding:"16px 0"}}>ยังไม่มีครูผู้สอนในระบบ</div>
+            ) : (() => {
+              const grouped = {};
+              teachers.forEach(u => {
+                const g = u.subjectGroup || "ไม่ได้ระบุกลุ่มสาระ";
+                if(!grouped[g]) grouped[g] = [];
+                grouped[g].push(u);
+              });
+              const groupOrder = [...SUBJECT_GROUPS, "ไม่ได้ระบุกลุ่มสาระ"];
+              const sortedKeys = Object.keys(grouped).sort((a,b) => {
+                const ai = groupOrder.indexOf(a); const bi = groupOrder.indexOf(b);
+                return (ai===-1?999:ai) - (bi===-1?999:bi);
+              });
+              return sortedKeys.map(grpName => (
+                <div key={grpName}>
+                  <div style={{display:"flex",alignItems:"center",gap:8,padding:"7px 10px",background:"#e0f2fe",borderRadius:8,marginBottom:6}}>
+                    <span style={{fontSize:13,fontWeight:800,color:"#0369a1"}}>📚 {grpName}</span>
+                    <span style={{marginLeft:"auto",fontSize:12,color:"#0369a1",fontWeight:700}}>{grouped[grpName].length} คน</span>
+                  </div>
+                  <div style={{display:"flex",flexDirection:"column",gap:7,paddingLeft:8}}>
+                    {grouped[grpName].map(u => {
+                      const m = ROLE_META.teacher;
+                      return (
+                        <div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"var(--W)",border:"1.5px solid var(--BD)",borderRadius:12,padding:"12px 16px",borderLeft:`4px solid ${m.color}`}}>
+                          <UAvatar name={u.displayName} role="teacher" size={44}/>
+                          <div style={{flex:1,minWidth:0}}>
+                            <div style={{fontWeight:700,fontSize:14}}>{u.displayName}</div>
+                            <div style={{fontSize:12,color:"var(--TS)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
+                          </div>
+                          <select value={u.role} onChange={e=>updateRole(u.id,e.target.value)}
+                            style={{padding:"6px 8px",borderRadius:8,border:"1.5px solid var(--BD)",fontSize:12,background:m.bg,color:m.color,fontWeight:700,cursor:"pointer",outline:"none",flexShrink:0,fontFamily:"Sarabun,sans-serif"}}>
+                            <option value="teacher">👩‍🏫 ครูผู้สอน</option>
+                            <option value="admin">👔 ผู้บริหาร</option>
+                            <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
+                          </select>
+                          <div style={{display:"flex",gap:6,flexShrink:0}}>
+                            <button onClick={()=>setModal({user:u})} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #6366f1",background:"#eef2ff",color:"#6366f1",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>✏️</button>
+                            <button onClick={()=>removeUser(u.id)} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #f87171",background:"#fff1f2",color:"#ef4444",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>🗑️</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
       </div>
       {modal&&<UserModal user={modal.user} onClose={()=>setModal(null)} onSave={handleSave}/>}
     </div>
