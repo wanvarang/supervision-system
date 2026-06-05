@@ -9,13 +9,16 @@ import {
 //  FIREBASE CONFIG
 //═══════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "AIzaSyCznDK8W_347IlLgvEWH4j5rOPKitHAHmo",
-  authDomain: "supervisionbm-a4543.firebaseapp.com",
-  projectId: "supervisionbm-a4543",
-  storageBucket: "supervisionbm-a4543.firebasestorage.app",
-  messagingSenderId: "1081927917450",
-  appId: "1:1081927917450:web:f3cc08789bfc8806a4f273",
-  measurementId: "G-4ZHDKWTB80"
+  const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
 };
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
