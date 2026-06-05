@@ -1103,7 +1103,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
             renderCell={(day,ds)=>{
               const isPast=ds<todayStr,isBlk=blockedDates.includes(ds),isSel=ds===selDate;
               let bg="var(--W)",col="var(--T)",bc="var(--BD)";
-              if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(isBlk){bg:"#FEE2E2";col:"#FECACA";bc:"#FECACA";} else if(isPast){bg="#F9FAFB";col="#D1D5DB";bc="#F3F4F6";}
+              if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(isBlk){bg="#FEE2E2";col="#EF4444";bc="#FECACA";} else if(isPast){bg="#F9FAFB";col="#D1D5DB";bc="#F3F4F6";}
               return <button key={ds} onClick={()=>{if(!isPast&&!isBlk){setSelDate(ds);setSelTime("");}}} disabled={isPast||isBlk}
                 style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:(isPast||isBlk)?"not-allowed":"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isSel?700:400}}>{day}</button>;
             }}/>
