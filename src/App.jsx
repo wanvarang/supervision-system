@@ -158,28 +158,36 @@ const CSS = `
   --P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;
   --A:#F59E0B;--AD:#D97706;
   --G:#16A34A;--R:#DC2626;
-  --T:#1F2937;--TS:#6B7280;--BD:#E5E7EB;--BG:#F0F4FA;--W:#FFFFFF;
+  --T:#1F2937;--TS:#6B7280;--BD:#D1D9F0;--BG:#EEF2FF;--W:#FFFFFF;
+  --shadow-card: 0 4px 24px rgba(30,58,138,.10), 0 1px 4px rgba(0,0,0,.04);
+  --shadow-hover: 0 8px 32px rgba(30,58,138,.16), 0 2px 8px rgba(0,0,0,.06);
+  --border-card: 1px solid rgba(30,58,138,.09);
 }
-body,#rootbody,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-height:100vh;}
-.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
-.inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.10);}
+body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-height:100vh;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px rgba(34,197,94,.25);}50%{opacity:.5;box-shadow:0 0 0 5px rgba(34,197,94,.05);}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.page-fade{animation:fadeUp .3s ease-out;}
+.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:10px;font-family:var(--font-th);font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
+.inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.12);}
 .inp:disabled{background:#F9FAFB;color:#9CA3AF;cursor:not-allowed;}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;}
 .btn:active{transform:scale(.97);}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
-.bp{background:var(--P);color:#fff;box-shadow:0 2px 8px rgba(30,58,138,.25);}
-.bp:hover:not(:disabled){background:var(--PD);box-shadow:0 4px 14px rgba(30,58,138,.35);}
+.bp{background:linear-gradient(135deg,var(--P),var(--PD));color:#fff;box-shadow:0 3px 12px rgba(30,58,138,.30);}
+.bp:hover:not(:disabled){background:linear-gradient(135deg,#2547b0,var(--P));box-shadow:0 5px 18px rgba(30,58,138,.38);}
 .ba{background:var(--A);color:#422006;}
 .ba:hover:not(:disabled){background:var(--AD);}
 .bg{background:var(--G);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.22);}
 .bg:hover:not(:disabled){background:#15803D;}
-.br{background:var(--R);color:#fff;}
+.br{background:var(--R);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.2);}
 .br:hover:not(:disabled){background:#B91C1C;}
 .bx{background:var(--PL);color:var(--P);border:1.5px solid #C7D2FE;}
 .bx:hover:not(:disabled){background:#C7D2FE;}
 .bo{background:var(--W);color:var(--T);border:1.5px solid var(--BD);}
-.bo:hover:not(:disabled){background:#F3F4F6;}
-.card{background:var(--W);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.07);padding:20px;border:1px solid rgba(0,0,0,.04);}
+.bo:hover:not(:disabled){background:#F5F7FF;}
+.card{background:var(--W);border-radius:14px;box-shadow:var(--shadow-card);padding:20px;border:var(--border-card);transition:box-shadow .2s;}
+.card:hover{box-shadow:var(--shadow-hover);}
 .frow{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
 .flbl{font-size:12.5px;font-weight:700;color:#4B5563;letter-spacing:.02em;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -189,15 +197,15 @@ body,#rootbody,#root{font-family:var(--font-th);background:var(--BG);color:var(-
 .badge-d{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#D1FAE5;color:#065F46;}
 .badge-part{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#DBEAFE;color:#1E40AF;}
 .rt-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:6px;box-shadow:0 0 0 2px rgba(34,197,94,.25);animation:pulse 2s infinite;}
-@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px rgba(34,197,94,.25);}50%{opacity:.5;box-shadow:0 0 0 5px rgba(34,197,94,.05);}}
-.score-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--BD);background:var(--W);cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
+.score-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--BD);background:var(--W);cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
 .score-btn:hover:not(:disabled){border-color:var(--P);color:var(--P);background:var(--PL);transform:scale(1.08);}
-.score-btn.active{background:var(--P);color:#fff;border-color:var(--P);box-shadow:0 2px 8px rgba(30,58,138,.3);}
+.score-btn.active{background:linear-gradient(135deg,var(--P),var(--PD));color:#fff;border-color:var(--P);box-shadow:0 2px 10px rgba(30,58,138,.35);}
 .score-btn:disabled{opacity:.4;cursor:not-allowed;}
 .progress-bar{height:8px;border-radius:99px;background:#E5E7EB;overflow:hidden;}
 .progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.stat-card{border-radius:12px;padding:20px;border:1px solid transparent;}
-.tab-btn{padding:9px 18px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--TS);border-bottom:2.5px solid transparent;transition:all .18s;}
+.stat-card{border-radius:14px;padding:22px 20px;border:var(--border-card);box-shadow:var(--shadow-card);transition:transform .18s,box-shadow .18s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
+.tab-btn{padding:9px 18px;border:none;background:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;color:var(--TS);border-bottom:2.5px solid transparent;transition:all .18s;}
 .tab-btn.active{color:var(--P);border-bottom-color:var(--P);}
 .tab-btn:hover:not(.active){color:var(--T);}
 .tbl-row:hover td{background:#F5F7FF!important;}
@@ -245,18 +253,20 @@ function PageHeader({icon,title,subtitle,right}){
   return(
     <div style={{
       background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",
-      borderRadius:16,padding:"22px 26px",marginBottom:24,
-      color:"#fff",position:"relative",overflow:"hidden"
+      borderRadius:18,padding:"24px 28px",marginBottom:24,
+      color:"#fff",position:"relative",overflow:"hidden",
+      boxShadow:"0 8px 32px rgba(30,58,138,.28)"
     }}>
-      <div style={{position:"absolute",top:-50,right:-50,width:160,height:160,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}/>
-      <div style={{position:"absolute",bottom:-70,left:-30,width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}/>
-      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative",flexWrap:"wrap"}}>
-        <div style={{width:48,height:48,borderRadius:12,background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+      <div style={{position:"absolute",top:-50,right:-50,width:180,height:180,borderRadius:"50%",background:"rgba(255,255,255,.06)",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",bottom:-70,left:-30,width:220,height:220,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
+      <div style={{position:"absolute",top:"50%",right:80,transform:"translateY(-50%)",width:60,height:60,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:16,position:"relative",flexWrap:"wrap"}}>
+        <div style={{width:52,height:52,borderRadius:14,background:"rgba(255,255,255,.18)",border:"2px solid rgba(255,255,255,.30)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 4px 12px rgba(0,0,0,.15)"}}>
           {icon}
         </div>
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontWeight:800,fontSize:19,lineHeight:1.2}}>{title}</div>
-          {subtitle&&<div style={{fontSize:13,opacity:.78,marginTop:3}}>{subtitle}</div>}
+          <div style={{fontWeight:800,fontSize:20,lineHeight:1.2,textShadow:"0 1px 4px rgba(0,0,0,.15)"}}>{title}</div>
+          {subtitle&&<div style={{fontSize:13,opacity:.82,marginTop:4,display:"flex",alignItems:"center",gap:6}}>{subtitle}</div>}
         </div>
         {right&&<div style={{flexShrink:0}}>{right}</div>}
       </div>
@@ -557,15 +567,15 @@ function DashboardPage({bookings,users,structure,settings}){
       )}
       <div className="g4" style={{marginBottom:20}}>
         {[
-          {label:"การนิเทศทั้งหมด",value:total,icon:"📋",color:"#EEF2FF",tc:"var(--P)"},
-          {label:"ประเมินครบแล้ว",value:done,icon:"✅",color:"#D1FAE5",tc:"#065F46"},
-          {label:"รอการประเมิน",value:pending,icon:"⏳",color:"#FEF3C7",tc:"#92400E"},
-          {label:"เดือนนี้",value:thisMonthBks.length,icon:"📅",color:"#F0FDF4",tc:"#166634"},
+          {label:"การนิเทศทั้งหมด",value:total,icon:"📋",grad:"linear-gradient(135deg,#EEF2FF,#DBEAFE)",tc:"var(--P)",bc:"rgba(30,58,138,.15)"},
+          {label:"ประเมินครบแล้ว",value:done,icon:"✅",grad:"linear-gradient(135deg,#D1FAE5,#A7F3D0)",tc:"#065F46",bc:"rgba(5,150,105,.15)"},
+          {label:"รอการประเมิน",value:pending,icon:"⏳",grad:"linear-gradient(135deg,#FEF3C7,#FDE68A)",tc:"#92400E",bc:"rgba(217,119,6,.15)"},
+          {label:"เดือนนี้",value:thisMonthBks.length,icon:"📅",grad:"linear-gradient(135deg,#F0FDF4,#DCFCE7)",tc:"#166634",bc:"rgba(22,163,74,.15)"},
         ].map(s=>(
-          <div key={s.label} className="stat-card" style={{background:s.color,border:`1px solid ${s.color}`}}>
-            <div style={{fontSize:26,marginBottom:4}}>{s.icon}</div>
-            <div style={{fontSize:28,fontWeight:800,color:s.tc}}>{s.value}</div>
-            <div style={{fontSize:12,color:s.tc,opacity:.8,fontWeight:600}}>{s.label}</div>
+          <div key={s.label} className="stat-card" style={{background:s.grad,border:`1px solid ${s.bc}`}}>
+            <div style={{fontSize:28,marginBottom:6}}>{s.icon}</div>
+            <div style={{fontSize:30,fontWeight:900,color:s.tc,lineHeight:1}}>{s.value}</div>
+            <div style={{fontSize:12,color:s.tc,opacity:.85,fontWeight:700,marginTop:5}}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -1315,14 +1325,15 @@ ${!isTeacher ? `
 
       {/* Detail Modal — ครูเห็นแค่ข้อเสนอแนะ ไม่เห็นชื่อ/คะแนน */}
       {detail&&(()=>{const sc=calcAvgScore(detail,structure);return(
-        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"var(--W)",borderRadius:14,maxWidth:520,width:"100%",maxHeight:"88vh",overflow:"auto"}}>
-            <div style={{background:"var(--P)",color:"#fff",padding:"14px 18px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(30,58,138,.28)",backdropFilter:"blur(4px)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fadeUp .2s ease-out"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"var(--W)",borderRadius:18,maxWidth:520,width:"100%",maxHeight:"88vh",overflow:"auto",boxShadow:"0 24px 64px rgba(30,58,138,.22)"}}>
+            <div style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",color:"#fff",padding:"18px 22px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:"-30px",right:"-20px",width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.07)",pointerEvents:"none"}}/>
               <div>
                 <div style={{fontWeight:700,fontSize:16}}>{detail.teacherName}</div>
                 <div style={{fontSize:12,opacity:.8}}>{detail.subject} · {fmtDate(detail.date)} {detail.time}</div>
               </div>
-              <button onClick={()=>setDetail(null)} style={{background:"none",border:"none",color:"#fff",fontSize:26,cursor:"pointer",lineHeight:1}}>×</button>
+              <button onClick={()=>setDetail(null)} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",color:"#fff",fontSize:18,cursor:"pointer",lineHeight:1,borderRadius:8,padding:"4px 11px",position:"relative"}}>✕</button>
             </div>
             <div style={{padding:18}}>
               {evalIds(detail).map((eid,idx)=>{
@@ -1616,11 +1627,12 @@ function UserModal({ user, onClose, onSave }) {
   const inp = { width:"100%", padding:"9px 12px", borderRadius:8, border:"1.5px solid var(--BD)", fontSize:14, background:"var(--W)", color:"inherit", outline:"none", boxSizing:"border-box", fontFamily:"Sarabun,sans-serif" };
   const lbl = { fontSize:12, fontWeight:700, color:"var(--TS)", marginBottom:4, display:"block" };
   return (
-    <div style={{position:"fixed",inset:0,background:"#0007",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"var(--W)",borderRadius:16,width:"100%",maxWidth:440,boxShadow:"0 20px 60px #0003",overflow:"hidden"}}>
-        <div style={{background:isEdit?"#6366f1":"#10b981",padding:"18px 22px",color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-          <div style={{fontWeight:800,fontSize:16}}>{isEdit?"✏️ แก้ไขผู้ใช้งาน":"➕ เพิ่มผู้ใช้งานใหม่"}</div>
-          <button onClick={onClose} style={{background:"#fff3",border:"none",color:"#fff",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:16}}>✕</button>
+    <div style={{position:"fixed",inset:0,background:"rgba(30,58,138,.3)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fadeUp .2s ease-out"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"var(--W)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 24px 64px rgba(30,58,138,.22)",overflow:"hidden"}}>
+        <div style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",padding:"20px 24px",color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:"-30px",right:"-20px",width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.07)",pointerEvents:"none"}}/>
+          <div style={{fontWeight:800,fontSize:16,display:"flex",alignItems:"center",gap:8,position:"relative"}}>{isEdit?"✏️ แก้ไขผู้ใช้งาน":"➕ เพิ่มผู้ใช้งานใหม่"}</div>
+          <button onClick={onClose} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",color:"#fff",borderRadius:8,padding:"4px 11px",cursor:"pointer",fontSize:16,position:"relative"}}>✕</button>
         </div>
         <div style={{padding:"22px 24px",display:"flex",flexDirection:"column",gap:14}}>
           <div><label style={lbl}>ชื่อ-นามสกุล *</label><input style={inp} value={form.displayName} onChange={set("displayName")} placeholder="ชื่อ นามสกุล"/></div>
@@ -1921,47 +1933,68 @@ export default function App() {
     (hasRole(currentUser,"sysadmin")||b.adminId===currentUser.id||b.teacher1Id===currentUser.id||b.teacher2Id===currentUser.id)
   ).length:0;
 
-  if(!loaded) return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontSize:17,fontFamily:"Sarabun,sans-serif"}}>⏳ กำลังเชื่อมต่อ Firebase...</div>);
+  if(!loaded) return(
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EEF2FF",fontFamily:"'Noto Sans Thai','Sarabun',sans-serif"}}>
+      <div style={{background:"#fff",borderRadius:20,padding:"40px 56px",boxShadow:"0 24px 64px rgba(30,58,138,.18)",textAlign:"center",animation:"loginFadeIn .5s ease-out"}}>
+        <style>{`@keyframes loginFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}`}</style>
+        <div style={{width:60,height:60,borderRadius:16,background:"linear-gradient(135deg,#1E3A8A,#1E2F6B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",boxShadow:"0 8px 24px rgba(30,58,138,.3)"}}>🏫</div>
+        <div style={{fontSize:16,fontWeight:800,color:"#1E3A8A",marginBottom:6}}>ระบบนิเทศการสอน</div>
+        <div style={{fontSize:13,color:"#6B7280",display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
+          <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#1E3A8A",animation:"pulse2 1.2s infinite"}}/>กำลังเชื่อมต่อ...
+        </div>
+        <style>{`@keyframes pulse2{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}`}</style>
+      </div>
+    </div>
+  );
 
   return(
-    <div style={{minHeight:"100vh",fontFamily:"'Sarabun',sans-serif"}}>
+    <div style={{minHeight:"100vh",fontFamily:"var(--font-th,Sarabun,sans-serif)"}}>
       <style>{CSS}</style>
       {currentUser&&(
-        <header className="np" style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E40AF 100%)",color:"#fff",padding:"10px 16px",position:"sticky",top:0,zIndex:300,boxShadow:"0 3px 16px rgba(0,0,0,.22)"}}>
-          <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:10}}>
-            <div style={{width:40,height:40,borderRadius:8,background:"rgba(255,255,255,.18)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
-              {settings.logo?<img src={settings.logo} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:"🏫"}
+        <header className="np" style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",color:"#fff",padding:"0 16px",position:"sticky",top:0,zIndex:300,boxShadow:"0 4px 20px rgba(30,58,138,.35)",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:"-30px",right:"-20px",width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,.05)",pointerEvents:"none"}}/>
+          <div style={{position:"absolute",bottom:"-40px",left:"40%",width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
+          <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:10,height:58,position:"relative"}}>
+            <div style={{width:38,height:38,borderRadius:10,background:"rgba(255,255,255,.16)",border:"1.5px solid rgba(255,255,255,.28)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
+              {settings.logo?<img src={settings.logo} style={{width:32,height:32,borderRadius:8,objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:"🏫"}
             </div>
-            <div style={{minWidth:0,marginRight:4,flexShrink:0}}>
-              <div style={{fontWeight:800,fontSize:14}}>{settings.schoolName}</div>
-              <div style={{fontSize:11,opacity:.75,display:"flex",alignItems:"center",gap:5}}>
-                {currentUser.displayName}&nbsp;<span style={{background:"rgba(255,255,255,.2)",padding:"1px 7px",borderRadius:20,fontSize:10}}>{getRoleLabel(currentUser)}</span>
+            <div style={{minWidth:0,marginRight:6,flexShrink:0}}>
+              <div style={{fontWeight:800,fontSize:13.5,lineHeight:1.2}}>{settings.schoolName}</div>
+              <div style={{fontSize:11,opacity:.8,display:"flex",alignItems:"center",gap:5,marginTop:1}}>
+                <span>{currentUser.displayName}</span>
+                <span style={{background:"rgba(255,255,255,.18)",padding:"1px 8px",borderRadius:20,fontSize:10,border:"1px solid rgba(255,255,255,.22)"}}>{getRoleLabel(currentUser)}</span>
               </div>
             </div>
             <nav style={{display:"flex",gap:2,flexWrap:"wrap",flex:1}}>
               {navItems.map(([id,icon,lb])=>{
                 const active=page===id;
                 return <button key={id} onClick={()=>setPage(id)}
-                  style={{padding:"6px 10px",borderRadius:7,cursor:"pointer",fontFamily:"Sarabun,sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"rgba(255,255,255,.22)":"transparent",border:`1.5px solid ${active?"rgba(255,255,255,.45)":"transparent"}`,color:active?"#fff":"rgba(255,255,255,.78)",display:"inline-flex",alignItems:"center",gap:4,transition:"all .18s"}}>
+                  style={{padding:"6px 11px",borderRadius:8,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:13,fontWeight:active?700:500,background:active?"rgba(255,255,255,.22)":"transparent",border:`1.5px solid ${active?"rgba(255,255,255,.4)":"transparent"}`,color:active?"#fff":"rgba(255,255,255,.80)",display:"inline-flex",alignItems:"center",gap:4,transition:"all .18s",boxShadow:active?"0 2px 8px rgba(0,0,0,.15)":"none"}}>
                   <span>{icon}</span><span className="hsm">{lb}</span>
-                  {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"0 5px",fontSize:10,fontWeight:800}}>{pendingCount}</span>}
+                  {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"0 5px",fontSize:10,fontWeight:800,marginLeft:2}}>{pendingCount}</span>}
                 </button>;
               })}
             </nav>
-            <button onClick={handleLogout} style={{padding:"6px 12px",borderRadius:7,cursor:"pointer",background:"transparent",border:"1.5px solid rgba(255,255,255,.35)",color:"#fff",fontFamily:"Sarabun,sans-serif",fontSize:13,flexShrink:0}}>ออก</button>
+            <button onClick={handleLogout}
+              style={{padding:"7px 14px",borderRadius:8,cursor:"pointer",background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.3)",color:"#fff",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:13,flexShrink:0,transition:"background .18s",fontWeight:600}}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.22)"}
+              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.1)"}
+            >ออก</button>
           </div>
         </header>
       )}
-      <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"22px 14px 56px":"0"}}>
+      <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"24px 14px 60px":"0"}}>
         {!currentUser&&<LoginPage users={users} settings={settings} onLogin={handleLogin}/>}
-        {currentUser&&page==="dashboard"                                   &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
-        {currentUser&&page==="booking"  &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
-        {currentUser&&page==="summary"                                     &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings}/>}
-        {currentUser&&page==="evaluate"                                    &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
-        {currentUser&&page==="schedule"                                    &&<ScheduleSummary bookings={bookings} users={users}/>}
-        {currentUser&&page==="users"   &&hasRole(currentUser,"sysadmin")   &&<UsersTab users={users}/>}
-        {currentUser&&page==="settings"&&hasRole(currentUser,"sysadmin")   &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
-        {currentUser&&page==="profile"                                     &&<ProfileTab currentUser={currentUser}/>}
+        {currentUser&&(<div key={page} className="page-fade">
+          {page==="dashboard"                                   &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
+          {page==="booking"  &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
+          {page==="summary"                                     &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings}/>}
+          {page==="evaluate"                                    &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
+          {page==="schedule"                                    &&<ScheduleSummary bookings={bookings} users={users}/>}
+          {page==="users"   &&hasRole(currentUser,"sysadmin")   &&<UsersTab users={users}/>}
+          {page==="settings"&&hasRole(currentUser,"sysadmin")   &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
+          {page==="profile"                                     &&<ProfileTab currentUser={currentUser}/>}
+        </div>)}
       </main>
     </div>
   );
