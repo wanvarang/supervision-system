@@ -64,6 +64,7 @@ const SUBJECT_GROUPS = [
   "ศิลปะ",
   "การงานอาชีพ",
   "ภาษาต่างประเทศ",
+  "แนะแนว",
 ];
 
 // ── multi-role helpers ──
