@@ -527,7 +527,7 @@ function DashboardPage({bookings,users,structure,settings}){
 
   return(
     <div>
-      <PageHeader icon="📊" title="Dashboard ภาพรวมการนิเทศ" subtitle={\${settings.schoolName} — ปีการศึกษา ${new Date().getFullYear()+543}`}/>`
+      <PageHeader icon="📊" title="Dashboard ภาพรวมการนิเทศ" subtitle={`${settings.schoolName} - ปีการศึกษา ${new Date().getFullYear()+543}`}/>`
       <div className="g4" style={{marginBottom:20}}>
         {[
           {label:"การนิเทศทั้งหมด",value:total,icon:"📋",color:"#EEF2FF",tc:"var(--P)"},
