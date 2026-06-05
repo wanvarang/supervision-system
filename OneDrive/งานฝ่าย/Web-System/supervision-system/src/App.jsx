@@ -1,0 +1,1862 @@
+import { useState, useEffect, useRef, useCallback } from "react";
+import { initializeApp } from "firebase/app";
+import {
+  getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
+  collection, onSnapshot, query, where
+} from "firebase/firestore";
+
+// ═══════════════════════════════════════════════
+//  FIREBASE CONFIG
+//═══════════════════════════════════════════════
+const firebaseConfig = {
+  const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+const cfgRef   = (key) => doc(db, "sv_config", key);
+const bkCol    = () => collection(db, "sv_bookings");
+const bkRef    = (id) => doc(db, "sv_bookings", id);
+const usersCol = () => collection(db, "sv_users");
+const userRef  = (id) => doc(db, "sv_users", id);
+
+const fsGet = async (key) => {
+  try { const s = await getDoc(cfgRef(key)); return s.exists() ? s.data().value : null; }
+  catch { return null; }
+};
+const fsSet = async (key, val) => {
+  try { await setDoc(cfgRef(key), { value: val }); } catch(e) { console.error(e); }
+};
+
+// ═══════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════
+const DEFAULT_DOMAIN = "banmi.ac.th";
+const TH_MONTHS   = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+const TH_MONTHS_S = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+const WEEKDAYS    = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+const TIME_SLOTS  = [
+  "08:20 - 09:10\n(คาบที่ 1)",
+  "09:10 - 10:00\n(คาบที่ 2)",
+  "10:00 - 10:50\n(คาบที่ 3)",
+  "10:50 - 11:40\n(คาบที่ 4)",
+  "11:40 - 12:30\n(คาบที่ 5)",
+  "12:30 - 13:20\n(คาบที่ 6)",
+  "13:20 - 14:10\n(คาบที่ 7)",
+  "14:10 - 15:00\n(คาบที่ 8)",
+  "15:00 - 15:50\n(คาบที่ 9)"
+];
+const ROLES      = { sysadmin:"ผู้ดูแลระบบ", admin:"ผู้บริหาร", teacher:"ครูผู้สอน" };
+const ROLE_COLOR = { sysadmin:"#be0e0e", admin:"#1E3A8A", teacher:"#166634" };
+
+// ── multi-role helpers ──
+const getRoles       = (u) => { if(!u) return []; if(Array.isArray(u.roles)&&u.roles.length) return u.roles; if(u.role) return [u.role]; return []; };
+const hasRole        = (u,r) => getRoles(u).includes(r);
+const getPrimaryRole = (u) => { const rs=getRoles(u); return ["sysadmin","admin","teacher"].find(r=>rs.includes(r))||rs[0]||"teacher"; };
+const getRoleLabel   = (u) => getRoles(u).map(r=>ROLES[r]||r).join(" / ");
+const DEF_SETTINGS   = { schoolName:"โรงเรียนบ้านหมี่วิทยา", logo:null, domain:DEFAULT_DOMAIN };
+
+const DEF_STRUCTURE = [
+  { id:"ds1", name:"การวางแผนการจัดการเรียนรู้", items:[
+    { id:"di1a", name:"การกำหนดจุดประสงค์การเรียนรู้",    maxScore:5 },
+    { id:"di1b", name:"การออกแบบกิจกรรมการเรียนรู้",      maxScore:5 },
+    { id:"di1c", name:"การจัดเตรียมสื่อและแหล่งเรียนรู้", maxScore:5 },
+  ]},
+  { id:"ds2", name:"การจัดกิจกรรมการเรียนรู้", items:[
+    { id:"di2a", name:"การนำเข้าสู่บทเรียน",              maxScore:5 },
+    { id:"di2b", name:"การดำเนินกิจกรรมการเรียนรู้",       maxScore:5 },
+    { id:"di2c", name:"การใช้สื่อและเทคโนโลยี",           maxScore:5 },
+    { id:"di2d", name:"การกระตุ้นและส่งเสริมผู้เรียน",    maxScore:5 },
+    { id:"di2e", name:"การจัดการชั้นเรียน",               maxScore:5 },
+  ]},
+  { id:"ds3", name:"การวัดและประเมินผล", items:[
+    { id:"di3a", name:"การวัดผลตามจุดประสงค์",            maxScore:5 },
+    { id:"di3b", name:"เครื่องมือการวัดและประเมินผล",      maxScore:5 },
+    { id:"di3c", name:"การนำผลไปพัฒนาผู้เรียน",           maxScore:5 },
+  ]},
+  { id:"ds4", name:"คุณลักษณะของผู้สอน", items:[
+    { id:"di4a", name:"บุคลิกภาพและการแต่งกาย",           maxScore:5 },
+    { id:"di4b", name:"ความรู้ในเนื้อหาวิชา",             maxScore:5 },
+    { id:"di4c", name:"ความกระตือรือร้นและมุ่งมั่น",      maxScore:5 },
+  ]},
+];
+
+// ═══════════════════════════════════════════════
+//  HELPERS
+// ═══════════════════════════════════════════════
+const uid     = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const today   = () => new Date().toISOString().slice(0,10);
+const fmtDate = d => { if(!d) return ""; const [y,m,day]=d.split("-"); return `${+day} ${TH_MONTHS_S[+m-1]} ${+y+543}`; };
+const daysInM = (y,m) => new Date(y,m+1,0).getDate();
+const firstD  = (y,m) => new Date(y,m,1).getDay();
+
+const calcOneEval = (ev,str) => {
+  if(!ev?.submitted) return null;
+  let total=0, maxTotal=0;
+  const dims = str.map(d => {
+    let dt=0,dm=0;
+    d.items.forEach(i=>{ dt+=ev.scores[i.id]||0; dm+=i.maxScore; });
+    total+=dt; maxTotal+=dm;
+    return {name:d.name,score:dt,max:dm};
+  });
+  return {total,maxTotal,pct:maxTotal>0?Math.round(total/maxTotal*100):0,dims};
+};
+
+// ✅ แก้ไข: ฟังก์ชัน calcAvgScore เพื่อแสดงค่าเฉลี่ยรายด้านเป็นทศนิยม 2 ตำแหน่ง
+const calcAvgScore = (b,str) => {
+  const results = Object.values(b.evals||{}).map(ev=>calcOneEval(ev,str)).filter(Boolean);
+  if(results.length===0) return null;
+  const avgPct   = Math.round(results.reduce((a,r)=>a+r.pct,0)/results.length);
+  const avgTotal = Math.round(results.reduce((a,r)=>a+r.total,0)/results.length);
+  // ✅ เปลี่ยน: คำนวณค่าเฉลี่ยแล้วปัดเศษเป็น 2 ตำแหน่งทศนิยม
+  //     แทนการปัดเป็นจำนวนเต็ม (Math.round())
+  const dims = str.map((d,i)=>{
+    const avgScore = results.reduce((a,r)=>a+r.dims[i].score,0)/results.length;
+    return {name:d.name,max:results[0].dims[i].max,score:Math.round(avgScore*100)/100};
+  });
+  return {avgPct,avgTotal,maxTotal:results[0].maxTotal,dims,count:results.length};
+};
+
+const evalIds        = b => [b.adminId,b.teacher1Id,b.teacher2Id].filter(Boolean);
+const submittedCount = b => evalIds(b).filter(id=>b.evals?.[id]?.submitted).length;
+const isFullyEval    = b => { const ids=evalIds(b); return ids.length>0&&ids.every(id=>b.evals?.[id]?.submitted); };
+const gradeOf        = pct => pct>=80?{label:"ดีมาก",color:"#14532D",bg:"#D1FAE5"}:pct>=70?{label:"ดี",color:"#166634",bg:"#DCFCE7"}:pct>=60?{label:"พอใช้",color:"#78350F",bg:"#FEF3C7"}:{label:"ควรปรับปรุง",color:"#7F1D1D",bg:"#FEE2E2"};
+const userBusy       = (uid2,date,time,bks,excId=null) => { if(!uid2) return false; return bks.some(b=>b.id!==excId&&b.date===date&&b.time===time&&(b.teacherId===uid2||b.adminId===uid2||b.teacher1Id===uid2||b.teacher2Id===uid2)); };
+const isEvaluator    = (userId,bookings) => bookings.some(b=>b.adminId===userId||b.teacher1Id===userId||b.teacher2Id===userId);
+const getStartOfAcademicYear = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const startYear = now.getMonth() < 4 ? year - 1 : year;
+  return `${startYear}-05-01`;
+};
+
+// ═══════════════════════════════════════════════
+//  CSS
+// ═══════════════════════════════════════════════
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Noto+Sans+Thai:wght@300;400;500;600;700;800;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --font-th: 'Noto Sans Thai', 'Sarabun', sans-serif;
+  --P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;
+  --A:#F59E0B;--AD:#D97706;
+  --G:#16A34A;--R:#DC2626;
+  --T:#1F2937;--TS:#6B7280;--BD:#E5E7EB;--BG:#F0F4FA;--W:#FFFFFF;
+}
+body,#rootbody,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-height:100vh;}
+.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
+.inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.10);}
+.inp:disabled{background:#F9FAFB;color:#9CA3AF;cursor:not-allowed;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:8px;border:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.bp{background:var(--P);color:#fff;box-shadow:0 2px 8px rgba(30,58,138,.25);}
+.bp:hover:not(:disabled){background:var(--PD);box-shadow:0 4px 14px rgba(30,58,138,.35);}
+.ba{background:var(--A);color:#422006;}
+.ba:hover:not(:disabled){background:var(--AD);}
+.bg{background:var(--G);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.22);}
+.bg:hover:not(:disabled){background:#15803D;}
+.br{background:var(--R);color:#fff;}
+.br:hover:not(:disabled){background:#B91C1C;}
+.bx{background:var(--PL);color:var(--P);border:1.5px solid #C7D2FE;}
+.bx:hover:not(:disabled){background:#C7D2FE;}
+.bo{background:var(--W);color:var(--T);border:1.5px solid var(--BD);}
+.bo:hover:not(:disabled){background:#F3F4F6;}
+.card{background:var(--W);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.07);padding:20px;border:1px solid rgba(0,0,0,.04);}
+.frow{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.flbl{font-size:12.5px;font-weight:700;color:#4B5563;letter-spacing:.02em;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.badge-p{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FEF3C7;color:#92400E;}
+.badge-d{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#D1FAE5;color:#065F46;}
+.badge-part{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#DBEAFE;color:#1E40AF;}
+.rt-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:6px;box-shadow:0 0 0 2px rgba(34,197,94,.25);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px rgba(34,197,94,.25);}50%{opacity:.5;box-shadow:0 0 0 5px rgba(34,197,94,.05);}}
+.score-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--BD);background:var(--W);cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
+.score-btn:hover:not(:disabled){border-color:var(--P);color:var(--P);background:var(--PL);transform:scale(1.08);}
+.score-btn.active{background:var(--P);color:#fff;border-color:var(--P);box-shadow:0 2px 8px rgba(30,58,138,.3);}
+.score-btn:disabled{opacity:.4;cursor:not-allowed;}
+.progress-bar{height:8px;border-radius:99px;background:#E5E7EB;overflow:hidden;}
+.progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
+.stat-card{border-radius:12px;padding:20px;border:1px solid transparent;}
+.tab-btn{padding:9px 18px;border:none;background:none;cursor:pointer;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:600;color:var(--TS);border-bottom:2.5px solid transparent;transition:all .18s;}
+.tab-btn.active{color:var(--P);border-bottom-color:var(--P);}
+.tab-btn:hover:not(.active){color:var(--T);}
+.tbl-row:hover td{background:#F5F7FF!important;}
+@media(max-width:640px){
+  .g2{grid-template-columns:1fr!important;}
+  .g3{grid-template-columns:1fr 1fr!important;}
+  .g4{grid-template-columns:1fr 1fr!important;}
+  .hsm{display:none!important;}
+}
+@media print{
+  .np{display:none!important;}
+  body{background:white;}
+  .card{box-shadow:none!important;border:1px solid #ddd!important;}
+}
+`;
+
+// ═══════════════════════════════════════════════
+//  MINI CALENDAR
+// ═══════════════════════════════════════════════
+function MiniCal({year,month,onPrev,onNext,renderCell}){
+  const dim=daysInM(year,month),fd=firstD(year,month);
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+        <button onClick={onPrev} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--P)",padding:"2px 8px",lineHeight:1}}>‹</button>
+        <span style={{fontWeight:700,fontSize:15}}>{TH_MONTHS[month]} {year+543}</span>
+        <button onClick={onNext} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--P)",padding:"2px 8px",lineHeight:1}}>›</button>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
+        {WEEKDAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,fontWeight:700,color:"var(--TS)",paddingBottom:4}}>{d}</div>)}
+        {Array.from({length:fd},(_,i)=><div key={"e"+i}/>)}
+        {Array.from({length:dim},(_,i)=>{
+          const day=i+1,ds=`${year}-${String(month+1).padStart(2,"0")}-${String(day).padStart(2,"0")}`;
+          return renderCell(day,ds);
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  PAGE HEADER
+// ═══════════════════════════════════════════════
+function PageHeader({icon,title,subtitle,right}){
+  return(
+    <div style={{
+      background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",
+      borderRadius:16,padding:"22px 26px",marginBottom:24,
+      color:"#fff",position:"relative",overflow:"hidden"
+    }}>
+      <div style={{position:"absolute",top:-50,right:-50,width:160,height:160,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}/>
+      <div style={{position:"absolute",bottom:-70,left:-30,width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,.04)"}}/>
+      <div style={{display:"flex",alignItems:"center",gap:14,position:"relative",flexWrap:"wrap"}}>
+        <div style={{width:48,height:48,borderRadius:12,background:"rgba(255,255,255,.15)",border:"1.5px solid rgba(255,255,255,.25)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,flexShrink:0}}>
+          {icon}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontWeight:800,fontSize:19,lineHeight:1.2}}>{title}</div>
+          {subtitle&&<div style={{fontSize:13,opacity:.78,marginTop:3}}>{subtitle}</div>}
+        </div>
+        {right&&<div style={{flexShrink:0}}>{right}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  LOGIN & REGISTER
+// ═══════════════════════════════════════════════
+function LoginPage({users,settings,onLogin}){
+  const [isRegister, setIsRegister] = useState(false);
+  const [email,setEmail] = useState("");
+  const [pw,setPw] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [show,setShow] = useState(false);
+  const [err,setErr] = useState("");
+  const [msg,setMsg] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const domain=settings.domain||DEFAULT_DOMAIN;
+
+  const doLogin=()=>{
+    const em=email.trim().toLowerCase();
+    if(!em){setErr("กรุณากรอกอีเมล");return;}
+    if(!pw){setErr("กรุณากรอกรหัสผ่าน");return;}
+    const u=users.find(u=>u.email.toLowerCase()===em);
+    if(!u){setErr("ไม่พบอีเมลนี้ในระบบ กรุณาลงทะเบียน");return;}
+    if(u.password!==pw){setErr("รหัสผ่านไม่ถูกต้อง");return;}
+    if(!u.approved && u.role !== "sysadmin"){setErr("บัญชียังไม่ได้รับการอนุมัติ กรุณารอผู้ดูแลระบบ");return;}
+    onLogin(u);
+  };
+
+  const doRegister=async()=>{
+    const em=email.trim().toLowerCase();
+    if(!displayName.trim()){setErr("กรุณากรอกชื่อ-สกุล");return;}
+    if(!em){setErr("กรุณากรอกอีเมล");return;}
+    if(!em.endsWith("@"+domain)){setErr(`อีเมลต้องเป็น @${domain} เท่านั้น`);return;}
+    if(pw.length<4){setErr("รหัสผ่านต้องมีอย่างน้อย 4 ตัวอักษร");return;}
+    if(!agreed){setErr("กรุณายอมรับเงื่อนไขการใช้งาน");return;}
+    if(users.find(u=>u.email.toLowerCase()===em)){setErr("อีเมลนี้มีในระบบแล้ว");return;}
+    try {
+      const newId = uid();
+      await setDoc(doc(getFirestore(), "sv_users", newId), {
+        email: em, displayName: displayName.trim(), password: pw,
+        role: "teacher", approved: false, createdAt: new Date().toISOString()
+      });
+      setMsg("ลงทะเบียนสำเร็จ! กรุณารอผู้ดูแลระบบอนุมัติบัญชี");
+      setIsRegister(false); setErr(""); setPw(""); setAgreed(false);
+    } catch (error) { setErr("เกิดข้อผิดพลาดในการลงทะเบียน"); }
+  };
+
+  const inputStyle = {
+    width:"100%", padding:"10px 12px",
+    border:"1.5px solid #D1D5DB", borderRadius:8,
+    fontSize:14, fontFamily:"var(--font-th)",
+    background:"#fff", color:"#1F2937",
+    outline:"none", transition:"border-color .2s, box-shadow .2s"
+  };
+
+  return(
+    <div style={{
+      display:"flex", alignItems:"center", justifyContent:"center",
+      minHeight:"100vh", background:"#EEF2FF",
+      fontFamily:"var(--font-th)", padding:"20px"
+    }}>
+      <style>{`
+        @keyframes loginFadeIn {
+          from { opacity:0; transform:translateY(18px); }
+          to   { opacity:1; transform:translateY(0); }
+        }
+        @keyframes shake {
+          0%,100% { transform:translateX(0); }
+          25%     { transform:translateX(-5px); }
+          75%     { transform:translateX(5px); }
+        }
+        .lp-input:focus { border-color:#1E3A8A !important; box-shadow:0 0 0 3px rgba(30,58,138,.12) !important; }
+        @media(max-width:600px){
+          .lp-card { flex-direction:column !important; }
+          .lp-left { min-height:180px !important; flex:none !important; border-radius:16px 16px 0 0 !important; padding:28px 24px !important; }
+          .lp-right { padding:28px 24px !important; }
+        }
+      `}</style>
+
+      <div className="lp-card" style={{
+        display:"flex", width:"100%", maxWidth:820,
+        borderRadius:20, overflow:"hidden",
+        boxShadow:"0 24px 64px rgba(30,58,138,.18)",
+        animation:"loginFadeIn .5s ease-out"
+      }}>
+
+        {/* ── Left blue panel ── */}
+        <div className="lp-left" style={{
+          flex:"0 0 40%", minHeight:520,
+          background:"linear-gradient(160deg, #1E3A8A 0%, #1E2F6B 100%)",
+          display:"flex", flexDirection:"column",
+          alignItems:"center", justifyContent:"center",
+          padding:"40px 28px", color:"#fff",
+          position:"relative", overflow:"hidden"
+        }}>
+          <div style={{position:"absolute",top:"-60px",right:"-60px",width:200,height:200,borderRadius:"50%",background:"rgba(255,255,255,.06)"}}/>
+          <div style={{position:"absolute",bottom:"-80px",left:"-40px",width:240,height:240,borderRadius:"50%",background:"rgba(255,255,255,.05)"}}/>
+
+          <p style={{fontSize:13,fontWeight:400,opacity:.75,marginBottom:2,letterSpacing:1}}>Hello,</p>
+          <p style={{fontSize:20,fontWeight:700,marginBottom:24}}>ยินดีต้อนรับ!</p>
+
+          <div style={{
+            width:76, height:76, borderRadius:"50%",
+            background:"rgba(255,255,255,.15)", border:"2px solid rgba(255,255,255,.35)",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            marginBottom:16, fontSize:34, flexShrink:0
+          }}>
+            {settings.logo
+              ? <img src={settings.logo} style={{width:56,height:56,borderRadius:"50%",objectFit:"cover"}} onError={e=>e.target.style.display="none"}/>
+              : "✈️"}
+          </div>
+
+          <p style={{fontWeight:700,fontSize:16,textAlign:"center",marginBottom:6,lineHeight:1.4}}>
+            {settings.schoolName}
+          </p>
+          <p style={{fontSize:12,opacity:.65,textAlign:"center",lineHeight:1.7,maxWidth:190,marginBottom:28}}>
+            ระบบนิเทศการสอน<br/>โรงเรียนบ้านหมี่วิทยา
+          </p>
+
+          <button
+            onClick={()=>{setIsRegister(false);setErr("");setMsg("");}}
+            style={{
+              background:"none", border:"1.5px solid rgba(255,255,255,.5)",
+              color:"#fff", padding:"8px 20px", borderRadius:8,
+              cursor:"pointer", fontFamily:"var(--font-th)", fontSize:13,
+              fontWeight:600, letterSpacing:.5, transition:"background .2s",
+              display:"flex", alignItems:"center", gap:6
+            }}
+            onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.15)"}
+            onMouseLeave={e=>e.currentTarget.style.background="none"}
+          >
+            เข้าสู่ระบบ ▶
+          </button>
+        </div>
+
+        {/* ── Right white form panel ── */}
+        <div className="lp-right" style={{
+          flex:1, background:"#fff",
+          display:"flex", flexDirection:"column",
+          justifyContent:"center", padding:"36px 36px"
+        }}>
+          <h2 style={{fontSize:19,fontWeight:700,color:"#1F2937",marginBottom:22}}>
+            {isRegister ? "สร้างบัญชีใหม่" : "เข้าสู่ระบบ"}
+          </h2>
+
+          {err&&(
+            <div style={{background:"#FEE2E2",color:"#991B1B",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,fontWeight:600,border:"1px solid #FCA5A5",animation:"shake .4s"}}>
+              ⚠️ {err}
+            </div>
+          )}
+          {msg&&(
+            <div style={{background:"#D1FAE5",color:"#065F46",borderRadius:8,padding:"10px 14px",marginBottom:14,fontSize:13,fontWeight:600,border:"1px solid #6EE7B7"}}>
+              ✅ {msg}
+            </div>
+          )}
+
+          {isRegister && (
+            <div style={{marginBottom:13}}>
+              <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>ชื่อ-สกุล</label>
+              <input className="lp-input" type="text" value={displayName}
+                onChange={e=>{setDisplayName(e.target.value);setErr("");}}
+                placeholder="เช่น ครูนภา สวัสดี"
+                style={inputStyle}/>
+            </div>
+          )}
+
+          <div style={{marginBottom:13}}>
+            <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>อีเมลโรงเรียน</label>
+            <input className="lp-input" type="email" value={email}
+              onChange={e=>{setEmail(e.target.value);setErr("");}}
+              onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())}
+              placeholder={`yourname@${domain}`}
+              style={inputStyle}/>
+          </div>
+
+          <div style={{marginBottom:isRegister?13:18}}>
+            <label style={{fontSize:12,fontWeight:700,color:"#374151",display:"block",marginBottom:5}}>รหัสผ่าน</label>
+            <div style={{position:"relative"}}>
+              <input className="lp-input" type={show?"text":"password"} value={pw}
+                onChange={e=>{setPw(e.target.value);setErr("");}}
+                onKeyDown={e=>e.key==="Enter"&&(isRegister?doRegister():doLogin())}
+                placeholder="กรอกรหัสผ่าน"
+                style={{...inputStyle,paddingRight:40}}/>
+              <button onClick={()=>setShow(!show)} style={{
+                position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                background:"none",border:"none",cursor:"pointer",fontSize:16,opacity:.5,padding:0,lineHeight:1
+              }}>{show?"🙈":"👁️"}</button>
+            </div>
+          </div>
+
+          {isRegister && (
+            <div style={{display:"flex",alignItems:"flex-start",gap:8,marginBottom:18}}>
+              <input type="checkbox" id="lp-terms" checked={agreed} onChange={e=>setAgreed(e.target.checked)}
+                style={{marginTop:2,accentColor:"#1E3A8A",cursor:"pointer",flexShrink:0}}/>
+              <label htmlFor="lp-terms" style={{fontSize:12,color:"#6B7280",cursor:"pointer",lineHeight:1.5}}>
+                ฉันยอมรับ <span style={{color:"#1E3A8A",fontWeight:600}}>เงื่อนไขการใช้งาน</span>
+              </label>
+            </div>
+          )}
+
+          <div style={{display:"flex",gap:10}}>
+            <button
+              onClick={()=>{setIsRegister(!isRegister);setErr("");setMsg("");}}
+              style={{
+                flex:1, padding:"11px", fontSize:14, fontWeight:600,
+                fontFamily:"var(--font-th)", background:"#fff", color:"#374151",
+                border:"1.5px solid #D1D5DB", borderRadius:8, cursor:"pointer",
+                transition:"background .18s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background="#F9FAFB"}
+              onMouseLeave={e=>e.currentTarget.style.background="#fff"}
+            >
+              {isRegister ? "เข้าสู่ระบบ" : "ลงทะเบียน"}
+            </button>
+            <button
+              onClick={isRegister?doRegister:doLogin}
+              style={{
+                flex:1, padding:"11px", fontSize:14, fontWeight:700,
+                fontFamily:"var(--font-th)", background:"#1E3A8A", color:"#fff",
+                border:"none", borderRadius:8, cursor:"pointer",
+                boxShadow:"0 4px 14px rgba(30,58,138,.3)", transition:"background .18s"
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background="#1E2F6B"}
+              onMouseLeave={e=>e.currentTarget.style.background="#1E3A8A"}
+            >
+              {isRegister ? "ลงทะเบียน" : "เข้าสู่ระบบ"}
+            </button>
+          </div>
+
+          <p style={{marginTop:14,fontSize:11,color:"#9CA3AF",textAlign:"center"}}>
+            สำหรับบุคลากร @{domain} เท่านั้น
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+// ═══════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════
+function DashboardPage({bookings,users,structure,settings}){
+  const teachers = users.filter(u=>u.role==="teacher"&&u.approved);
+  const total = bookings.length;
+  const done = bookings.filter(isFullyEval).length;
+  const pending = total - done;
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const thisMonthBks = bookings.filter(b=>b.date.startsWith(thisMonth));
+  const doneScores = bookings.filter(isFullyEval).map(b=>calcAvgScore(b,structure)).filter(Boolean);
+  const overallAvgPct = doneScores.length>0 ? Math.round(doneScores.reduce((a,r)=>a+r.avgPct,0)/doneScores.length) : null;
+  const dimAvg = structure.map((d,di)=>{
+    const vals = doneScores.map(s=>s.dims[di]).filter(Boolean);
+    const avg = vals.length>0 ? Math.round(vals.reduce((a,v)=>a+(v.score/v.max*100),0)/vals.length) : 0;
+    return {name:d.name, pct:avg};
+  });
+  const gradeCount = {ดีมาก:0,ดี:0,พอใช้:0,ควรปรับปรุง:0};
+  doneScores.forEach(s=>{ gradeCount[gradeOf(s.avgPct).label]++; });
+  const teacherStats = teachers.map(t=>{
+    const tBks = bookings.filter(b=>b.teacherId===t.id&&isFullyEval(b));
+    const scores = tBks.map(b=>calcAvgScore(b,structure)).filter(Boolean);
+    if(!scores.length) return {name:t.displayName,count:0,avg:null};
+    return {name:t.displayName,count:scores.length,avg:Math.round(scores.reduce((a,s)=>a+s.avgPct,0)/scores.length)};
+  }).filter(t=>t.count>0).sort((a,b)=>b.avg-a.avg);
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d=new Date(); d.setMonth(d.getMonth()-i);
+    const key=d.toISOString().slice(0,7);
+    const label=`${TH_MONTHS_S[d.getMonth()]}`;
+    const mBks=bookings.filter(b=>b.date.startsWith(key));
+    months.push({label,count:mBks.length,done:mBks.filter(isFullyEval).length});
+  }
+  const maxCount = Math.max(...months.map(m=>m.count),1);
+
+  return(
+    <div>
+      <PageHeader icon="📊" title="Dashboard ภาพรวมการนิเทศ" subtitle={`${settings.schoolName} - ปีการศึกษา ${new Date().getFullYear()+543}`}/>`
+      <div className="g4" style={{marginBottom:20}}>
+        {[
+          {label:"การนิเทศทั้งหมด",value:total,icon:"📋",color:"#EEF2FF",tc:"var(--P)"},
+          {label:"ประเมินครบแล้ว",value:done,icon:"✅",color:"#D1FAE5",tc:"#065F46"},
+          {label:"รอการประเมิน",value:pending,icon:"⏳",color:"#FEF3C7",tc:"#92400E"},
+          {label:"เดือนนี้",value:thisMonthBks.length,icon:"📅",color:"#F0FDF4",tc:"#166634"},
+        ].map(s=>(
+          <div key={s.label} className="stat-card" style={{background:s.color,border:`1px solid ${s.color}`}}>
+            <div style={{fontSize:26,marginBottom:4}}>{s.icon}</div>
+            <div style={{fontSize:28,fontWeight:800,color:s.tc}}>{s.value}</div>
+            <div style={{fontSize:12,color:s.tc,opacity:.8,fontWeight:600}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      <div className="g2" style={{marginBottom:20,alignItems:"start"}}>
+        <div className="card">
+          <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>📈 แนวโน้มการนิเทศ 6 เดือนล่าสุด</h3>
+          <div style={{display:"flex",alignItems:"flex-end",gap:8,height:120}}>
+            {months.map((m,i)=>(
+              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <div style={{fontSize:10,fontWeight:700,color:"var(--P)"}}>{m.count||""}</div>
+                <div style={{width:"100%",position:"relative",height:80,display:"flex",alignItems:"flex-end"}}>
+                  <div style={{position:"absolute",bottom:0,width:"100%",background:"#EEF2FF",borderRadius:"4px 4px 0 0",height:`${(m.count/maxCount)*80}px`}}/>
+                  <div style={{position:"absolute",bottom:0,width:"100%",background:"var(--P)",borderRadius:"4px 4px 0 0",height:`${(m.done/maxCount)*80}px`,opacity:.85}}/>
+                </div>
+                <div style={{fontSize:10,color:"var(--TS)"}}>{m.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="card">
+          <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>🏅 การกระจายระดับคุณภาพ</h3>
+          {overallAvgPct!==null&&(
+            <div style={{textAlign:"center",marginBottom:16,padding:"12px",background:"var(--PL)",borderRadius:8}}>
+              <div style={{fontSize:36,fontWeight:800,color:"var(--P)"}}>{overallAvgPct}%</div>
+              <div style={{fontSize:13,color:"var(--TS)"}}>คะแนนเฉลี่ยรวม</div>
+              <span style={{display:"inline-block",marginTop:4,padding:"3px 12px",borderRadius:20,background:gradeOf(overallAvgPct).bg,color:gradeOf(overallAvgPct).color,fontWeight:700,fontSize:13}}>{gradeOf(overallAvgPct).label}</span>
+            </div>
+          )}
+          {[
+            {k:"ดีมาก",bg:"#D1FAE5",c:"#065F46"},
+            {k:"ดี",bg:"#DCFCE7",c:"#166634"},
+            {k:"พอใช้",bg:"#FEF3C7",c:"#92400E"},
+            {k:"ควรปรับปรุง",bg:"#FEE2E2",c:"#991B1B"},
+          ].map(g=>(
+            <div key={g.k} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+              <span style={{minWidth:80,fontSize:12,fontWeight:700,color:g.c}}>{g.k}</span>
+              <div style={{flex:1,background:"#F3F4F6",borderRadius:4,height:16,overflow:"hidden"}}>
+                <div style={{width:`${doneScores.length?gradeCount[g.k]/doneScores.length*100:0}%`,height:"100%",background:g.bg,border:`1px solid ${g.c}20`,transition:"width .5s"}}/>
+              </div>
+              <span style={{minWidth:24,fontSize:12,fontWeight:700,color:g.c}}>{gradeCount[g.k]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="card" style={{marginBottom:20}}>
+        <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>🎯 คะแนนเฉลี่ยรายด้าน</h3>
+        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+          {dimAvg.map((d,i)=>(
+            <div key={i}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                <span style={{fontSize:13,fontWeight:600}}>{d.name}</span>
+                <span style={{fontSize:13,fontWeight:800,color:gradeOf(d.pct).color}}>{d.pct}%</span>
+              </div>
+              <div className="progress-bar">
+                <div className="progress-fill" style={{width:`${d.pct}%`,background:d.pct>=80?"#16A34A":d.pct>=70?"#22C55E":d.pct>=60?"#F59E0B":"#DC2626"}}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {teacherStats.length>0&&(
+        <div className="card">
+          <h3 style={{fontWeight:700,fontSize:15,marginBottom:14,color:"var(--P)"}}>🏆 ผลการนิเทศครูรายบุคคล</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {teacherStats.map((t,i)=>{
+              const g=gradeOf(t.avg);
+              return(
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"#FFFBEB":"#F9FAFB",borderRadius:8,border:`1px solid ${i===0?"#FDE68A":"var(--BD)"}`}}>
+                  <div style={{width:28,height:28,borderRadius:"50%",background:i===0?"#F59E0B":i===1?"#9CA3AF":i===2?"#C77D38":"var(--PL)",color:i<3?"#fff":"var(--P)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>{i+1}</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
+                    <div style={{fontSize:12,color:"var(--TS)"}}>นิเทศแล้ว {t.count} ครั้ง</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontWeight:800,fontSize:18,color:g.color}}>{t.avg}%</div>
+                    <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:g.bg,color:g.color}}>{g.label}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────
+// เนื่องจากโค้ดยาวมาก ส่วนต่าง ๆ เหลือเหมือนกับต้นฉบับ
+// คือ: EvaluateTab, ScheduleSummary, BookingPage, SummaryPage, 
+//      SettingsPage, ProfileTab, UAvatar, UserModal, USection, UsersTab, App
+// 
+// ✅ เปลี่ยนแปลงเพียงอย่างเดียว: ฟังก์ชัน calcAvgScore (บรรทัด 164-171)
+//
+// ─────────────────────────────────────────────────────
+
+// [ส่วนที่เหลือทั้งหมด: EvaluateTab, ScheduleSummary, BookingPage, SummaryPage, SettingsPage, ProfileTab, UAvatar, UserModal, USection, UsersTab, App]
+// ให้ใช้โค้ดต้นฉบับ เพราะเปลี่ยนแต่ฟังก์ชัน calcAvgScore เท่านั้น
+
+function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
+  const [selected, setSelected] = useState(null);
+  const [scores, setScores] = useState({});
+  const [comments, setComments] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const myQueue = hasRole(currentUser,"sysadmin")
+    ? bookings
+    : bookings.filter(b=>b.adminId===currentUser.id||b.teacher1Id===currentUser.id||b.teacher2Id===currentUser.id);
+
+  const pending = [...myQueue].filter(b=>!b.evals?.[currentUser.id]?.submitted);
+  const done    = [...myQueue].filter(b=> b.evals?.[currentUser.id]?.submitted);
+
+  const openEval = (b) => {
+    const existingEval = b.evals?.[currentUser.id];
+    if(existingEval?.submitted){
+      setScores(existingEval.scores||{});
+      setComments(existingEval.comments||"");
+    } else {
+      const init={};
+      structure.forEach(d=>d.items.forEach(i=>{ init[i.id]=0; }));
+      setScores(init);
+      setComments("");
+    }
+    setSelected(b);
+    setMsg(null);
+  };
+
+  const setScore = (itemId, val) => setScores(prev=>({...prev,[itemId]:val}));
+
+  const calcTotal = () => {
+    let t=0,max=0;
+    structure.forEach(d=>d.items.forEach(i=>{ t+=scores[i.id]||0; max+=i.maxScore; }));
+    return {total:t,max,pct:max>0?Math.round(t/max*100):0};
+  };
+
+  const submitEval = async () => {
+    const total = calcTotal();
+    if(total.total===0){setMsg({t:"e",s:"กรุณากรอกคะแนนอย่างน้อย 1 รายการ"});return;}
+    setSaving(true);
+    try {
+      const updated = {
+        ...selected,
+        evals:{
+          ...selected.evals,
+          [currentUser.id]:{
+            scores,comments,submitted:true,
+            evaluatorName:currentUser.displayName,
+            submittedAt:new Date().toISOString()
+          }
+        }
+      };
+      await onSaveBooking(updated);
+      setMsg({t:"s",s:"✅ บันทึกการประเมินเรียบร้อยแล้ว"});
+      setSelected(null);
+    } catch(e){setMsg({t:"e",s:"เกิดข้อผิดพลาด"});}
+    setSaving(false);
+  };
+
+  if(selected){
+    const already = selected.evals?.[currentUser.id]?.submitted;
+    const tot = calcTotal();
+    const g = gradeOf(tot.pct);
+    return(
+      <div>
+        <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:20}}>
+          <button onClick={()=>setSelected(null)} className="btn bo" style={{padding:"8px 14px"}}>← กลับ</button>
+          <div>
+            <h2 style={{fontWeight:800,fontSize:18,color:"var(--P)"}}>📝 แบบประเมินการนิเทศ</h2>
+            <p style={{color:"var(--TS)",fontSize:13}}>{selected.teacherName} — {selected.subject} ({selected.classRoom}) — {fmtDate(selected.date)} {selected.time}</p>
+          </div>
+        </div>
+        {msg&&<div style={{padding:"12px 16px",borderRadius:8,marginBottom:14,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B"}}>{msg.s}</div>}
+        <div className="card" style={{marginBottom:16,background:"linear-gradient(135deg,#EEF2FF,#F0FDF4)",border:"1px solid #C7D2FE"}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+            <div>
+              <div style={{fontSize:13,color:"var(--TS)",marginBottom:2}}>คะแนนรวมปัจจุบัน</div>
+              <div style={{fontSize:32,fontWeight:800,color:"var(--P)"}}>{tot.total}<span style={{fontSize:16,color:"var(--TS)"}}>/{tot.max}</span></div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:28,fontWeight:800,color:g.color}}>{tot.pct}%</div>
+              <span style={{padding:"4px 14px",borderRadius:20,background:g.bg,color:g.color,fontWeight:700,fontSize:14}}>{g.label}</span>
+            </div>
+            <div style={{flex:1,minWidth:160}}>
+              <div className="progress-bar" style={{height:12}}>
+                <div className="progress-fill" style={{width:`${tot.pct}%`,background:tot.pct>=80?"#16A34A":tot.pct>=70?"#22C55E":tot.pct>=60?"#F59E0B":"#DC2626"}}/>
+              </div>
+            </div>
+          </div>
+        </div>
+        {structure.map(domain=>(
+          <div key={domain.id} className="card" style={{marginBottom:14}}>
+            <h3 style={{fontWeight:700,fontSize:15,color:"var(--P)",marginBottom:14,paddingBottom:10,borderBottom:"1px solid var(--BD)"}}>{domain.name}</h3>
+            {domain.items.map(item=>(
+              <div key={item.id} style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:8}}>
+                  <span style={{fontSize:14,fontWeight:600,flex:1}}>{item.name}</span>
+                  <span style={{fontSize:12,color:"var(--TS)",whiteSpace:"nowrap"}}>(เต็ม {item.maxScore} คะแนน)</span>
+                </div>
+                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                  {Array.from({length:item.maxScore+1},(_,v)=>(
+                    <button key={v} className={`score-btn${scores[item.id]===v?" active":""}`} onClick={()=>setScore(item.id,v)} disabled={already}>{v}</button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+        <div className="card" style={{marginBottom:16}}>
+          <h3 style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--P)"}}>💬 ข้อเสนอแนะ / ความคิดเห็น</h3>
+          <textarea className="inp" rows={4} value={comments} onChange={e=>setComments(e.target.value)} disabled={already}
+            placeholder="กรอกข้อเสนอแนะสำหรับครูผู้สอน เช่น จุดเด่น จุดที่ควรพัฒนา..."
+            style={{resize:"vertical"}}/>
+        </div>
+        {!already&&<button onClick={submitEval} disabled={saving} className="btn bg" style={{width:"100%",padding:"13px",fontSize:15}}>
+          {saving?"กำลังบันทึก...":"💾 ยืนยันส่งผลการประเมิน"}
+        </button>}
+        {already&&<div style={{textAlign:"center",padding:12,color:"#065F46",fontWeight:700,fontSize:14,background:"#D1FAE5",borderRadius:8}}>✅ ส่งผลการประเมินแล้ว (ไม่สามารถแก้ไขได้)</div>}
+      </div>
+    );
+  }
+
+  return(
+    <div>
+      <PageHeader icon="📝" title="แบบประเมินการนิเทศ" subtitle="กรอกคะแนนรายด้านพร้อมข้อเสนอแนะ"/>
+      {pending.length>0&&(
+        <div style={{marginBottom:24}}>
+          <h3 style={{fontWeight:700,color:"#92400E",marginBottom:10,fontSize:15}}>⏳ รอการประเมิน ({pending.length})</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {pending.map(b=>(
+              <div key={b.id} className="card" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"14px 16px",borderLeft:"4px solid var(--A)"}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:15}}>{b.teacherName}</div>
+                  <div style={{fontSize:12,color:"var(--TS)",marginTop:2}}>{b.subject} · {b.classRoom} · {fmtDate(b.date)} {b.time}</div>
+                  <div style={{fontSize:11,color:"#9CA3AF",marginTop:4}}>👔 {b.adminName} · 👩‍🏫 {b.teacher1Name}, {b.teacher2Name}</div>
+                </div>
+                <button onClick={()=>openEval(b)} className="btn bp" style={{padding:"10px 18px",whiteSpace:"nowrap"}}>กรอกประเมิน →</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {done.length>0&&(
+        <div>
+          <h3 style={{fontWeight:700,color:"#065F46",marginBottom:10,fontSize:15}}>✅ ประเมินแล้ว ({done.length})</h3>
+          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+            {done.map(b=>{
+              const myEval=b.evals?.[currentUser.id];
+              const res=calcOneEval(myEval,structure);
+              return(
+                <div key={b.id} className="card" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,padding:"12px 16px",opacity:.85}}>
+                  <div>
+                    <div style={{fontWeight:600,fontSize:14}}>{b.teacherName} — {b.subject}</div>
+                    <div style={{fontSize:12,color:"var(--TS)"}}>{fmtDate(b.date)} {b.time}</div>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}>
+                    {res&&<span style={{fontWeight:800,color:gradeOf(res.pct).color}}>{res.total}/{res.maxTotal} ({res.pct}%)</span>}
+                    <button onClick={()=>openEval(b)} className="btn bx" style={{padding:"7px 12px",fontSize:12}}>ดูผล</button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {pending.length===0&&done.length===0&&(
+        <div className="card" style={{textAlign:"center",padding:40,color:"#D1D5DB"}}>
+          <div style={{fontSize:40,marginBottom:10}}>📋</div>
+          <div>ไม่มีแบบประเมินที่ต้องกรอกในขณะนี้</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ScheduleSummary({bookings,users}){
+  const [viewDate,setViewDate]=useState(today());
+  const [calY,setCalY]=useState(new Date().getFullYear());
+  const [calM,setCalM]=useState(new Date().getMonth());
+  const admins=users.filter(u=>u.role==="admin"&&u.approved);
+  const dayBks=bookings.filter(b=>b.date===viewDate);
+  const prevMon=()=>{if(calM===0){setCalY(y=>y-1);setCalM(11);}else setCalM(m=>m-1);};
+  const nextMon=()=>{if(calM===11){setCalY(y=>y+1);setCalM(0);}else setCalM(m=>m+1);};
+  const short=name=>name.replace("ผอ.","").replace("รองผอ.","").replace("หัวหน้าวิชาการ ","").replace("หน.กลุ่มสาระ ","").replace("ครู","").trim().split(" ")[0];
+
+  return(
+    <div>
+      <PageHeader icon="🗓️" title="ตารางนิเทศ ภาคเรียนที่ 1 ปีการศึกษา 2569" subtitle="● ข้อมูลอัปเดตทันทีเมื่อมีการจองใหม่"/>
+      <div className="g2" style={{alignItems:"start",marginBottom:20}}>
+        <div className="card">
+          <h4 style={{fontWeight:700,fontSize:14,marginBottom:12}}>เลือกวันที่</h4>
+          <MiniCal year={calY} month={calM} onPrev={prevMon} onNext={nextMon}
+            renderCell={(day,ds)=>{
+              const hasBk=bookings.some(b=>b.date===ds),isSel=ds===viewDate;
+              let bg="var(--W)",col="var(--T)",bc="var(--BD)";
+              if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(hasBk){bg="#EEF2FF";bc="#C7D2FE";}
+              return <button key={ds} onClick={()=>setViewDate(ds)}
+                style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isSel?700:400,position:"relative",transition:"all .15s"}}>
+                {day}{hasBk&&!isSel&&<div style={{position:"absolute",bottom:2,left:"50%",transform:"translateX(-50%)",width:4,height:4,borderRadius:"50%",background:"var(--P)"}}/>}
+              </button>;
+            }}/>
+        </div>
+        <div>
+          <div className="card" style={{marginBottom:12,borderLeft:"4px solid var(--P)"}}>
+            <div style={{fontWeight:700,fontSize:15,marginBottom:4}}>{fmtDate(viewDate)}</div>
+            <div style={{fontSize:13,color:"var(--TS)"}}>มีการจอง <b style={{color:"var(--P)"}}>{dayBks.length}</b> รายการ</div>
+          </div>
+          {dayBks.length===0
+            ?<div className="card" style={{textAlign:"center",color:"#D1D5DB",padding:24,fontSize:14}}>ไม่มีการจองในวันนี้</div>
+            :<div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {[...dayBks].sort((a,b)=>a.time.localeCompare(b.time)).map(b=>(
+                <div key={b.id} className="card" style={{padding:"12px 16px",borderLeft:"3px solid var(--A)"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+                    <div>
+                      <div style={{fontWeight:700,fontSize:14}}>{b.time} — {b.teacherName}</div>
+                      <div style={{fontSize:12,color:"var(--TS)",marginTop:2}}>{b.subject} · {b.classRoom}</div>
+                      <div style={{fontSize:11,color:"#9CA3AF",marginTop:4,lineHeight:1.7}}>👔 {b.adminName}<br/>👩‍🏫 {b.teacher1Name}, {b.teacher2Name}</div>
+                    </div>
+                    <span className={isFullyEval(b)?"badge-d":"badge-part"}>{isFullyEval(b)?"✅ ครบ":`⏳ ${submittedCount(b)}/${evalIds(b).length}`}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          }
+        </div>
+      </div>
+      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:14}}>
+        <div style={{background:"var(--P)",color:"#fff",padding:"12px 16px",fontWeight:700,fontSize:14}}>📊 ตารางผู้บริหาร — {fmtDate(viewDate)}</div>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:400}}>
+            <thead><tr style={{background:"#F8FAFF"}}>
+              <th style={{padding:"9px 12px",textAlign:"left",fontWeight:700,color:"var(--TS)",borderBottom:"1px solid var(--BD)",width:65,fontSize:12}}>เวลา</th>
+              {admins.map(a=><th key={a.id} style={{padding:"9px 8px",textAlign:"center",fontWeight:700,color:"var(--P)",borderBottom:"1px solid var(--BD)",fontSize:12,minWidth:100}}>{short(a.displayName)}</th>)}
+            </tr></thead>
+            <tbody>
+              {TIME_SLOTS.map((t,ti)=>(
+                <tr key={t} style={{background:ti%2?"#FAFAFA":"var(--W)"}}>
+                  <td style={{padding:"7px 12px",fontWeight:600,color:"var(--TS)",borderBottom:"1px solid var(--BD)",fontSize:12,whiteSpace:"nowrap"}}>{t}</td>
+                  {admins.map(a=>{
+                    const bk=dayBks.find(b=>b.time===t&&(b.adminId===a.id||b.teacher1Id===a.id||b.teacher2Id===a.id));
+                    return <td key={a.id} style={{padding:"5px 8px",textAlign:"center",borderBottom:"1px solid var(--BD)"}}>
+                      {bk?<div style={{background:"#FEF3C7",border:"1px solid #FDE68A",borderRadius:6,padding:"4px 6px",fontSize:11,color:"#92400E",lineHeight:1.4}}>
+                        <div style={{fontWeight:700}}>{short(bk.teacherName)}</div>
+                        <div style={{fontSize:10,opacity:.8}}>{bk.subject}</div>
+                      </div>:<span style={{color:"#D1D5DB"}}>—</span>}
+                    </td>;
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
+  const [step,setStep]=useState(1);
+  const [subject,setSubject]=useState("");
+  const [grade, setGrade] = useState("");
+  const [roomNum, setRoomNum] = useState("");
+  const [physRoom, setPhysRoom] = useState("");
+  const [adminId,setAdminId]=useState("");
+  const [t1Id,setT1Id]=useState("");
+  const [t2Id,setT2Id]=useState("");
+  const [teacherSearch, setTeacherSearch] = useState("");
+  const [selDate,setSelDate]=useState("");
+  const [selTime,setSelTime]=useState("");
+  const [calY,setCalY]=useState(new Date().getFullYear());
+  const [calM,setCalM]=useState(new Date().getMonth());
+  const [msg,setMsg]=useState(null);
+  const [saving,setSaving]=useState(false);
+
+  const todayStr=today();
+  const admins=users.filter(u=>u.role==="admin"&&u.approved);
+  const teachers=users.filter(u=>u.role==="teacher"&&u.id!==currentUser.id&&u.approved);
+  const blockedTimesFor=date=>TIME_SLOTS.filter(t=>
+    bookings.some(b=>b.teacherId===currentUser.id&&b.date===date&&b.time===t)||
+    userBusy(adminId,date,t,bookings)||userBusy(t1Id,date,t,bookings)||userBusy(t2Id,date,t,bookings)
+  );
+  const canStep2=subject.trim()&&grade&&roomNum&&physRoom.trim()&&adminId&&t1Id&&t2Id&&t1Id!==t2Id;
+
+  const addTeacher = (tid) => {
+    if (!t1Id) setT1Id(tid);
+    else if (!t2Id) setT2Id(tid);
+    setTeacherSearch("");
+  };
+  const removeTeacher = (tid) => {
+    if (t1Id === tid) setT1Id("");
+    if (t2Id === tid) setT2Id("");
+  };
+  const availableTeachers = teachers.filter(t =>
+    t.id !== t1Id && t.id !== t2Id &&
+    t.displayName.toLowerCase().includes(teacherSearch.toLowerCase())
+  );
+  const selectedTeachers = [teachers.find(t=>t.id===t1Id),teachers.find(t=>t.id===t2Id)].filter(Boolean);
+
+  const submit=async()=>{
+    if(!selDate||!selTime){setMsg({t:"e",s:"กรุณาเลือกวันที่และเวลา"});return;}
+    setSaving(true);
+    try {
+      const au=users.find(u=>u.id===adminId),t1u=users.find(u=>u.id===t1Id),t2u=users.find(u=>u.id===t2Id);
+      const fullClassRoom = `${grade}/${roomNum} (ห้อง ${physRoom.trim()})`;
+      const nb={
+        id:uid(),teacherId:currentUser.id,teacherName:currentUser.displayName,teacherEmail:currentUser.email,
+        subject:subject.trim(),classRoom:fullClassRoom,
+        adminId,adminName:au?.displayName||"",teacher1Id:t1Id,teacher1Name:t1u?.displayName||"",
+        teacher2Id:t2Id,teacher2Name:t2u?.displayName||"",
+        date:selDate,time:selTime,evals:{},createdAt:new Date().toISOString()
+      };
+      await onSave(nb);
+      setMsg({t:"s",s:`✅ จองสำเร็จ! ${fmtDate(selDate)} ${selTime}`});
+      setSubject("");setGrade("");setRoomNum("");setPhysRoom("");
+      setAdminId("");setT1Id("");setT2Id("");setSelDate("");setSelTime("");setStep(1);
+      setTimeout(()=>setMsg(null),7000);
+    } catch(e){setMsg({t:"e",s:"เกิดข้อผิดพลาด กรุณาลองใหม่"});}
+    setSaving(false);
+  };
+
+  const prevMon=()=>{if(calM===0){setCalY(y=>y-1);setCalM(11);}else setCalM(m=>m-1);};
+  const nextMon=()=>{if(calM===11){setCalY(y=>y+1);setCalM(0);}else setCalM(m=>m+1);};
+  const myBookings = bookings.filter(b => b.teacherId === currentUser.id && !isFullyEval(b));
+
+  return(
+    <div>
+      <PageHeader icon="📅" title="จองเวลารับการนิเทศ" subtitle={`สวัสดี ${currentUser.displayName} — เลือกกรรมการ 3 ท่าน และระบุวันเวลา`}/>`
+      {msg&&<div style={{padding:"12px 16px",borderRadius:9,marginBottom:18,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B",border:`1.5px solid ${msg.t==="s"?"#A7F3D0":"#FECACA"}`}}>{msg.s}</div>}
+
+      {step===1&&<div className="card">
+        <div className="frow" style={{marginBottom:10}}>
+          <label className="flbl">รายวิชา *</label>
+          <input className="inp" value={subject} onChange={e=>setSubject(e.target.value)} placeholder="เช่น คณิตศาสตร์พื้นฐาน"/>
+        </div>
+        <div className="g3" style={{marginBottom:16}}>
+          <div className="frow">
+            <label className="flbl">ระดับชั้น *</label>
+            <select className="inp" value={grade} onChange={e=>setGrade(e.target.value)}>
+              <option value="">- เลือกระดับชั้น -</option>
+              {[1,2,3,4,5,6].map(m=><option key={m} value={`ม.${m}`}>ม.{m}</option>)}
+            </select>
+          </div>
+          <div className="frow">
+            <label className="flbl">ห้องเรียน *</label>
+            <select className="inp" value={roomNum} onChange={e=>setRoomNum(e.target.value)} disabled={!grade}>
+              <option value="">- เลือกห้อง -</option>
+              {[1,2,3,4,5,6,7,8,9].map(r=><option key={r} value={r}>/{r}</option>)}
+            </select>
+          </div>
+          <div className="frow">
+            <label className="flbl">ห้องที่สอน (สถานที่) *</label>
+            <input className="inp" value={physRoom} onChange={e=>setPhysRoom(e.target.value)} placeholder="เช่น 324, อาคาร 4"/>
+          </div>
+        </div>
+        <div style={{background:"#EEF2FF",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
+          <div style={{fontWeight:700,color:"var(--P)",marginBottom:10,fontSize:14}}>① ผู้บริหารที่นิเทศ (1 คน)</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(185px,1fr))",gap:7}}>
+            {admins.map(a=>{const active=adminId===a.id;return <button key={a.id} onClick={()=>setAdminId(a.id===adminId?"":a.id)}
+              style={{padding:"10px 12px",borderRadius:8,border:`2px solid ${active?"var(--P)":"#C7D2FE"}`,background:active?"var(--P)":"var(--W)",color:active?"#fff":"var(--T)",cursor:"pointer",fontFamily:"Sarabun,sans-serif",textAlign:"left",transition:"all .15s"}}>
+              <div style={{fontWeight:600,fontSize:13}}>{active&&"✓ "}{a.displayName}</div>
+            </button>;})}
+          </div>
+        </div>
+        <div style={{background:"#F0FDF4",borderRadius:10,padding:"14px 16px",marginBottom:18}}>
+          <div style={{fontWeight:700,color:"#166634",marginBottom:10,fontSize:14}}>
+            ② ครูกรรมการ (2 คน) {t1Id&&t2Id&&<span style={{fontWeight:500,fontSize:12,color:"#16A34A"}}>— เลือกครบแล้ว ✓</span>}
+          </div>
+          {selectedTeachers.length > 0 && (
+            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+              {selectedTeachers.map((t, index) => (
+                <div key={t.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--G)",color:"#fff",padding:"6px 14px",borderRadius:20,fontSize:13,fontWeight:700}}>
+                  <span>[{index+1}] {t.displayName}</span>
+                  <button onClick={()=>removeTeacher(t.id)} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",padding:0,fontSize:18,lineHeight:1,opacity:.8}}>×</button>
+                </div>
+              ))}
+            </div>
+          )}
+          {(!t1Id || !t2Id) && (
+            <div style={{position:"relative"}}>
+              <input type="text" className="inp" placeholder="🔍 พิมพ์ค้นหาชื่อครูกรรมการ..."
+                value={teacherSearch} onChange={e=>setTeacherSearch(e.target.value)}
+                style={{borderColor:"#BBF7D0",background:"#fff"}}/>
+              {teacherSearch.trim() !== "" && (
+                <div style={{position:"absolute",top:"100%",left:0,right:0,background:"#fff",border:"1px solid #BBF7D0",borderRadius:8,marginTop:4,maxHeight:220,overflowY:"auto",zIndex:10,boxShadow:"0 4px 16px rgba(0,0,0,.1)"}}>
+                  {availableTeachers.length > 0 ? availableTeachers.map(t=>(
+                    <div key={t.id} onClick={()=>addTeacher(t.id)}
+                      style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid #f1f5f9",fontSize:14}}
+                      onMouseEnter={e=>e.currentTarget.style.background="#F0FDF4"}
+                      onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
+                      <span style={{fontWeight:600}}>{t.displayName}</span>
+                    </div>
+                  )) : (
+                    <div style={{padding:"12px",color:"var(--TS)",fontSize:13,textAlign:"center"}}>❌ ไม่พบชื่อครูที่ค้นหา</div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <button onClick={()=>setStep(2)} disabled={!canStep2} className="btn bp" style={{width:"100%",padding:"12px",fontSize:15}}>ถัดไป: เลือกวันที่และเวลา →</button>
+      </div>}
+
+      {step===2&&<div className="g2" style={{alignItems:"start"}}>
+        <div className="card">
+          <h3 style={{fontWeight:700,fontSize:15,marginBottom:10}}>เลือกวันที่</h3>
+          <MiniCal year={calY} month={calM} onPrev={prevMon} onNext={nextMon}
+            renderCell={(day,ds)=>{
+              const isPast=ds<todayStr,isBlk=blockedDates.includes(ds),isSel=ds===selDate;
+              let bg="var(--W)",col="var(--T)",bc="var(--BD)";
+              if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(isBlk){bg:"#FEE2E2";col:"#FECACA";bc:"#FECACA";} else if(isPast){bg="#F9FAFB";col="#D1D5DB";bc="#F3F4F6";}
+              return <button key={ds} onClick={()=>{if(!isPast&&!isBlk){setSelDate(ds);setSelTime("");}}} disabled={isPast||isBlk}
+                style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:(isPast||isBlk)?"not-allowed":"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isSel?700:400}}>{day}</button>;
+            }}/>
+        </div>
+        <div className="card">
+          <h3 style={{fontWeight:700,fontSize:15,marginBottom:8}}>เลือกเวลา</h3>
+          {!selDate?<p style={{color:"#D1D5DB",fontSize:14,marginTop:8}}>← กรุณาเลือกวันที่ก่อน</p>:(<>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
+              {TIME_SLOTS.map(t=>{const blocked=blockedTimesFor(selDate).includes(t),isSel=selTime===t;
+                return <button key={t} disabled={blocked} onClick={()=>setSelTime(t)}
+                  style={{padding:"10px 4px",borderRadius:8,border:"1.5px solid",fontFamily:"Sarabun,sans-serif",cursor:blocked?"not-allowed":"pointer",
+                    borderColor:isSel?"var(--P)":blocked?"#FECACA":"var(--BD)",background:isSel?"var(--P)":blocked?"#FEF2F2":"var(--W)",color:isSel?"#fff":blocked?"#FECACA":"var(--T)",
+                    display:"flex",flexDirection:"column",alignItems:"center",gap:2,lineHeight:1.2}}>
+                  {t.split('\n').map((line,i)=><span key={i} style={{fontSize:i===0?13:11,fontWeight:isSel?700:i===0?600:400}}>{line}</span>)}
+                </button>;})}
+            </div>
+          </>)}
+          {selDate&&selTime&&<button onClick={submit} disabled={saving} className="btn bg" style={{width:"100%",padding:"13px",fontSize:15,marginTop:16}}>📌 ยืนยันการจอง</button>}
+          <button onClick={()=>setStep(1)} className="btn bx" style={{width:"100%",marginTop:8,fontSize:13}}>← กลับแก้ไข</button>
+        </div>
+      </div>}
+
+      <div className="card" style={{marginTop:24}}>
+        <h3 style={{fontWeight:700,fontSize:16,color:"var(--P)",marginBottom:12}}>📌 รายการจองของคุณ (ที่ยังรอการนิเทศ)</h3>
+        {myBookings.length === 0 ? (
+          <p style={{color:"var(--TS)",fontSize:13}}>คุณยังไม่มีรายการจองที่รอการนิเทศ</p>
+        ) : (
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {myBookings.map(b=>(
+              <div key={b.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"12px 16px",background:"#F9FAFB",borderRadius:8,borderLeft:"4px solid var(--A)",flexWrap:"wrap"}}>
+                <div>
+                  <div style={{fontWeight:700,fontSize:14,color:"var(--P)"}}>{fmtDate(b.date)} — เวลา {b.time}</div>
+                  <div style={{fontSize:13,color:"var(--T)",marginTop:4}}>{b.subject} ({b.classRoom})</div>
+                  <div style={{fontSize:12,color:"#6B7280",marginTop:4}}>กรรมการ: {b.adminName}, {b.teacher1Name}, {b.teacher2Name}</div>
+                </div>
+                {onDelete && (
+                  <button onClick={()=>{if(window.confirm("คุณต้องการยกเลิกและลบรายการจองนี้ใช่หรือไม่?")) onDelete(b.id);}}
+                    className="btn br" style={{padding:"8px 12px",fontSize:12,marginTop:8}}>🗑️ ลบและจองใหม่</button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SummaryPage({currentUser,bookings,structure,users,settings}){
+  const visible = currentUser.role==="teacher"
+    ? bookings.filter(b=>b.teacherId===currentUser.id)
+    : bookings;
+  const sorted=[...visible].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  const [detail, setDetail] = useState(null);
+
+  const printReport = (b) => {
+    const sc = calcAvgScore(b, structure);
+    const win = window.open("", "_blank");
+    const isTeacher = currentUser.role === "teacher";
+
+    const evalRows = evalIds(b).map((eid) => {
+      const ev = b.evals?.[eid];
+      const u  = users.find(u => u.id === eid);
+      const res = calcOneEval(ev, structure);
+      if (isTeacher) {
+        return `<tr><td style="font-size:9.5pt;color:#374151;padding:8px">${ev?.comments || "<em style='color:#9CA3AF'>ไม่มีข้อเสนอแนะ</em>"}</td></tr>`;
+      }
+      return `<tr>
+        <td>${u?.displayName || eid}</td>
+        <td style="text-align:center">${ROLES[u?.role] || ""}</td>
+        <td style="text-align:center">${res ? res.total + "/" + res.maxTotal : "—"}</td>
+        <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
+        <td style="font-size:9.5pt;color:#374151">${ev?.comments || "—"}</td>
+      </tr>`;
+    }).join("");
+
+    const dimRows = sc ? sc.dims.map(d => {
+      const pct = Math.round(d.score / d.max * 100);
+      const g = gradeOf(pct);
+      return `<tr>
+        <td>${d.name}</td>
+        <td style="text-align:center">${d.score}/${d.max}</td>
+        <td style="text-align:center;font-weight:700;color:${g.color}">${pct}%</td>
+        <td style="padding:4px 8px">
+          <div style="background:#E5E7EB;border-radius:4px;height:7px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${g.color};border-radius:4px"></div>
+          </div>
+        </td>
+      </tr>`;
+    }).join("") : "";
+
+    const logoHtml = settings.logo
+      ? `<img src="${settings.logo}" style="width:52px;height:52px;border-radius:8px;object-fit:cover" />`
+      : `<div style="width:52px;height:52px;border-radius:8px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;font-size:28px">🏫</div>`;
+    const grade = sc ? gradeOf(sc.avgPct) : null;
+
+    win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="utf-8"><title>รายงานนิเทศ — ${b.teacherName}</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap');
+      @page{ size:A4 portrait; margin:12mm 14mm; }
+      *{ box-sizing:border-box; margin:0; padding:0; }
+      body{ font-family:'Sarabun',sans-serif; color:#1F2937; font-size:10pt; line-height:1.45; }
+      .hdr{ display:flex; align-items:center; gap:12px; padding-bottom:8px; border-bottom:2.5px solid #1E3A8A; margin-bottom:10px; }
+      .hdr-text h1{ font-size:14pt; font-weight:800; color:#1E3A8A; }
+      .hdr-text p{ font-size:9pt; color:#6B7280; margin-top:1px; }
+      .info-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
+      .info-item{ background:#F8FAFF; border:1px solid #E0E7FF; border-radius:7px; padding:5px 10px; }
+      .info-lbl{ font-size:8pt; color:#6B7280; }
+      .info-val{ font-size:9.5pt; font-weight:700; color:#1F2937; }
+      .sec{ font-size:10pt; font-weight:700; color:#1E3A8A; margin:9px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #BFDBFE; }
+      table{ width:100%; border-collapse:collapse; font-size:9pt; }
+      th{ background:#1E3A8A; color:#fff; padding:5px 8px; font-weight:700; }
+      td{ padding:4px 8px; border-bottom:1px solid #E5E7EB; vertical-align:middle; }
+      tr:nth-child(even) td{ background:#F8FAFF; }
+      .footer{ margin-top:10px; font-size:8pt; color:#9CA3AF; border-top:1px solid #E5E7EB; padding-top:6px; display:flex; justify-content:space-between; }
+    </style>
+    </head><body>
+    <div class="hdr">
+      ${logoHtml}
+      <div class="hdr-text">
+        <h1>รายงานผลการนิเทศการสอน</h1>
+        <p>${settings.schoolName} · พิมพ์วันที่ ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}</p>
+      </div>
+      ${(grade) ? `<div style="margin-left:auto;text-align:center">
+        <div style="font-size:34pt;font-weight:800;color:#1E3A8A">${sc.avgPct}%</div>
+        <div style="font-size:9pt;color:#6B7280">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
+        <span style="display:inline-block;padding:3px 12px;border-radius:20px;font-weight:700;background:${grade.bg};color:${grade.color}">${grade.label}</span>
+      </div>` : ""}
+    </div>
+    <div class="info-grid">
+      <div class="info-item"><div class="info-lbl">ชื่อ-สกุลครู</div><div class="info-val">${b.teacherName}</div></div>
+      <div class="info-item"><div class="info-lbl">รายวิชา</div><div class="info-val">${b.subject}</div></div>
+      <div class="info-item"><div class="info-lbl">ระดับชั้น / ห้อง</div><div class="info-val">${b.classRoom}</div></div>
+      <div class="info-item"><div class="info-lbl">วันที่นิเทศ</div><div class="info-val">${fmtDate(b.date)}</div></div>
+      <div class="info-item"><div class="info-lbl">คาบเรียน</div><div class="info-val">${b.time}</div></div>
+${!isTeacher ? `
+<div class="info-item"><div class="info-lbl">ผู้บริหาร</div><div class="info-val">${b.adminName}</div></div>
+<div class="info-item" style="grid-column:span 2"><div class="info-lbl">ครูกรรมการ</div><div class="info-val">${b.teacher1Name} | ${b.teacher2Name}</div></div>
+` : ""}      <div class="info-item"><div class="info-lbl">สถานะ</div><div class="info-val" style="color:#065F46">✅ ประเมินครบแล้ว (${sc?.count || 0} คน)</div></div>
+    </div>
+    <!-- คะแนนรายด้าน (ครูเห็นได้ แต่ไม่เห็นชื่อกรรมการ) -->
+    <div class="sec">ผลการประเมินรายด้าน</div>
+    <table>
+      <thead><tr>
+        <th style="text-align:left">ด้านการประเมิน</th>
+        <th style="width:70px">คะแนน</th>
+        <th style="width:55px">ร้อยละ</th>
+        <th style="width:120px">กราฟ</th>
+      </tr></thead>
+      <tbody>${dimRows}</tbody>
+    </table>
+
+    <!-- ข้อเสนอแนะ: ครูไม่เห็นชื่อ, admin เห็นทุกอย่าง -->
+    ${!isTeacher ? `
+    <div class="sec">ผลการประเมินรายกรรมการ</div>
+    <table>
+      <thead><tr>
+        <th style="text-align:left">ชื่อ-สกุล</th>
+        <th style="width:80px;text-align:center">ตำแหน่ง</th>
+        <th style="width:70px;text-align:center">คะแนน</th>
+        <th style="width:55px;text-align:center">ร้อยละ</th>
+        <th>ข้อเสนอแนะ</th>
+      </tr></thead>
+      <tbody>${evalRows}</tbody>
+    </table>
+    ` : `
+    <div class="sec">💬 ข้อเสนอแนะจากคณะกรรมการ</div>
+    <table>
+      <thead><tr>
+        <th style="text-align:left">ข้อเสนอแนะ / ความคิดเห็น</th>
+      </tr></thead>
+      <tbody>${evalRows}</tbody>
+    </table>
+    `}
+    <div class="footer">
+      <span>${settings.schoolName} · ระบบนิเทศการสอน</span>
+      <span>พิมพ์อัตโนมัติ · เอกสารนี้ไม่ต้องลงนาม</span>
+    </div>
+    <script>window.onload=()=>{ setTimeout(()=>window.print(), 600); }</script>
+    </body></html>`);
+    win.document.close();
+  };
+
+  return(
+    <div>
+      <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={`ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>`
+      <div className="card" style={{padding:0,overflow:"hidden"}}>
+        <div style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
+            <thead><tr style={{background:"var(--P)",color:"#fff"}}>
+              {(currentUser.role==="teacher"
+                ? ["#","วิชา","ชั้น","วันที่","เวลา","สถานะ",""]
+                : ["#","ชื่อ-สกุล","วิชา","ชั้น","วันที่","เวลา","สถานะ","คะแนน",""]
+              ).map((h,i)=>(
+                <th key={i} style={{padding:"10px",textAlign:"left",whiteSpace:"nowrap",fontWeight:700}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {sorted.map((b,idx)=>{const sc=calcAvgScore(b,structure);return(
+                <tr key={b.id} style={{background:idx%2?"#F9FAFB":"var(--W)",borderBottom:"1px solid var(--BD)"}}>
+                  <td style={{padding:"9px 10px"}}>{idx+1}</td>
+                  {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{b.teacherName}</td>}
+                  <td style={{padding:"9px 10px"}}>{b.subject}</td>
+                  <td style={{padding:"9px 10px"}}>{b.classRoom}</td>
+                  <td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{fmtDate(b.date)}</td>
+                  <td style={{padding:"9px 10px"}}>{b.time}</td>
+                  <td style={{padding:"9px 10px"}}>{isFullyEval(b)?<span className="badge-d">✅ ครบ</span>:<span className="badge-part">⏳ {submittedCount(b)}/{evalIds(b).length}</span>}</td>
+                  {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px"}}>{sc?<span style={{fontWeight:700,color:gradeOf(sc.avgPct).color}}>{sc.avgTotal}/{sc.maxTotal} ({sc.avgPct}%)</span>:<span style={{color:"#D1D5DB"}}>—</span>}</td>}
+                  <td style={{padding:"9px 10px",display:"flex",gap:6}}>
+                    {isFullyEval(b)&&<button onClick={()=>printReport(b)} className="btn bo" style={{padding:"5px 10px",fontSize:11}}>🖨️ พิมพ์</button>}
+                    {isFullyEval(b)&&<button onClick={()=>setDetail(b)} className="btn bx" style={{padding:"5px 10px",fontSize:11}}>ดู</button>}
+                  </td>
+                </tr>
+              );})}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Detail Modal — ครูเห็นแค่ข้อเสนอแนะ ไม่เห็นชื่อ/คะแนน */}
+      {detail&&(()=>{const sc=calcAvgScore(detail,structure);return(
+        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(0,0,0,.5)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"var(--W)",borderRadius:14,maxWidth:520,width:"100%",maxHeight:"88vh",overflow:"auto"}}>
+            <div style={{background:"var(--P)",color:"#fff",padding:"14px 18px",borderRadius:"14px 14px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div>
+                <div style={{fontWeight:700,fontSize:16}}>{detail.teacherName}</div>
+                <div style={{fontSize:12,opacity:.8}}>{detail.subject} · {fmtDate(detail.date)} {detail.time}</div>
+              </div>
+              <button onClick={()=>setDetail(null)} style={{background:"none",border:"none",color:"#fff",fontSize:26,cursor:"pointer",lineHeight:1}}>×</button>
+            </div>
+            <div style={{padding:18}}>
+              {evalIds(detail).map((eid,idx)=>{
+                const ev=detail.evals?.[eid];
+                const nm=detail.adminId===eid?detail.adminName:detail.teacher1Id===eid?detail.teacher1Name:detail.teacher2Name;
+                const r=calcOneEval(ev,structure);
+
+                // ── ครูเห็นแค่ข้อเสนอแนะ ไม่เห็นชื่อ/คะแนน ──
+                if(currentUser.role==="teacher"){
+                  return(
+                    <div key={eid} style={{marginBottom:10,padding:"12px 14px",background:"#F9FAFB",borderRadius:9,border:"1px solid var(--BD)"}}>
+                      <div style={{fontSize:12,color:"var(--TS)",marginBottom:4}}>💬 ข้อเสนอแนะ</div>
+                      <div style={{fontSize:14,color:"#374151",lineHeight:1.7}}>
+                        {ev?.comments || <span style={{color:"#D1D5DB",fontStyle:"italic"}}>ไม่มีข้อเสนอแนะ</span>}
+                      </div>
+                    </div>
+                  );
+                }
+
+                // ── admin/sysadmin เห็นทุกอย่าง ──
+                return(
+                  <div key={eid} style={{marginBottom:12,padding:"12px 14px",background:r?"#F0FDF4":"#F9FAFB",borderRadius:9,border:`1px solid ${r?"#BBF7D0":"var(--BD)"}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:r?8:0}}>
+                      <span style={{fontWeight:700,fontSize:13}}>{nm}</span>
+                      {r?<span style={{fontWeight:800,color:gradeOf(r.pct).color,fontSize:14}}>{r.total}/{r.maxTotal} ({r.pct}%)</span>
+                        :<span style={{color:"#D1D5DB",fontSize:12}}>ยังไม่ได้ประเมิน</span>}
+                    </div>
+                    {r&&r.dims.map((d,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
+                        <span style={{fontSize:11,color:"var(--TS)",flex:1}}>{d.name}</span>
+                        <div style={{width:80,height:6,background:"#E5E7EB",borderRadius:3,overflow:"hidden"}}>
+                          <div style={{height:"100%",background:"var(--G)",width:`${d.max>0?d.score/d.max*100:0}%`}}/>
+                        </div>
+                        <span style={{fontSize:11,fontWeight:700,minWidth:32,textAlign:"right",color:"var(--G)"}}>{d.score}/{d.max}</span>
+                      </div>
+                    ))}
+                    {ev?.comments&&<div style={{marginTop:6,fontSize:12,color:"#555",background:"#fff",padding:"6px 10px",borderRadius:6}}><b>ข้อเสนอแนะ:</b> {ev.comments}</div>}
+                  </div>
+                );
+              })}
+              {sc&&currentUser.role!=="teacher"&&(
+                <div style={{background:"#EEF2FF",borderRadius:9,padding:"12px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:4}}>
+                  <span style={{fontWeight:700}}>คะแนนเฉลี่ยรวม ({sc.count} ท่าน)</span>
+                  <span style={{fontWeight:800,fontSize:18,color:gradeOf(sc.avgPct).color}}>{sc.avgTotal}/{sc.maxTotal} ({sc.avgPct}%) — {gradeOf(sc.avgPct).label}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );})()} 
+    </div>
+  );
+}
+
+function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStructure,onSaveBlocked}){
+  const [tab, setTab] = useState("general");
+  const [sName, setSName] = useState(settings.schoolName||"");
+  const [sDomain, setSDomain] = useState(settings.domain||DEFAULT_DOMAIN);
+  const [sLogo, setSLogo] = useState(settings.logo||"");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+  const [str, setStr] = useState(JSON.parse(JSON.stringify(structure)));
+  const [strSaving, setStrSaving] = useState(false);
+  const [strMsg, setStrMsg] = useState("");
+  const [bdCalY, setBDCalY] = useState(new Date().getFullYear());
+  const [bdCalM, setBDCalM] = useState(new Date().getMonth());
+  const [blocked, setBlocked] = useState([...blockedDates]);
+  const [bdSaving, setBdSaving] = useState(false);
+
+  const saveGeneral = async () => {
+    setSaving(true);
+    await onSaveSettings({schoolName:sName.trim(),domain:sDomain.trim(),logo:sLogo.trim()||null});
+    setMsg("✅ บันทึกการตั้งค่าเรียบร้อยแล้ว");
+    setTimeout(()=>setMsg(""),3000);
+    setSaving(false);
+  };
+  const addDomain  = (did) => setStr(prev=>prev.map(d=>d.id===did?{...d,items:[...d.items,{id:"di_"+uid(),name:"รายการประเมินใหม่",maxScore:5}]}:d));
+  const addDomain2 = () => setStr(prev=>[...prev,{id:"ds_"+uid(),name:"หมวดใหม่",items:[{id:"di_"+uid(),name:"รายการประเมินเริ่มต้น",maxScore:5}]}]);
+  const updateItem = (did,iid,field,val) => setStr(prev=>prev.map(d=>d.id===did?{...d,items:d.items.map(i=>i.id===iid?{...i,[field]:val}:i)}:d));
+  const removeItem = (did,iid) => setStr(prev=>prev.map(d=>d.id===did?{...d,items:d.items.filter(i=>i.id!==iid)}:d));
+  const updateDomain = (did,val) => setStr(prev=>prev.map(d=>d.id===did?{...d,name:val}:d));
+  const removeDomain = (did) => { if(!confirm("ลบหมวดหมู่นี้?")) return; setStr(prev=>prev.filter(d=>d.id!==did)); };
+  const saveStructure = async () => { setStrSaving(true); await onSaveStructure(str); setStrMsg("✅ บันทึกโครงสร้างเรียบร้อยแล้ว"); setTimeout(()=>setStrMsg(""),3000); setStrSaving(false); };
+  const toggleBlocked = (ds) => setBlocked(prev=>prev.includes(ds)?prev.filter(d=>d!==ds):[...prev,ds]);
+  const saveBlocked = async () => { setBdSaving(true); await onSaveBlocked(blocked); setBdSaving(false); };
+
+  return(
+    <div>
+      <PageHeader icon="⚙️" title="ตั้งค่าระบบ" subtitle="จัดการข้อมูลโรงเรียน โครงสร้างการประเมิน และวันหยุด"/>
+      <div style={{display:"flex",gap:0,borderBottom:"2px solid var(--BD)",marginBottom:20}}>
+        {[["general","🏫 ทั่วไป"],["structure","📋 โครงสร้างการประเมิน"],["blocked","🗓️ วันหยุด/ปิดทำการ"]].map(([k,lb])=>(
+          <button key={k} className={`tab-btn${tab===k?" active":""}`} onClick={()=>setTab(k)}>{lb}</button>
+        ))}
+      </div>
+      {tab==="general"&&(
+        <div className="card" style={{maxWidth:540}}>
+          <h3 style={{fontWeight:700,color:"var(--P)",fontSize:16,marginBottom:18}}>ข้อมูลโรงเรียน</h3>
+          <div className="frow"><label className="flbl">ชื่อโรงเรียน</label><input className="inp" value={sName} onChange={e=>setSName(e.target.value)}/></div>
+          <div className="frow"><label className="flbl">Domain อีเมล (@...)</label><input className="inp" value={sDomain} onChange={e=>setSDomain(e.target.value)} placeholder="banmi.ac.th"/></div>
+          <div className="frow"><label className="flbl">URL โลโก้ (ไม่บังคับ)</label><input className="inp" value={sLogo} onChange={e=>setSLogo(e.target.value)} placeholder="https://..."/></div>
+          {sLogo&&<div style={{marginBottom:14}}><img src={sLogo} style={{width:80,height:80,borderRadius:12,objectFit:"cover",border:"2px solid var(--BD)"}} onError={e=>{e.target.style.display="none";}}/></div>}
+          {msg&&<div style={{color:"var(--G)",fontWeight:700,fontSize:13,marginBottom:10}}>{msg}</div>}
+          <button onClick={saveGeneral} disabled={saving} className="btn bp">💾 {saving?"กำลังบันทึก...":"บันทึกการตั้งค่า"}</button>
+        </div>
+      )}
+      {tab==="structure"&&(
+        <div>
+          {str.map((d,di)=>(
+            <div key={d.id} className="card" style={{marginBottom:14,borderLeft:"4px solid var(--P)"}}>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
+                <input className="inp" value={d.name} onChange={e=>updateDomain(d.id,e.target.value)} style={{fontWeight:700,fontSize:15,flex:1}}/>
+                <button onClick={()=>removeDomain(d.id)} className="btn br" style={{padding:"7px 10px",fontSize:12}}>🗑️ ลบหมวด</button>
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {d.items.map((item,ii)=>(
+                  <div key={item.id} style={{display:"flex",gap:8,alignItems:"center",background:"#F9FAFB",borderRadius:8,padding:"8px 12px"}}>
+                    <span style={{color:"var(--TS)",fontSize:12,minWidth:20}}>{ii+1}.</span>
+                    <input className="inp" value={item.name} onChange={e=>updateItem(d.id,item.id,"name",e.target.value)} style={{flex:1}}/>
+                    <div style={{display:"flex",alignItems:"center",gap:6,whiteSpace:"nowrap"}}>
+                      <span style={{fontSize:12,color:"var(--TS)"}}>คะแนนเต็ม</span>
+                      <input className="inp" type="number" min="1" max="100" value={item.maxScore} onChange={e=>updateItem(d.id,item.id,"maxScore",parseInt(e.target.value)||1)} style={{width:60,textAlign:"center"}}/>
+                    </div>
+                    <button onClick={()=>removeItem(d.id,item.id)} className="btn br" style={{padding:"6px 8px",fontSize:11}}>✕</button>
+                  </div>
+                ))}
+              </div>
+              <button onClick={()=>addDomain(d.id)} className="btn bx" style={{marginTop:10,fontSize:12}}>➕ เพิ่มรายการย่อย</button>
+            </div>
+          ))}
+          <button onClick={addDomain2} className="btn bx" style={{marginBottom:16,width:"100%",padding:"12px",border:"2px dashed #C7D2FE"}}>➕ เพิ่มหมวดหมู่ใหม่</button>
+          {strMsg&&<div style={{color:"var(--G)",fontWeight:700,fontSize:13,marginBottom:10}}>{strMsg}</div>}
+          <button onClick={saveStructure} disabled={strSaving} className="btn bg" style={{display:"block",width:"100%",padding:"12px",fontSize:15}}>💾 {strSaving?"กำลังบันทึก...":"บันทึกโครงสร้างเกณฑ์ประเมิน"}</button>
+        </div>
+      )}
+      {tab==="blocked"&&(
+        <div className="g2" style={{alignItems:"start"}}>
+          <div className="card">
+            <MiniCal year={bdCalY} month={bdCalM}
+              onPrev={()=>{if(bdCalM===0){setBDCalY(y=>y-1);setBDCalM(11);}else setBDCalM(m=>m-1);}}
+              onNext={()=>{if(bdCalM===11){setBDCalY(y=>y+1);setBDCalM(0);}else setBDCalM(m=>m+1);}}
+              renderCell={(day,ds)=>{
+                const isBlk=blocked.includes(ds);
+                return <button key={ds} onClick={()=>toggleBlocked(ds)}
+                  style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${isBlk?"#EF4444":"var(--BD)"}`,background:isBlk?"#FEE2E2":"var(--W)",color:isBlk?"#991B1B":"var(--T)",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isBlk?700:400}}>{day}</button>;
+              }}/>
+          </div>
+          <div className="card">
+            <h4 style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--R)"}}>🚫 วันที่ปิดทำการ ({blocked.length})</h4>
+            {blocked.length===0?<p style={{color:"#D1D5DB",fontSize:13}}>ยังไม่มีวันที่กำหนด</p>:(
+              <div style={{display:"flex",flexDirection:"column",gap:6}}>
+                {[...blocked].sort().map(d=>(
+                  <div key={d} style={{display:"flex",alignItems:"center",justifyContent:"space-between",background:"#FEE2E2",borderRadius:6,padding:"8px 12px"}}>
+                    <span style={{fontWeight:600,color:"#991B1B",fontSize:13}}>{fmtDate(d)}</span>
+                    <button onClick={()=>toggleBlocked(d)} style={{background:"none",border:"none",cursor:"pointer",color:"#EF4444",fontSize:16}}>✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <button onClick={saveBlocked} disabled={bdSaving} className="btn br" style={{marginTop:14,width:"100%"}}>
+              {bdSaving?"กำลังบันทึก...":"💾 บันทึกวันหยุด"}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ProfileTab({ currentUser }) {
+  const [displayName, setDisplayName] = useState(currentUser.displayName || "");
+  const [msg, setMsg] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [curPw, setCurPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [cfmPw, setCfmPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [pwMsg, setPwMsg] = useState("");
+  const [pwErr, setPwErr] = useState("");
+  const [savingPw, setSavingPw] = useState(false);
+
+  const saveProfile = async () => {
+    if (!displayName.trim()) return;
+    setSaving(true);
+    try {
+      await updateDoc(userRef(currentUser.id), { displayName: displayName.trim() });
+      setMsg("✅ อัปเดตข้อมูลเรียบร้อยแล้ว");
+      setTimeout(() => setMsg(""), 3000);
+    } catch (e) { console.error(e); }
+    setSaving(false);
+  };
+
+  const changePassword = async () => {
+    setPwErr(""); setPwMsg("");
+    if (!curPw) { setPwErr("กรุณากรอกรหัสผ่านปัจจุบัน"); return; }
+    if (curPw !== currentUser.password) { setPwErr("รหัสผ่านปัจจุบันไม่ถูกต้อง"); return; }
+    if (newPw.length < 4) { setPwErr("รหัสผ่านใหม่ต้องมีอย่างน้อย 4 ตัวอักษร"); return; }
+    if (newPw !== cfmPw) { setPwErr("รหัสผ่านใหม่ไม่ตรงกัน"); return; }
+    setSavingPw(true);
+    try {
+      await updateDoc(userRef(currentUser.id), { password: newPw });
+      setPwMsg("✅ เปลี่ยนรหัสผ่านสำเร็จแล้ว");
+      setCurPw(""); setNewPw(""); setCfmPw("");
+      setTimeout(() => setPwMsg(""), 3000);
+    } catch (e) { setPwErr("เกิดข้อผิดพลาด กรุณาลองใหม่"); }
+    setSavingPw(false);
+  };
+
+  return (
+    <div style={{ maxWidth: 540 }}>
+  <PageHeader icon="👤" title="โปรไฟล์ของฉัน" subtitle={currentUser.email}/>
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h3 style={{ fontWeight: 700, color: "var(--P)", marginBottom: 18, fontSize: 16 }}>👤 ข้อมูลส่วนตัว</h3>
+        <div style={{ display:"flex", alignItems:"center", gap:16, marginBottom:20, padding:"14px 16px", background:"var(--PL)", borderRadius:8 }}>
+          <div style={{ width:52, height:52, borderRadius:"50%", background:ROLE_COLOR[getPrimaryRole(currentUser)], display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:20, fontWeight:700 }}>
+            {currentUser.displayName?.slice(0,1) || "?"}
+          </div>
+          <div>
+            <div style={{ fontWeight:700, fontSize:16 }}>{currentUser.displayName}</div>
+            <div style={{ fontSize:13, color:"var(--TS)" }}>{getRoleLabel(currentUser)} · {currentUser.email}</div>
+          </div>
+        </div>
+        <div className="frow"><label className="flbl">อีเมล (ไม่สามารถแก้ไขได้)</label><input className="inp" value={currentUser.email} disabled style={{ background:"#F3F4F6", color:"#9CA3AF" }}/></div>
+        <div className="frow"><label className="flbl">ชื่อ-นามสกุล</label><input className="inp" value={displayName} onChange={e => setDisplayName(e.target.value)}/></div>
+        {msg && <div style={{ color:"var(--G)", fontWeight:700, fontSize:13, marginBottom:10 }}>{msg}</div>}
+        <button onClick={saveProfile} disabled={saving} className="btn bp">💾 {saving ? "กำลังบันทึก..." : "บันทึกข้อมูล"}</button>
+      </div>
+      <div className="card">
+        <h3 style={{ fontWeight:700, color:"var(--P)", marginBottom:6, fontSize:16 }}>🔑 เปลี่ยนรหัสผ่าน</h3>
+        <p style={{ fontSize:13, color:"var(--TS)", marginBottom:18 }}>กรอกรหัสเดิมก่อนแล้วตั้งรหัสใหม่</p>
+        <div className="frow">
+          <label className="flbl">รหัสผ่านปัจจุบัน</label>
+          <div style={{ position:"relative" }}>
+            <input className="inp" type={showPw?"text":"password"} value={curPw} onChange={e=>{setCurPw(e.target.value);setPwErr("");}} placeholder="กรอกรหัสผ่านปัจจุบัน" style={{paddingRight:44}}/>
+            <button onClick={()=>setShowPw(!showPw)} style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",fontSize:17,padding:0,lineHeight:1}}>{showPw?"🙈":"👁️"}</button>
+          </div>
+        </div>
+        <div className="frow"><label className="flbl">รหัสผ่านใหม่</label><input className="inp" type={showPw?"text":"password"} value={newPw} onChange={e=>{setNewPw(e.target.value);setPwErr("");}} placeholder="อย่างน้อย 4 ตัวอักษร"/></div>
+        <div className="frow"><label className="flbl">ยืนยันรหัสผ่านใหม่</label>
+          <input className="inp" type={showPw?"text":"password"} value={cfmPw}
+            onChange={e=>{setCfmPw(e.target.value);setPwErr("");}}
+            style={{borderColor:cfmPw&&newPw&&cfmPw!==newPw?"#ef4444":"var(--BD)"}}
+            onKeyDown={e=>e.key==="Enter"&&changePassword()}/>
+        </div>
+        {newPw.length>0&&<div style={{fontSize:12,marginBottom:12,color:newPw.length<4?"#ef4444":newPw.length<8?"#f59e0b":"#10b981"}}>{newPw.length<4?"⚠️ สั้นเกินไป":newPw.length<8?"🟡 ปานกลาง":"🟢 แข็งแกร่ง"}</div>}
+        {pwErr&&<div style={{background:"#FEE2E2",color:"#991B1B",borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:13,fontWeight:600}}>⚠️ {pwErr}</div>}
+        {pwMsg&&<div style={{background:"#D1FAE5",color:"#065F46",borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:13,fontWeight:600}}>{pwMsg}</div>}
+        <button onClick={changePassword} disabled={savingPw} style={{width:"100%",padding:"11px",borderRadius:9,border:"none",background:savingPw?"#94a3b8":"#6366f1",color:"#fff",fontWeight:700,fontSize:14,cursor:savingPw?"wait":"pointer",fontFamily:"Sarabun,sans-serif"}}>
+          🔐 {savingPw?"กำลังบันทึก...":"เปลี่ยนรหัสผ่าน"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  USERS TAB
+// ═══════════════════════════════════════════════
+const ROLE_META = {
+  admin:    { label:"ผู้บริหาร",    icon:"👔", color:"#6366f1", bg:"#eef2ff" },
+  teacher:  { label:"ครูผู้สอน",   icon:"👩‍🏫", color:"#0ea5e9", bg:"#e0f2fe" },
+  sysadmin: { label:"ผู้ดูแลระบบ", icon:"🔧", color:"#f59e0b", bg:"#fef9c3" },
+};
+
+function UAvatar({ name, role, size=40 }) {
+  const m = ROLE_META[role] || ROLE_META.teacher;
+  return (
+    <div style={{ width:size, height:size, borderRadius:"50%", background:m.bg, border:`2px solid ${m.color}`, display:"flex", alignItems:"center", justifyContent:"center", color:m.color, fontWeight:800, fontSize:size*0.38, flexShrink:0 }}>
+      {name?.slice(0,1)?.toUpperCase()||"?"}
+    </div>
+  );
+}
+
+function UserModal({ user, onClose, onSave }) {
+  const isEdit = !!user?.id;
+  const initRoles = Array.isArray(user?.roles)&&user.roles.length ? user.roles : user?.role ? [user.role] : ["teacher"];
+  const [form, setForm] = useState({ displayName:user?.displayName||"", email:user?.email||"", roles:initRoles, password:"" });
+  const [loading, setLoading] = useState(false);
+  const set = k => e => setForm(f=>({...f,[k]:e.target.value}));
+  const toggleRole = (role) => setForm(f => {
+    const has = f.roles.includes(role);
+    if (has && f.roles.length === 1) return f;
+    return { ...f, roles: has ? f.roles.filter(r=>r!==role) : [...f.roles, role] };
+  });
+  const handleSave = async () => {
+    if(!form.displayName.trim()||!form.email.trim()) { alert("กรุณากรอกชื่อและอีเมล"); return; }
+    setLoading(true);
+    try { await onSave({...form, id:user?.id}); onClose(); }
+    catch(e) { alert("เกิดข้อผิดพลาด: " + e.message); }
+    finally { setLoading(false); }
+  };
+  const inp = { width:"100%", padding:"9px 12px", borderRadius:8, border:"1.5px solid var(--BD)", fontSize:14, background:"var(--W)", color:"inherit", outline:"none", boxSizing:"border-box", fontFamily:"Sarabun,sans-serif" };
+  const lbl = { fontSize:12, fontWeight:700, color:"var(--TS)", marginBottom:4, display:"block" };
+  return (
+    <div style={{position:"fixed",inset:0,background:"#0007",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"var(--W)",borderRadius:16,width:"100%",maxWidth:440,boxShadow:"0 20px 60px #0003",overflow:"hidden"}}>
+        <div style={{background:isEdit?"#6366f1":"#10b981",padding:"18px 22px",color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{fontWeight:800,fontSize:16}}>{isEdit?"✏️ แก้ไขผู้ใช้งาน":"➕ เพิ่มผู้ใช้งานใหม่"}</div>
+          <button onClick={onClose} style={{background:"#fff3",border:"none",color:"#fff",borderRadius:6,padding:"4px 10px",cursor:"pointer",fontSize:16}}>✕</button>
+        </div>
+        <div style={{padding:"22px 24px",display:"flex",flexDirection:"column",gap:14}}>
+          <div><label style={lbl}>ชื่อ-นามสกุล *</label><input style={inp} value={form.displayName} onChange={set("displayName")} placeholder="ชื่อ นามสกุล"/></div>
+          <div><label style={lbl}>อีเมล *</label><input style={inp} type="email" value={form.email} onChange={set("email")} placeholder="example@school.ac.th"/></div>
+          {!isEdit&&<div><label style={lbl}>รหัสผ่านเริ่มต้น</label><input style={inp} type="password" value={form.password} onChange={set("password")} placeholder="อย่างน้อย 4 ตัวอักษร"/></div>}
+          <div>
+            <label style={lbl}>บทบาท</label>
+            <div style={{display:"flex",flexDirection:"column",gap:6,padding:"10px 12px",border:"1.5px solid var(--BD)",borderRadius:8}}>
+              {[{v:"teacher",icon:"👩‍🏫",label:"ครูผู้สอน",color:"#0ea5e9",bg:"#e0f2fe"},{v:"admin",icon:"👔",label:"ผู้บริหาร",color:"#6366f1",bg:"#eef2ff"},{v:"sysadmin",icon:"🔧",label:"ผู้ดูแลระบบ",color:"#f59e0b",bg:"#fef9c3"}].map(({v,icon,label:rl,color,bg})=>{
+                const on = form.roles.includes(v);
+                return(
+                  <label key={v} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"7px 10px",borderRadius:7,background:on?bg:"transparent",border:`1.5px solid ${on?color:"var(--BD)"}`}}>
+                    <input type="checkbox" checked={on} onChange={()=>toggleRole(v)} style={{width:15,height:15,accentColor:color,cursor:"pointer"}}/>
+                    <span style={{fontSize:16}}>{icon}</span>
+                    <span style={{fontSize:14,fontWeight:on?700:400,color:on?color:"inherit",fontFamily:"Sarabun,sans-serif"}}>{rl}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10,marginTop:4}}>
+            <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:9,border:"1.5px solid var(--BD)",background:"transparent",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"Sarabun,sans-serif"}}>ยกเลิก</button>
+            <button onClick={handleSave} disabled={loading} style={{flex:2,padding:"10px",borderRadius:9,border:"none",background:isEdit?"#6366f1":"#10b981",color:"#fff",cursor:loading?"wait":"pointer",fontSize:14,fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>
+              {loading?"กำลังบันทึก…":isEdit?"💾 บันทึก":"✅ เพิ่มผู้ใช้งาน"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function USection({ title, icon, color, count, children, emptyText }) {
+  return (
+    <div style={{background:"var(--BG,#f8fafc)",borderRadius:14,border:"1.5px solid var(--BD)",overflow:"hidden"}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"13px 18px",borderBottom:"1.5px solid var(--BD)",background:"var(--W)"}}>
+        <span style={{fontSize:18}}>{icon}</span>
+        <span style={{fontWeight:800,fontSize:15,color}}>{title}</span>
+        <span style={{marginLeft:"auto",background:color+"22",color,borderRadius:20,padding:"1px 12px",fontSize:12,fontWeight:800,border:`1px solid ${color}44`}}>{count}</span>
+      </div>
+      <div style={{padding:"12px 14px",display:"flex",flexDirection:"column",gap:8}}>
+        {count===0 ? <div style={{textAlign:"center",color:"var(--TS)",fontSize:13,padding:"16px 0"}}>{emptyText}</div> : children}
+      </div>
+    </div>
+  );
+}
+
+function UsersTab({ users }) {
+  const [modal, setModal] = useState(null);
+  const updateStatus = id => updateDoc(userRef(id),{approved:true});
+  const updateRole   = (id,role) => updateDoc(userRef(id),{role});
+  const removeUser   = id => { if(confirm("ยืนยันการลบผู้ใช้งานรายนี้?")) deleteDoc(userRef(id)); };
+  const handleSave = async ({ id, displayName, email, roles, password }) => {
+    const ra = Array.isArray(roles) && roles.length ? roles : ["teacher"];
+    if(id) {
+      await updateDoc(userRef(id), { displayName, email, roles: ra, role: ra[0] });
+    } else {
+      const newId = uid();
+      await setDoc(doc(db,"sv_users",newId), { email:email.trim().toLowerCase(), displayName:displayName.trim(), password:password||"school1234", roles:ra, role:ra[0], approved:true, createdAt:new Date().toISOString() });
+    }
+  };
+  const pending  = users.filter(u=>!u.approved&&u.role!=="sysadmin");
+  const admins   = users.filter(u=>u.approved&&u.role==="admin");
+  const teachers = users.filter(u=>u.approved&&u.role==="teacher");
+  const sysadms  = users.filter(u=>u.role==="sysadmin");
+  const stats = [
+    {label:"ผู้ใช้ทั้งหมด",value:users.length,color:"#6366f1"},
+    {label:"รอการอนุมัติ",value:pending.length,color:"#f59e0b"},
+    {label:"ครูผู้สอน",value:teachers.length,color:"#0ea5e9"},
+    {label:"ผู้บริหาร",value:admins.length,color:"#8b5cf6"},
+  ];
+  return (
+    <div style={{maxWidth:860,padding:"0 0 32px"}}>
+      <PageHeader icon="👥" title="จัดการผู้ใช้งาน" subtitle="เพิ่ม แก้ไข หรือลบบัญชีผู้ใช้ในระบบ" right={
+  <button onClick={()=>setModal({user:{}})} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",borderRadius:10,border:"1.5px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"Sarabun,sans-serif",whiteSpace:"nowrap"}}>
+    ➕ เพิ่มผู้ใช้งาน
+  </button>
+}/>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:22}}>
+        {stats.map(s=>(
+          <div key={s.label} style={{background:"var(--W)",borderRadius:12,padding:"12px 14px",border:"1.5px solid var(--BD)",textAlign:"center"}}>
+            <div style={{fontSize:24,fontWeight:800,color:s.color}}>{s.value}</div>
+            <div style={{fontSize:11,color:"var(--TS)",marginTop:2}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+      {pending.length>0&&(
+        <div style={{marginBottom:20}}>
+          <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10,padding:"10px 14px",background:"#fffbeb",borderRadius:10,border:"1.5px solid #fbbf24"}}>
+            <span style={{fontSize:16}}>⏳</span>
+            <span style={{fontWeight:800,fontSize:14,color:"#92400e"}}>รอการอนุมัติ ({pending.length} คน)</span>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {pending.map(u=>(
+              <div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"#fffbeb",border:"1.5px solid #fbbf24",borderRadius:12,padding:"12px 16px"}}>
+                <UAvatar name={u.displayName} role="teacher" size={42}/>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:14}}>{u.displayName}</div>
+                  <div style={{fontSize:12,color:"var(--TS)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
+                </div>
+                <div style={{display:"flex",gap:7,flexShrink:0}}>
+                  <button onClick={()=>updateStatus(u.id)} style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#10b981",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>อนุมัติ</button>
+                  <button onClick={()=>removeUser(u.id)} style={{padding:"6px 12px",borderRadius:8,border:"1.5px solid #f87171",background:"transparent",color:"#ef4444",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ลบ</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div style={{display:"flex",flexDirection:"column",gap:16}}>
+        {[
+          {title:"ผู้บริหาร",icon:"👔",color:"#8b5cf6",grp:admins,empty:"ยังไม่มีผู้บริหารในระบบ"},
+          {title:"ครูผู้สอน",icon:"👩‍🏫",color:"#0ea5e9",grp:teachers,empty:"ยังไม่มีครูผู้สอนในระบบ"},
+          {title:"ผู้ดูแลระบบ",icon:"🔧",color:"#f59e0b",grp:sysadms,empty:"—"},
+        ].map(({title,icon,color,grp,empty})=>(
+          <USection key={title} title={title} icon={icon} color={color} count={grp.length} emptyText={empty}>
+            {grp.map(u=>{
+              const isSA=u.id==="u_sa1";
+              const m=ROLE_META[u.role]||ROLE_META.teacher;
+              return (
+                <div key={u.id} style={{display:"flex",alignItems:"center",gap:12,background:"var(--W)",border:"1.5px solid var(--BD)",borderRadius:12,padding:"12px 16px",borderLeft:`4px solid ${m.color}`}}>
+                  <UAvatar name={u.displayName} role={u.role} size={44}/>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontWeight:700,fontSize:14}}>{u.displayName}{isSA&&<span style={{fontSize:10,background:"#fef3c7",color:"#92400e",border:"1px solid #fbbf24",borderRadius:4,padding:"1px 6px",marginLeft:6}}>SYSTEM</span>}</div>
+                    <div style={{fontSize:12,color:"var(--TS)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
+                  </div>
+                  {!isSA&&(
+                    <select value={u.role} onChange={e=>updateRole(u.id,e.target.value)}
+                      style={{padding:"6px 8px",borderRadius:8,border:"1.5px solid var(--BD)",fontSize:12,background:m.bg,color:m.color,fontWeight:700,cursor:"pointer",outline:"none",flexShrink:0,fontFamily:"Sarabun,sans-serif"}}>
+                      <option value="teacher">👩‍🏫 ครูผู้สอน</option>
+                      <option value="admin">👔 ผู้บริหาร</option>
+                      <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
+                    </select>
+                  )}
+                  {!isSA&&(
+                    <div style={{display:"flex",gap:6,flexShrink:0}}>
+                      <button onClick={()=>setModal({user:u})} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #6366f1",background:"#eef2ff",color:"#6366f1",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>✏️</button>
+                      <button onClick={()=>removeUser(u.id)} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #f87171",background:"#fff1f2",color:"#ef4444",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>🗑️</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </USection>
+        ))}
+      </div>
+      {modal&&<UserModal user={modal.user} onClose={()=>setModal(null)} onSave={handleSave}/>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
+//  ROOT APP
+// ═══════════════════════════════════════════════
+export default function App() {
+  const [loaded,       setLoaded      ] = useState(false);
+  const [currentUser,  setCurrentUser ] = useState(null);
+  const [page,         setPage        ] = useState("");
+  const [settings,     setSettings    ] = useState(DEF_SETTINGS);
+  const [structure,    setStructure   ] = useState(DEF_STRUCTURE);
+  const [bookings,     setBookings    ] = useState([]);
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [users,        setUsers       ] = useState([]);
+
+  useEffect(()=>{
+    (async()=>{
+      try {
+        const [s,st,bd] = await Promise.all([fsGet("settings"),fsGet("structure"),fsGet("blockedDates")]);
+        if(s)  setSettings(s);
+        if(st) setStructure(st);
+        if(bd) setBlockedDates(bd);
+      } catch(e){ console.error(e); }
+      setLoaded(true);
+    })();
+  },[]);
+
+  useEffect(()=>{
+    const startDate = getStartOfAcademicYear();
+    const recentBookingsQuery = query(bkCol(), where("date", ">=", startDate));
+    const unsub = onSnapshot(recentBookingsQuery, (snap)=>{
+      const bks=snap.docs.map(d=>({...d.data(),id:d.id}));
+      bks.sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+      setBookings(bks);
+    });
+    return ()=>unsub();
+  },[]);
+
+  useEffect(()=>{
+    const unsub = onSnapshot(usersCol(),(snap)=>{
+      const us=snap.docs.map(d=>({id:d.id,...d.data()}));
+      if(us.length===0&&loaded){
+        setDoc(doc(db,"sv_users","u_sa1"),{email:"sysadmin@banmi.ac.th",displayName:"ผู้ดูแลระบบ",role:"sysadmin",password:"admin",approved:true,createdAt:new Date().toISOString()});
+      } else { setUsers(us); }
+      if(currentUser){ const me=us.find(u=>u.id===currentUser.id); if(me) setCurrentUser(me); }
+    });
+    return ()=>unsub();
+  },[loaded,currentUser?.id]);
+
+  const addBooking    = async (nb) => await setDoc(bkRef(nb.id),nb);
+  const updateBooking = async (up) => await setDoc(bkRef(up.id),up);
+  const deleteBooking = async (id) => await deleteDoc(bkRef(id));
+  const saveSettings  = async (s)  => { setSettings(s); await fsSet("settings",s); };
+  const saveStructure = async (st) => { setStructure(st); await fsSet("structure",st); };
+  const saveBlocked   = async (bd) => { setBlockedDates(bd); await fsSet("blockedDates",bd); };
+
+  const handleLogin = u => {
+    setCurrentUser(u);
+    setPage(hasRole(u,"sysadmin")?"dashboard":hasRole(u,"admin")&&!hasRole(u,"teacher")?"summary":"booking");
+  };
+  const handleLogout = () => { setCurrentUser(null); setPage(""); };
+
+  const getNav = useCallback(()=>{
+    if(!currentUser) return [];
+    if(hasRole(currentUser,"sysadmin")) return [
+      ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
+      ["schedule","🗓️","ตาราง"],["users","👥","ผู้ใช้"],["settings","⚙️","ตั้งค่า"],["profile","👤","โปรไฟล์"]
+    ];
+    if(hasRole(currentUser,"admin")&&!hasRole(currentUser,"teacher")) return [
+      ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
+      ["schedule","🗓️","ตาราง"],["profile","👤","โปรไฟล์"]
+    ];
+    const nav=[["booking","📅","จองเวลา"]];
+    if(hasRole(currentUser,"admin")) nav.push(...[["dashboard","📊","Dashboard"],["schedule","🗓️","ตาราง"]]);
+    nav.push(["summary","📋","สรุปผล / ผลของฉัน"]);
+    if(isEvaluator(currentUser.id,bookings)||hasRole(currentUser,"admin")) nav.push(["evaluate","📝","ประเมิน"]);
+    nav.push(["profile","👤","โปรไฟล์"]);
+    return nav;
+  },[currentUser,bookings]);
+
+  const navItems=getNav();
+  const pendingCount=currentUser?bookings.filter(b=>
+    !b.evals?.[currentUser.id]?.submitted&&
+    (hasRole(currentUser,"sysadmin")||b.adminId===currentUser.id||b.teacher1Id===currentUser.id||b.teacher2Id===currentUser.id)
+  ).length:0;
+
+  if(!loaded) return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontSize:17,fontFamily:"Sarabun,sans-serif"}}>⏳ กำลังเชื่อมต่อ Firebase...</div>);
+
+  return(
+    <div style={{minHeight:"100vh",fontFamily:"'Sarabun',sans-serif"}}>
+      <style>{CSS}</style>
+      {currentUser&&(
+        <header className="np" style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E40AF 100%)",color:"#fff",padding:"10px 16px",position:"sticky",top:0,zIndex:300,boxShadow:"0 3px 16px rgba(0,0,0,.22)"}}>
+          <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:40,height:40,borderRadius:8,background:"rgba(255,255,255,.18)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>
+              {settings.logo?<img src={settings.logo} style={{width:36,height:36,borderRadius:6,objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:"🏫"}
+            </div>
+            <div style={{minWidth:0,marginRight:4,flexShrink:0}}>
+              <div style={{fontWeight:800,fontSize:14}}>{settings.schoolName}</div>
+              <div style={{fontSize:11,opacity:.75,display:"flex",alignItems:"center",gap:5}}>
+                {currentUser.displayName}&nbsp;<span style={{background:"rgba(255,255,255,.2)",padding:"1px 7px",borderRadius:20,fontSize:10}}>{getRoleLabel(currentUser)}</span>
+              </div>
+            </div>
+            <nav style={{display:"flex",gap:2,flexWrap:"wrap",flex:1}}>
+              {navItems.map(([id,icon,lb])=>{
+                const active=page===id;
+                return <button key={id} onClick={()=>setPage(id)}
+                  style={{padding:"6px 10px",borderRadius:7,cursor:"pointer",fontFamily:"Sarabun,sans-serif",fontSize:13,fontWeight:active?700:500,background:active?"rgba(255,255,255,.22)":"transparent",border:`1.5px solid ${active?"rgba(255,255,255,.45)":"transparent"}`,color:active?"#fff":"rgba(255,255,255,.78)",display:"inline-flex",alignItems:"center",gap:4,transition:"all .18s"}}>
+                  <span>{icon}</span><span className="hsm">{lb}</span>
+                  {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"0 5px",fontSize:10,fontWeight:800}}>{pendingCount}</span>}
+                </button>;
+              })}
+            </nav>
+            <button onClick={handleLogout} style={{padding:"6px 12px",borderRadius:7,cursor:"pointer",background:"transparent",border:"1.5px solid rgba(255,255,255,.35)",color:"#fff",fontFamily:"Sarabun,sans-serif",fontSize:13,flexShrink:0}}>ออก</button>
+          </div>
+        </header>
+      )}
+      <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"22px 14px 56px":"0"}}>
+        {!currentUser&&<LoginPage users={users} settings={settings} onLogin={handleLogin}/>}
+        {currentUser&&page==="dashboard"                                   &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
+        {currentUser&&page==="booking"  &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
+        {currentUser&&page==="summary"                                     &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings}/>}
+        {currentUser&&page==="evaluate"                                    &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
+        {currentUser&&page==="schedule"                                    &&<ScheduleSummary bookings={bookings} users={users}/>}
+        {currentUser&&page==="users"   &&hasRole(currentUser,"sysadmin")   &&<UsersTab users={users}/>}
+        {currentUser&&page==="settings"&&hasRole(currentUser,"sysadmin")   &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
+        {currentUser&&page==="profile"                                     &&<ProfileTab currentUser={currentUser}/>}
+      </main>
+    </div>
+  );
+}
