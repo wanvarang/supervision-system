@@ -505,13 +505,18 @@ function LoginPage({users,settings,onLogin}){
 //  DASHBOARD
 // ═══════════════════════════════════════════════
 function DashboardPage({bookings,users,structure,settings}){
+  const [filterGroup, setFilterGroup] = useState("");
   const teachers = users.filter(u=>u.role==="teacher"&&u.approved);
-  const total = bookings.length;
-  const done = bookings.filter(isFullyEval).length;
+  const filteredTeachers = filterGroup ? teachers.filter(t=>t.subjectGroup===filterGroup) : teachers;
+  const filteredBookings = filterGroup
+    ? bookings.filter(b=>{ const t=teachers.find(u=>u.id===b.teacherId); return t&&t.subjectGroup===filterGroup; })
+    : bookings;
+  const total = filteredBookings.length;
+  const done = filteredBookings.filter(isFullyEval).length;
   const pending = total - done;
   const thisMonth = new Date().toISOString().slice(0,7);
-  const thisMonthBks = bookings.filter(b=>b.date.startsWith(thisMonth));
-  const doneScores = bookings.filter(isFullyEval).map(b=>calcAvgScore(b,structure)).filter(Boolean);
+  const thisMonthBks = filteredBookings.filter(b=>b.date.startsWith(thisMonth));
+  const doneScores = filteredBookings.filter(isFullyEval).map(b=>calcAvgScore(b,structure)).filter(Boolean);
   const overallAvgPct = doneScores.length>0 ? Math.round(doneScores.reduce((a,r)=>a+r.avgPct,0)/doneScores.length) : null;
   const dimAvg = structure.map((d,di)=>{
     const vals = doneScores.map(s=>s.dims[di]).filter(Boolean);
@@ -520,11 +525,11 @@ function DashboardPage({bookings,users,structure,settings}){
   });
   const gradeCount = {ดีมาก:0,ดี:0,พอใช้:0,ควรปรับปรุง:0};
   doneScores.forEach(s=>{ gradeCount[gradeOf(s.avgPct).label]++; });
-  const teacherStats = teachers.map(t=>{
-    const tBks = bookings.filter(b=>b.teacherId===t.id&&isFullyEval(b));
+  const teacherStats = filteredTeachers.map(t=>{
+    const tBks = filteredBookings.filter(b=>b.teacherId===t.id&&isFullyEval(b));
     const scores = tBks.map(b=>calcAvgScore(b,structure)).filter(Boolean);
-    if(!scores.length) return {name:t.displayName,count:0,avg:null};
-    return {name:t.displayName,count:scores.length,avg:Math.round(scores.reduce((a,s)=>a+s.avgPct,0)/scores.length)};
+    if(!scores.length) return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:0,avg:null};
+    return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:scores.length,avg:Math.round(scores.reduce((a,s)=>a+s.avgPct,0)/scores.length)};
   }).filter(t=>t.count>0).sort((a,b)=>b.avg-a.avg);
   const months = [];
   for(let i=5;i>=0;i--){
@@ -536,9 +541,20 @@ function DashboardPage({bookings,users,structure,settings}){
   }
   const maxCount = Math.max(...months.map(m=>m.count),1);
 
+  const usedGroups = [...new Set(teachers.map(t=>t.subjectGroup).filter(Boolean))].sort((a,b)=>SUBJECT_GROUPS.indexOf(a)-SUBJECT_GROUPS.indexOf(b));
+
   return(
     <div>
-      <PageHeader icon="📊" title="Dashboard ภาพรวมการนิเทศ" subtitle={`${settings.schoolName} - ปีการศึกษา ${new Date().getFullYear()+543}`}/>`
+      <PageHeader icon="📊" title="Dashboard ภาพรวมการนิเทศ" subtitle={`${settings.schoolName} - ปีการศึกษา ${new Date().getFullYear()+543}`}/>
+      {usedGroups.length>0&&(
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,flexWrap:"wrap"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"var(--TS)"}}>📚 กลุ่มสาระ:</span>
+          <button onClick={()=>setFilterGroup("")} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${!filterGroup?"var(--P)":"var(--BD)"}`,background:!filterGroup?"var(--P)":"var(--W)",color:!filterGroup?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ทั้งหมด</button>
+          {usedGroups.map(g=>(
+            <button key={g} onClick={()=>setFilterGroup(g===filterGroup?"":g)} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${filterGroup===g?"var(--P)":"var(--BD)"}`,background:filterGroup===g?"var(--P)":"var(--W)",color:filterGroup===g?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>{g}</button>
+          ))}
+        </div>
+      )}
       <div className="g4" style={{marginBottom:20}}>
         {[
           {label:"การนิเทศทั้งหมด",value:total,icon:"📋",color:"#EEF2FF",tc:"var(--P)"},
@@ -621,7 +637,10 @@ function DashboardPage({bookings,users,structure,settings}){
                   <div style={{width:28,height:28,borderRadius:"50%",background:i===0?"#F59E0B":i===1?"#9CA3AF":i===2?"#C77D38":"var(--PL)",color:i<3?"#fff":"var(--P)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>{i+1}</div>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
-                    <div style={{fontSize:12,color:"var(--TS)"}}>นิเทศแล้ว {t.count} ครั้ง</div>
+                    <div style={{fontSize:12,color:"var(--TS)"}}>
+                      {t.subjectGroup&&<span style={{marginRight:6,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"1px 7px",fontWeight:600}}>📚 {t.subjectGroup}</span>}
+                      นิเทศแล้ว {t.count} ครั้ง
+                    </div>
                   </div>
                   <div style={{textAlign:"right"}}>
                     <div style={{fontWeight:800,fontSize:18,color:g.color}}>{t.avg}%</div>
@@ -917,6 +936,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [t1Id,setT1Id]=useState("");
   const [t2Id,setT2Id]=useState("");
   const [teacherSearch, setTeacherSearch] = useState("");
+  const [teacherGroupFilter, setTeacherGroupFilter] = useState("");
   const [selDate,setSelDate]=useState("");
   const [selTime,setSelTime]=useState("");
   const [calY,setCalY]=useState(new Date().getFullYear());
@@ -944,8 +964,10 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   };
   const availableTeachers = teachers.filter(t =>
     t.id !== t1Id && t.id !== t2Id &&
-    t.displayName.toLowerCase().includes(teacherSearch.toLowerCase())
+    t.displayName.toLowerCase().includes(teacherSearch.toLowerCase()) &&
+    (!teacherGroupFilter || t.subjectGroup === teacherGroupFilter)
   );
+  const teacherGroups = [...new Set(teachers.map(t=>t.subjectGroup).filter(Boolean))].sort((a,b)=>SUBJECT_GROUPS.indexOf(a)-SUBJECT_GROUPS.indexOf(b));
   const selectedTeachers = [teachers.find(t=>t.id===t1Id),teachers.find(t=>t.id===t2Id)].filter(Boolean);
 
   const submit=async()=>{
@@ -1028,24 +1050,35 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
             </div>
           )}
           {(!t1Id || !t2Id) && (
-            <div style={{position:"relative"}}>
+            <div>
+              {teacherGroups.length>0&&(
+                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+                  <button onClick={()=>setTeacherGroupFilter("")} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${!teacherGroupFilter?"#16A34A":"#BBF7D0"}`,background:!teacherGroupFilter?"#16A34A":"#fff",color:!teacherGroupFilter?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ทั้งหมด</button>
+                  {teacherGroups.map(g=>(
+                    <button key={g} onClick={()=>setTeacherGroupFilter(g===teacherGroupFilter?"":g)} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${teacherGroupFilter===g?"#16A34A":"#BBF7D0"}`,background:teacherGroupFilter===g?"#16A34A":"#fff",color:teacherGroupFilter===g?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>{g}</button>
+                  ))}
+                </div>
+              )}
+              <div style={{position:"relative"}}>
               <input type="text" className="inp" placeholder="🔍 พิมพ์ค้นหาชื่อครูกรรมการ..."
                 value={teacherSearch} onChange={e=>setTeacherSearch(e.target.value)}
                 style={{borderColor:"#BBF7D0",background:"#fff"}}/>
-              {teacherSearch.trim() !== "" && (
+              {(teacherSearch.trim() !== "" || teacherGroupFilter) && (
                 <div style={{position:"absolute",top:"100%",left:0,right:0,background:"#fff",border:"1px solid #BBF7D0",borderRadius:8,marginTop:4,maxHeight:220,overflowY:"auto",zIndex:10,boxShadow:"0 4px 16px rgba(0,0,0,.1)"}}>
                   {availableTeachers.length > 0 ? availableTeachers.map(t=>(
                     <div key={t.id} onClick={()=>addTeacher(t.id)}
-                      style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid #f1f5f9",fontSize:14}}
+                      style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid #f1f5f9",fontSize:14,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}
                       onMouseEnter={e=>e.currentTarget.style.background="#F0FDF4"}
                       onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
                       <span style={{fontWeight:600}}>{t.displayName}</span>
+                      {t.subjectGroup&&<span style={{fontSize:11,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"2px 8px",fontWeight:600,whiteSpace:"nowrap"}}>{t.subjectGroup}</span>}
                     </div>
                   )) : (
                     <div style={{padding:"12px",color:"var(--TS)",fontSize:13,textAlign:"center"}}>❌ ไม่พบชื่อครูที่ค้นหา</div>
                   )}
                 </div>
               )}
+              </div>
             </div>
           )}
         </div>
