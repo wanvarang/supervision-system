@@ -1235,7 +1235,7 @@ ${!isTeacher ? `
 
   return(
     <div>
-      <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={\ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>`
+      <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={`ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
