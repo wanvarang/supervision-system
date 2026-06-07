@@ -1158,6 +1158,61 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
     : bookings;
   const sorted=[...visible].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
   const [detail, setDetail] = useState(null);
+    const exportExcel = () => {
+    const isTeacher = currentUser.role === "teacher";
+    const BOM = "﻿";
+
+    const dimNames = structure.flatMap(d => d.items.map(i => i.name));
+
+    const headers = isTeacher
+      ? ["ลำดับ","วิชา","ระดับชั้น/ห้อง","วันที่","คาบ","สถานะ","คะแนนเฉลี่ย","ร้อยละ","ระดับ","ข้อเสนอแนะ"]
+      : ["ลำดับ","ชื่อ-สกุลครู","กลุ่มสาระ","วิชา","ระดับชั้น/ห้อง","วันที่","คาบ","ผู้บริหาร","กรรมการ 1","กรรมการ 2","สถานะ",...dimNames,"คะแนนรวม","คะแนนเต็ม","ร้อยละ","ระดับ","ข้อเสนอแนะรวม"];
+
+    const rows = sorted.map((b, idx) => {
+      const sc = calcAvgScore(b, structure);
+      const statusLabel = isFullyEval(b) ? "ประเมินครบแล้ว" : `รอประเมิน (${submittedCount(b)}/${evalIds(b).length})`;
+      const grade = sc ? gradeOf(sc.avgPct).label : "";
+      const allComments = evalIds(b).map(eid => b.evals?.[eid]?.comments).filter(Boolean).join(" | ");
+
+      if (isTeacher) {
+        return [
+          idx + 1, b.subject, b.classRoom, b.date, b.time,
+          statusLabel, sc ? sc.avgTotal : "", sc ? sc.avgPct : "", grade, allComments
+        ];
+      }
+
+      const dimScores = structure.flatMap(d =>
+        d.items.map(i => {
+          if (!sc) return "";
+          let total = 0, count = 0;
+          evalIds(b).forEach(eid => {
+            const ev = b.evals?.[eid];
+            if (ev?.submitted) { total += ev.scores?.[i.id] || 0; count++; }
+          });
+          return count > 0 ? (total / count).toFixed(1) : "";
+        })
+      );
+
+      return [
+        idx + 1, b.teacherName, b.subjectGroup || "", b.subject, b.classRoom, b.date, b.time,
+        b.adminName, b.teacher1Name, b.teacher2Name,
+        statusLabel, ...dimScores,
+        sc ? sc.avgTotal : "", sc ? sc.maxTotal : "", sc ? sc.avgPct : "", grade, allComments
+      ];
+    });
+
+    const csvContent = BOM + [headers, ...rows]
+      .map(row => row.map(cell => `"${String(cell ?? "").replace(/"/g, '""')}"`).join(","))
+      .join("\r\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `สรุปผลนิเทศ_${settings.schoolName}_${new Date().toLocaleDateString("th-TH").replace(/\//g,"-")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   const printReport = (b) => {
     const sc = calcAvgScore(b, structure);
@@ -1290,7 +1345,10 @@ ${!isTeacher ? `
 
   return(
     <div>
-      <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={`ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:16,flexWrap:"wrap",gap:10}}>
+        <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={`ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>
+        {sorted.length>0&&<button onClick={exportExcel} className="btn bg" style={{padding:"9px 18px",fontSize:13,whiteSpace:"nowrap"}}>📥 ส่งออก Excel</button>}
+      </div>
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         <div style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
