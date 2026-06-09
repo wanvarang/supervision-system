@@ -775,11 +775,11 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
         </div>
         {structure.map(domain=>(
           <div key={domain.id} className="card" style={{marginBottom:14}}>
-            <h3 style={{fontWeight:700,fontSize:15,color:"var(--P)",marginBottom:14,paddingBottom:10,borderBottom:"1px solid var(--BD)"}}>{domain.name}</h3>
+            <h3 style={{fontWeight:700,fontSize:15,color:"var(--P)",marginBottom:14,paddingBottom:10,borderBottom:"1px solid var(--BD)",textAlign:"left"}}>{domain.name}</h3>
             {domain.items.map(item=>(
   <div key={item.id} style={{marginBottom:14,paddingBottom:14,borderBottom:"1px solid #F3F4F6"}}>
     <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:8}}>
-      <span style={{fontSize:14,fontWeight:600,flex:1,lineHeight:1.6}}>{item.name}</span>
+      <span style={{fontSize:14,fontWeight:600,flex:1,textAlign:"left"}}>{item.name}</span>
       <span style={{fontSize:11,color:"var(--TS)",whiteSpace:"nowrap",paddingTop:2}}>{item.maxScore} คะแนน</span>
     </div>
     <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
