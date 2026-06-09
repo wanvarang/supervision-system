@@ -682,7 +682,8 @@ function DashboardPage({bookings,users,structure,settings}){
 function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
   const [selected, setSelected] = useState(null);
   const [scores, setScores] = useState({});
-  const [comments, setComments] = useState("");
+  const [strengthComments, setStrengthComments] = useState("");
+  const [improveComments, setImproveComments] = useState("");
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState(null);
 
@@ -697,7 +698,8 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
     const existingEval = b.evals?.[currentUser.id];
     if(existingEval?.submitted){
       setScores(existingEval.scores||{});
-      setComments(existingEval.comments||"");
+      setStrengthComments(existingEval.strengthComments||"");
+      setImproveComments(existingEval.improveComments||"");
     } else {
       const init={};
       structure.forEach(d=>d.items.forEach(i=>{ init[i.id]=0; }));
@@ -726,7 +728,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
         evals:{
           ...selected.evals,
           [currentUser.id]:{
-            scores,comments,submitted:true,
+            scores,strengthComments,improveComments,submitted:true,
             evaluatorName:currentUser.displayName,
             submittedAt:new Date().toISOString()
           }
@@ -789,10 +791,19 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
           </div>
         ))}
         <div className="card" style={{marginBottom:16}}>
-          <h3 style={{fontWeight:700,fontSize:14,marginBottom:10,color:"var(--P)"}}>💬 ข้อเสนอแนะ / ความคิดเห็น</h3>
-          <textarea className="inp" rows={4} value={comments} onChange={e=>setComments(e.target.value)} disabled={already}
-            placeholder="กรอกข้อเสนอแนะสำหรับครูผู้สอน เช่น จุดเด่น จุดที่ควรพัฒนา..."
-            style={{resize:"vertical"}}/>
+          <h3 style={{fontWeight:700,fontSize:14,marginBottom:14,color:"var(--P)"}}>💬 ข้อเสนอแนะ / ความคิดเห็น</h3>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#065F46",marginBottom:6}}>⭐ จุดเด่นในการจัดกิจกรรมการเรียนรู้</div>
+            <textarea className="inp" rows={3} value={strengthComments} onChange={e=>setStrengthComments(e.target.value)} disabled={already}
+              placeholder="ระบุจุดเด่นของครูผู้สอนในการจัดกิจกรรมการเรียนรู้..."
+              style={{resize:"vertical"}}/>
+          </div>
+          <div>
+            <div style={{fontSize:13,fontWeight:700,color:"#92400E",marginBottom:6}}>🔧 จุดที่ควรพัฒนา</div>
+            <textarea className="inp" rows={3} value={improveComments} onChange={e=>setImproveComments(e.target.value)} disabled={already}
+              placeholder="ระบุจุดที่ครูผู้สอนควรพัฒนาปรับปรุง..."
+              style={{resize:"vertical"}}/>
+          </div>
         </div>
         {!already&&<button onClick={submitEval} disabled={saving} className="btn bg" style={{width:"100%",padding:"13px",fontSize:15}}>
           {saving?"กำลังบันทึก...":"💾 ยืนยันส่งผลการประเมิน"}
@@ -1165,19 +1176,20 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
     const dimNames = structure.flatMap(d => d.items.map(i => i.name));
 
     const headers = isTeacher
-      ? ["ลำดับ","วิชา","ระดับชั้น/ห้อง","วันที่","คาบ","สถานะ","คะแนนเฉลี่ย","ร้อยละ","ระดับ","ข้อเสนอแนะ"]
-      : ["ลำดับ","ชื่อ-สกุลครู","กลุ่มสาระ","วิชา","ระดับชั้น/ห้อง","วันที่","คาบ","ผู้บริหาร","กรรมการ 1","กรรมการ 2","สถานะ",...dimNames,"คะแนนรวม","คะแนนเต็ม","ร้อยละ","ระดับ","ข้อเสนอแนะรวม"];
+      ? ["ลำดับ","วิชา","ระดับชั้น/ห้อง","วันที่","คาบ","สถานะ","คะแนนเฉลี่ย","ร้อยละ","ระดับ","จุดเด่น","จุดที่ควรพัฒนา"]
+      : ["ลำดับ","ชื่อ-สกุลครู","กลุ่มสาระ","วิชา","ระดับชั้น/ห้อง","วันที่","คาบ","ผู้บริหาร","กรรมการ 1","กรรมการ 2","สถานะ",...dimNames,"คะแนนรวม","คะแนนเต็ม","ร้อยละ","ระดับ","จุดเด่นรวม","จุดที่ควรพัฒนารวม"];
 
     const rows = sorted.map((b, idx) => {
       const sc = calcAvgScore(b, structure);
       const statusLabel = isFullyEval(b) ? "ประเมินครบแล้ว" : `รอประเมิน (${submittedCount(b)}/${evalIds(b).length})`;
       const grade = sc ? gradeOf(sc.avgPct).label : "";
-      const allComments = evalIds(b).map(eid => b.evals?.[eid]?.comments).filter(Boolean).join(" | ");
+      const allStrengths = evalIds(b).map(eid => b.evals?.[eid]?.strengthComments).filter(Boolean).join(" | ");
+      const allImprove = evalIds(b).map(eid => b.evals?.[eid]?.improveComments).filter(Boolean).join(" | ");
 
       if (isTeacher) {
         return [
           idx + 1, b.subject, b.classRoom, b.date, b.time,
-          statusLabel, sc ? sc.avgTotal : "", sc ? sc.avgPct : "", grade, allComments
+          statusLabel, sc ? sc.avgTotal : "", sc ? sc.avgPct : "", grade, allStrengths, allImprove
         ];
       }
 
@@ -1197,7 +1209,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         idx + 1, b.teacherName, b.subjectGroup || "", b.subject, b.classRoom, b.date, b.time,
         b.adminName, b.teacher1Name, b.teacher2Name,
         statusLabel, ...dimScores,
-        sc ? sc.avgTotal : "", sc ? sc.maxTotal : "", sc ? sc.avgPct : "", grade, allComments
+        sc ? sc.avgTotal : "", sc ? sc.maxTotal : "", sc ? sc.avgPct : "", grade, allStrengths, allImprove
       ];
     });
 
