@@ -704,7 +704,8 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
       const init={};
       structure.forEach(d=>d.items.forEach(i=>{ init[i.id]=0; }));
       setScores(init);
-      setComments("");
+      setStrengthComments("");
+      setImproveComments("");
     }
     setSelected(b);
     setMsg(null);
