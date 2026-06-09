@@ -777,18 +777,16 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
           <div key={domain.id} className="card" style={{marginBottom:14}}>
             <h3 style={{fontWeight:700,fontSize:15,color:"var(--P)",marginBottom:14,paddingBottom:10,borderBottom:"1px solid var(--BD)"}}>{domain.name}</h3>
             {domain.items.map(item=>(
-              <div key={item.id} style={{marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,marginBottom:8}}>
-                  <span style={{fontSize:14,fontWeight:600,flex:1}}>{item.name}</span>
-                  <span style={{fontSize:12,color:"var(--TS)",whiteSpace:"nowrap"}}>(เต็ม {item.maxScore} คะแนน)</span>
-                </div>
-                <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                  {Array.from({length:item.maxScore+1},(_,v)=>(
-                    <button key={v} className={`score-btn${scores[item.id]===v?" active":""}`} onClick={()=>setScore(item.id,v)} disabled={already}>{v}</button>
-                  ))}
-                </div>
-              </div>
-            ))}
+  <div key={item.id} style={{display:"flex",alignItems:"center",gap:12,marginBottom:10,paddingBottom:10,borderBottom:"1px solid #F3F4F6"}}>
+    <span style={{fontSize:13.5,fontWeight:600,flex:1,lineHeight:1.5}}>{item.name}</span>
+    <div style={{display:"flex",gap:4,alignItems:"center",flexShrink:0}}>
+      {Array.from({length:item.maxScore+1},(_,v)=>(
+        <button key={v} className={`score-btn${scores[item.id]===v?" active":""}`} onClick={()=>setScore(item.id,v)} disabled={already} style={{width:34,height:34,fontSize:13}}>{v}</button>
+      ))}
+      <span style={{fontSize:11,color:"var(--TS)",marginLeft:2,whiteSpace:"nowrap"}}>/{item.maxScore}</span>
+    </div>
+  </div>
+))}
           </div>
         ))}
         <div className="card" style={{marginBottom:16}}>
