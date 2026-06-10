@@ -1232,7 +1232,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
     const win = window.open("", "_blank");
     const isTeacher = currentUser.role === "teacher";
 
-    const evalRows = evalIds(b).map((eid) => {
+     const evalRows = evalIds(b).map((eid) => {
       const ev = b.evals?.[eid];
       const u  = users.find(u => u.id === eid);
       const res = calcOneEval(ev, structure);
@@ -1246,6 +1246,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
         <td style="font-size:9pt;color:#065F46">${ev?.strengthComments || "<em style='color:#9CA3AF'>—</em>"}</td>
         <td style="font-size:9pt;color:#92400E">${ev?.improveComments || "<em style='color:#9CA3AF'>—</em>"}</td>
+        <td style="font-size:9pt;color:#374151">${ev?.comments || "<em style='color:#9CA3AF'>—</em>"}</td>
       </tr>`;
     }).join("");
 
@@ -1337,7 +1338,7 @@ ${!isTeacher ? `
         <th style="width:55px;text-align:center">ร้อยละ</th>
         <th style="width:140px">จุดเด่น</th>
         <th style="width:140px">จุดที่ควรพัฒนา</th>
-      </tr></thead>
+            </tr></thead>
       <tbody>${evalRows}</tbody>
     </table>
     ` : `
