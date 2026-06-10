@@ -1237,8 +1237,11 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       const u  = users.find(u => u.id === eid);
       const res = calcOneEval(ev, structure);
       if (isTeacher) {
-        return `<tr><td style="font-size:9.5pt;color:#374151;padding:8px">${ev?.comments || "<em style='color:#9CA3AF'>ไม่มีข้อเสนอแนะ</em>"}</td></tr>`;
-      }
+  return `<tr>
+    <td style="font-size:9pt;color:#065F46;padding:6px 8px">${ev?.strengthComments || "<em style='color:#9CA3AF'>—</em>"}</td>
+    <td style="font-size:9pt;color:#92400E;padding:6px 8px">${ev?.improveComments || "<em style='color:#9CA3AF'>—</em>"}</td>
+  </tr>`;
+}
       return `<tr>
         <td>${u?.displayName || eid}</td>
         <td style="text-align:center">${ROLES[u?.role] || ""}</td>
@@ -1246,7 +1249,6 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
         <td style="font-size:9pt;color:#065F46">${ev?.strengthComments || "<em style='color:#9CA3AF'>—</em>"}</td>
         <td style="font-size:9pt;color:#92400E">${ev?.improveComments || "<em style='color:#9CA3AF'>—</em>"}</td>
-        <td style="font-size:9pt;color:#374151">${ev?.comments || "<em style='color:#9CA3AF'>—</em>"}</td>
       </tr>`;
     }).join("");
 
@@ -1345,8 +1347,9 @@ ${!isTeacher ? `
     <div class="sec">💬 ข้อเสนอแนะจากคณะกรรมการ</div>
     <table>
       <thead><tr>
-        <th style="text-align:left">ข้อเสนอแนะ / ความคิดเห็น</th>
-      </tr></thead>
+  <th style="text-align:left">⭐ จุดเด่น</th>
+  <th style="text-align:left">🔧 จุดที่ควรพัฒนา</th>
+</tr></thead>
       <tbody>${evalRows}</tbody>
     </table>
     `}
