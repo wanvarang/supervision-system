@@ -1244,7 +1244,8 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         <td style="text-align:center">${ROLES[u?.role] || ""}</td>
         <td style="text-align:center">${res ? res.total + "/" + res.maxTotal : "—"}</td>
         <td style="text-align:center;font-weight:700;color:${res ? gradeOf(res.pct).color : "#999"}">${res ? res.pct + "%" : "—"}</td>
-        <td style="font-size:9.5pt;color:#374151">${ev?.comments || "—"}</td>
+        <td style="font-size:9pt;color:#065F46">${ev?.strengthComments || "<em style='color:#9CA3AF'>—</em>"}</td>
+        <td style="font-size:9pt;color:#92400E">${ev?.improveComments || "<em style='color:#9CA3AF'>—</em>"}</td>
       </tr>`;
     }).join("");
 
