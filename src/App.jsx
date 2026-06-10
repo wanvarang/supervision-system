@@ -1334,7 +1334,8 @@ ${!isTeacher ? `
         <th style="width:80px;text-align:center">ตำแหน่ง</th>
         <th style="width:70px;text-align:center">คะแนน</th>
         <th style="width:55px;text-align:center">ร้อยละ</th>
-        <th>ข้อเสนอแนะ</th>
+        <th style="width:140px">จุดเด่น</th>
+        <th style="width:140px">จุดที่ควรพัฒนา</th>
       </tr></thead>
       <tbody>${evalRows}</tbody>
     </table>
