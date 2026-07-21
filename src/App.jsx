@@ -138,6 +138,12 @@ const calcAvgScore = (b,str) => {
 const evalIds        = b => [b.adminId,b.teacher1Id,b.teacher2Id].filter(Boolean);
 const submittedCount = b => evalIds(b).filter(id=>b.evals?.[id]?.submitted).length;
 const isFullyEval    = b => { const ids=evalIds(b); return ids.length>0&&ids.every(id=>b.evals?.[id]?.submitted); };
+const evalStatusList = b => [
+  {id:b.adminId,   name:b.adminName},
+  {id:b.teacher1Id,name:b.teacher1Name},
+  {id:b.teacher2Id,name:b.teacher2Name},
+].filter(e=>e.id).map(e=>({...e,submitted:!!b.evals?.[e.id]?.submitted}));
+const pendingEvaluatorNames = b => evalStatusList(b).filter(e=>!e.submitted).map(e=>e.name).filter(Boolean);
 const gradeOf        = pct => pct>=80?{label:"ดีมาก",color:"#14532D",bg:"#D1FAE5"}:pct>=70?{label:"ดี",color:"#166634",bg:"#DCFCE7"}:pct>=60?{label:"พอใช้",color:"#78350F",bg:"#FEF3C7"}:{label:"ควรปรับปรุง",color:"#7F1D1D",bg:"#FEE2E2"};
 const userBusy       = (uid2,date,time,bks,excId=null) => { if(!uid2) return false; return bks.some(b=>b.id!==excId&&b.date===date&&b.time===time&&(b.teacherId===uid2||b.adminId===uid2||b.teacher1Id===uid2||b.teacher2Id===uid2)); };
 const isEvaluator    = (userId,bookings) => bookings.some(b=>b.adminId===userId||b.teacher1Id===userId||b.teacher2Id===userId);
@@ -1388,7 +1394,11 @@ ${!isTeacher ? `
                   <td style={{padding:"9px 10px"}}>{b.classRoom}</td>
                   <td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{fmtDate(b.date)}</td>
                   <td style={{padding:"9px 10px"}}>{b.time}</td>
-                  <td style={{padding:"9px 10px"}}>{isFullyEval(b)?<span className="badge-d">✅ ครบ</span>:<span className="badge-part">⏳ {submittedCount(b)}/{evalIds(b).length}</span>}</td>
+                  <td style={{padding:"9px 10px"}}>
+  {isFullyEval(b)?<span className="badge-d">✅ ครบ</span>:<span className="badge-part">⏳ {submittedCount(b)}/{evalIds(b).length}</span>}
+  {!isFullyEval(b)&&currentUser.role!=="teacher"&&pendingEvaluatorNames(b).length>0&&
+    <div style={{fontSize:11,color:"#B45309",marginTop:3}}>รอ: {pendingEvaluatorNames(b).join(", ")}</div>}
+</td>
                   {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px"}}>{sc?<span style={{fontWeight:700,color:gradeOf(sc.avgPct).color}}>{sc.avgTotal}/{sc.maxTotal} ({sc.avgPct}%)</span>:<span style={{color:"#D1D5DB"}}>—</span>}</td>}
                   <td style={{padding:"9px 10px",display:"flex",gap:6}}>
                     {isFullyEval(b)&&<button onClick={()=>printReport(b)} className="btn bo" style={{padding:"5px 10px",fontSize:11}}>🖨️ พิมพ์</button>}
