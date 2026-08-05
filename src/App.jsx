@@ -795,7 +795,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
     </div>
     <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
       {Array.from({length:item.maxScore+1},(_,v)=>(
-        <button key={v} className={`score-btn${scores[item.id]===v?" active":""}`} onClick={()=>setScore(item.id,v)} disabled={already}>{v}</button>
+        <button key={v} className={`score-btn${scores[item.id]===v?" active":""}`} onClick={()=>setScore(item.id,v)} disabled={locked}>{v}</button>
       ))}
     </div>
   </div>
@@ -806,21 +806,22 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
           <h3 style={{fontWeight:700,fontSize:14,marginBottom:14,color:"var(--P)"}}>💬 ข้อเสนอแนะ / ความคิดเห็น</h3>
           <div style={{marginBottom:12}}>
             <div style={{fontSize:13,fontWeight:700,color:"#065F46",marginBottom:6}}>⭐ จุดเด่นในการจัดกิจกรรมการเรียนรู้</div>
-            <textarea className="inp" rows={3} value={strengthComments} onChange={e=>setStrengthComments(e.target.value)} disabled={already}
+            <textarea className="inp" rows={3} value={strengthComments} onChange={e=>setStrengthComments(e.target.value)} disabled={locked}
               placeholder="ระบุจุดเด่นของครูผู้สอนในการจัดกิจกรรมการเรียนรู้..."
               style={{resize:"vertical"}}/>
           </div>
           <div>
             <div style={{fontSize:13,fontWeight:700,color:"#92400E",marginBottom:6}}>🔧 จุดที่ควรพัฒนา</div>
-            <textarea className="inp" rows={3} value={improveComments} onChange={e=>setImproveComments(e.target.value)} disabled={already}
+            <textarea className="inp" rows={3} value={improveComments} onChange={e=>setImproveComments(e.target.value)} disabled={locked}
               placeholder="ระบุจุดที่ครูผู้สอนควรพัฒนาปรับปรุง..."
               style={{resize:"vertical"}}/>
           </div>
         </div>
-        {!already&&<button onClick={submitEval} disabled={saving} className="btn bg" style={{width:"100%",padding:"13px",fontSize:15}}>
+                {!locked&&<button onClick={submitEval} disabled={saving} className="btn bg" style={{width:"100%",padding:"13px",fontSize:15}}>
           {saving?"กำลังบันทึก...":"💾 ยืนยันส่งผลการประเมิน"}
         </button>}
         {already&&<div style={{textAlign:"center",padding:12,color:"#065F46",fontWeight:700,fontSize:14,background:"#D1FAE5",borderRadius:8}}>✅ ส่งผลการประเมินแล้ว (ไม่สามารถแก้ไขได้)</div>}
+        {notYetDue&&<div style={{textAlign:"center",padding:12,color:"#92400E",fontWeight:700,fontSize:14,background:"#FEF3C7",borderRadius:8}}>⏳ ยังไม่ถึงวันนิเทศ ไม่สามารถกรอกแบบประเมินได้</div>}
       </div>
     );
   }
