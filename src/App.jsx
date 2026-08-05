@@ -726,6 +726,7 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
   };
 
   const submitEval = async () => {
+    if(selected&&selected.date>today()){setMsg({t:"e",s:"ยังไม่ถึงวันนิเทศ ไม่สามารถกรอกแบบประเมินได้"});return;}
     const total = calcTotal();
     if(total.total===0){setMsg({t:"e",s:"กรุณากรอกคะแนนอย่างน้อย 1 รายการ"});return;}
     setSaving(true);
@@ -748,8 +749,10 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
     setSaving(false);
   };
 
-  if(selected){
+   if(selected){
     const already = selected.evals?.[currentUser.id]?.submitted;
+    const notYetDue = !already && selected.date>today();
+    const locked = already||notYetDue;
     const tot = calcTotal();
     const g = gradeOf(tot.pct);
     return(
@@ -761,7 +764,9 @@ function EvaluateTab({currentUser,bookings,structure,onSaveBooking}){
             <p style={{color:"var(--TS)",fontSize:13}}>{selected.teacherName} — {selected.subject} ({selected.classRoom}) — {fmtDate(selected.date)} {selected.time}</p>
           </div>
         </div>
-        {msg&&<div style={{padding:"12px 16px",borderRadius:8,marginBottom:14,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B"}}>{msg.s}</div>}
+                {msg&&<div style={{padding:"12px 16px",borderRadius:8,marginBottom:14,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B"}}>{msg.s}</div>}
+        {notYetDue&&<div style={{padding:"12px 16px",borderRadius:8,marginBottom:14,fontWeight:600,fontSize:14,background:"#FEF3C7",color:"#92400E"}}>⏳ ยังไม่ถึงวันนิเทศ ({fmtDate(selected.date)}) ยังไม่สามารถกรอกแบบประเมินได้</div>}
+        
         <div className="card" style={{marginBottom:16,background:"linear-gradient(135deg,#EEF2FF,#F0FDF4)",border:"1px solid #C7D2FE"}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
             <div>
