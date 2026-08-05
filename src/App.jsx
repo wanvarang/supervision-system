@@ -1948,7 +1948,10 @@ function UsersTab({ users }) {
 // ═══════════════════════════════════════════════
 export default function App() {
   const [loaded,       setLoaded      ] = useState(false);
-  const [currentUser,  setCurrentUser ] = useState(null);
+  const [currentUser,  setCurrentUser ] = useState(()=>{
+    try { const saved=localStorage.getItem("sv_currentUser"); return saved?JSON.parse(saved):null; }
+    catch(e){ return null; }
+  });
   const [page,         setPage        ] = useState("");
   const [settings,     setSettings    ] = useState(DEF_SETTINGS);
   const [structure,    setStructure   ] = useState(DEF_STRUCTURE);
@@ -1985,7 +1988,7 @@ export default function App() {
       if(us.length===0&&loaded){
         setDoc(doc(db,"sv_users","u_sa1"),{email:"sysadmin@banmi.ac.th",displayName:"ผู้ดูแลระบบ",role:"sysadmin",password:"admin",approved:true,createdAt:new Date().toISOString()});
       } else { setUsers(us); }
-      if(currentUser){ const me=us.find(u=>u.id===currentUser.id); if(me) setCurrentUser(me); }
+            if(currentUser){ const me=us.find(u=>u.id===currentUser.id); if(me){ setCurrentUser(me); localStorage.setItem("sv_currentUser",JSON.stringify(me)); } }
     });
     return ()=>unsub();
   },[loaded,currentUser?.id]);
@@ -1997,11 +2000,12 @@ export default function App() {
   const saveStructure = async (st) => { setStructure(st); await fsSet("structure",st); };
   const saveBlocked   = async (bd) => { setBlockedDates(bd); await fsSet("blockedDates",bd); };
 
-  const handleLogin = u => {
+   const handleLogin = u => {
     setCurrentUser(u);
+    localStorage.setItem("sv_currentUser",JSON.stringify(u));
     setPage(hasRole(u,"sysadmin")?"dashboard":hasRole(u,"admin")&&!hasRole(u,"teacher")?"summary":"booking");
   };
-  const handleLogout = () => { setCurrentUser(null); setPage(""); };
+    const handleLogout = () => { setCurrentUser(null); localStorage.removeItem("sv_currentUser"); setPage(""); };
 
   const getNav = useCallback(()=>{
     if(!currentUser) return [];
