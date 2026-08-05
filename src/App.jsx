@@ -232,6 +232,9 @@ body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-he
   .card{padding:16px;}
   .score-btn{width:36px;height:36px;}
 }
+@media(max-width:480px){
+  .step-lbl{display:none;}
+}
 @media print{
   .np{display:none!important;}
   body{background:white;}
@@ -1015,6 +1018,71 @@ function ScheduleSummary({bookings,users}){
   );
 }
 
+// ═══════════════════════════════════════════════
+//  PERSON PICKER (unified search+select for admin/teacher committee)
+// ═══════════════════════════════════════════════
+function PersonPicker({icon,title,people,selectedIds,max,onChange,showGroupFilter}){
+  const [search,setSearch]=useState("");
+  const [groupFilter,setGroupFilter]=useState("");
+  const selected = selectedIds.map(id=>people.find(p=>p.id===id)).filter(Boolean);
+  const full = selected.length>=max;
+  const groups = showGroupFilter
+    ? [...new Set(people.map(p=>p.subjectGroup).filter(Boolean))].sort((a,b)=>SUBJECT_GROUPS.indexOf(a)-SUBJECT_GROUPS.indexOf(b))
+    : [];
+  const pool = people.filter(p=>
+    !selectedIds.includes(p.id)&&
+    p.displayName.toLowerCase().includes(search.toLowerCase())&&
+    (!groupFilter||p.subjectGroup===groupFilter)
+  );
+  const select = id => { onChange([...selectedIds,id]); setSearch(""); };
+  const remove = id => onChange(selectedIds.filter(x=>x!==id));
+
+  return (
+    <div style={{background:"#F8FAFF",border:"1px solid var(--BD)",borderRadius:"var(--radius-md)",padding:"14px 16px",marginBottom:14}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+        <span style={{fontWeight:700,fontSize:14,color:"var(--T)"}}>{icon} {title}</span>
+        <span style={{fontSize:11.5,fontWeight:700,color:selected.length===max?"var(--G)":"var(--TS)"}}>เลือกแล้ว {selected.length}/{max}</span>
+      </div>
+      {selected.length>0&&(
+        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:full?0:12}}>
+          {selected.map(p=>(
+            <span key={p.id} style={{display:"inline-flex",alignItems:"center",gap:6,background:"var(--P)",color:"#fff",padding:"6px 8px 6px 14px",borderRadius:20,fontSize:13,fontWeight:700}}>
+              {p.displayName}
+              <button onClick={()=>remove(p.id)} style={{background:"rgba(255,255,255,.22)",border:"none",color:"#fff",width:18,height:18,borderRadius:"50%",cursor:"pointer",fontSize:12,lineHeight:1,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      {!full&&(
+        <div>
+          {showGroupFilter&&groups.length>0&&(
+            <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+              <button onClick={()=>setGroupFilter("")} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${!groupFilter?"var(--P)":"var(--BD)"}`,background:!groupFilter?"var(--P)":"#fff",color:!groupFilter?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ทั้งหมด</button>
+              {groups.map(g=>(
+                <button key={g} onClick={()=>setGroupFilter(g===groupFilter?"":g)} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${groupFilter===g?"var(--P)":"var(--BD)"}`,background:groupFilter===g?"var(--P)":"#fff",color:groupFilter===g?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>{g}</button>
+              ))}
+            </div>
+          )}
+          <input type="text" className="inp" placeholder={`🔍 พิมพ์ค้นหาชื่อ...`} value={search} onChange={e=>setSearch(e.target.value)} style={{background:"#fff"}}/>
+          <div style={{display:"flex",flexDirection:"column",gap:3,marginTop:8,maxHeight:200,overflowY:"auto"}}>
+            {pool.length>0?pool.map(p=>(
+              <div key={p.id} onClick={()=>select(p.id)}
+                style={{display:"flex",alignItems:"center",gap:8,padding:"9px 11px",borderRadius:8,cursor:"pointer",fontSize:13.5}}
+                onMouseEnter={e=>e.currentTarget.style.background="var(--PL)"}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}>
+                <span style={{flex:1,fontWeight:600,color:"var(--T)"}}>{p.displayName}</span>
+                {p.subjectGroup&&<span style={{fontSize:11,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"2px 8px",fontWeight:600,whiteSpace:"nowrap"}}>{p.subjectGroup}</span>}
+              </div>
+            )):(
+              <div style={{padding:"10px",color:"var(--TS)",fontSize:13,textAlign:"center"}}>❌ ไม่พบรายชื่อ</div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [step,setStep]=useState(1);
   const [subject,setSubject]=useState("");
@@ -1024,8 +1092,6 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
   const [adminId,setAdminId]=useState("");
   const [t1Id,setT1Id]=useState("");
   const [t2Id,setT2Id]=useState("");
-  const [teacherSearch, setTeacherSearch] = useState("");
-  const [teacherGroupFilter, setTeacherGroupFilter] = useState("");
   const [selDate,setSelDate]=useState("");
   const [selTime,setSelTime]=useState("");
   const [calY,setCalY]=useState(new Date().getFullYear());
@@ -1040,24 +1106,13 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
     bookings.some(b=>b.teacherId===currentUser.id&&b.date===date&&b.time===t)||
     userBusy(adminId,date,t,bookings)||userBusy(t1Id,date,t,bookings)||userBusy(t2Id,date,t,bookings)
   );
-  const canStep2=subject.trim()&&grade&&roomNum&&physRoom.trim()&&adminId&&t1Id&&t2Id&&t1Id!==t2Id;
-
-  const addTeacher = (tid) => {
-    if (!t1Id) setT1Id(tid);
-    else if (!t2Id) setT2Id(tid);
-    setTeacherSearch("");
-  };
-  const removeTeacher = (tid) => {
-    if (t1Id === tid) setT1Id("");
-    if (t2Id === tid) setT2Id("");
-  };
-  const availableTeachers = teachers.filter(t =>
-    t.id !== t1Id && t.id !== t2Id &&
-    t.displayName.toLowerCase().includes(teacherSearch.toLowerCase()) &&
-    (!teacherGroupFilter || t.subjectGroup === teacherGroupFilter)
-  );
-  const teacherGroups = [...new Set(teachers.map(t=>t.subjectGroup).filter(Boolean))].sort((a,b)=>SUBJECT_GROUPS.indexOf(a)-SUBJECT_GROUPS.indexOf(b));
-  const selectedTeachers = [teachers.find(t=>t.id===t1Id),teachers.find(t=>t.id===t2Id)].filter(Boolean);
+  const classInfoValid = !!(subject.trim()&&grade&&roomNum&&physRoom.trim());
+  const committeeValid = !!(adminId&&t1Id&&t2Id);
+  const maxReachableStep = committeeValid&&classInfoValid ? 3 : classInfoValid ? 2 : 1;
+  const missingCommittee = [
+    ...(!adminId?["ผู้บริหาร 1 ท่าน"]:[]),
+    ...([t1Id,t2Id].filter(Boolean).length<2?[`ครูกรรมการอีก ${2-[t1Id,t2Id].filter(Boolean).length} ท่าน`]:[]),
+  ];
 
   const submit=async()=>{
     if(!selDate||!selTime){setMsg({t:"e",s:"กรุณาเลือกวันที่และเวลา"});return;}
@@ -1090,6 +1145,32 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
       <PageHeader icon="📅" title="จองเวลารับการนิเทศ" subtitle={`สวัสดี ${currentUser.displayName} — เลือกกรรมการ 3 ท่าน และระบุวันเวลา`}/>
       {msg&&<div style={{padding:"12px 16px",borderRadius:9,marginBottom:18,fontWeight:600,fontSize:14,background:msg.t==="s"?"#D1FAE5":"#FEE2E2",color:msg.t==="s"?"#065F46":"#991B1B",border:`1.5px solid ${msg.t==="s"?"#A7F3D0":"#FECACA"}`}}>{msg.s}</div>}
 
+      <div style={{display:"flex",gap:0,background:"var(--W)",border:"1px solid var(--BD)",borderRadius:99,padding:5,marginBottom:18,boxShadow:"var(--shadow-card)"}}>
+        {[[1,"ข้อมูลการสอน"],[2,"เลือกกรรมการ"],[3,"วันและเวลา"]].map(([n,label])=>{
+          const active=step===n, done=step>n, reachable=n<=maxReachableStep;
+          return (
+            <button key={n} onClick={()=>{if(reachable)setStep(n);}} disabled={!reachable}
+              style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"9px 6px",borderRadius:99,border:"none",cursor:reachable?"pointer":"not-allowed",fontFamily:"Sarabun,sans-serif",fontSize:12.5,fontWeight:700,background:active?"var(--PL)":"transparent",color:active?"var(--P)":done?"#16A34A":"var(--TS)",opacity:reachable?1:.5}}>
+              <span style={{width:20,height:20,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,background:done?"#16A34A":active?"var(--P)":"#F3F4F6",color:done||active?"#fff":"var(--TS)"}}>{done?"✓":n}</span>
+              <span className="step-lbl">{label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {step>=2&&(
+        <div style={{display:"flex",flexWrap:"wrap",gap:8,alignItems:"center",background:"linear-gradient(135deg,var(--P),var(--PD))",color:"#fff",borderRadius:"var(--radius-md)",padding:"12px 16px",marginBottom:18}}>
+          <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12.5,fontWeight:600,background:"rgba(255,255,255,.14)",border:"1px solid rgba(255,255,255,.24)",padding:"5px 12px",borderRadius:20}}>📖 {subject}</span>
+          <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12.5,fontWeight:600,background:"rgba(255,255,255,.14)",border:"1px solid rgba(255,255,255,.24)",padding:"5px 12px",borderRadius:20}}>🏫 {grade}/{roomNum} · ห้อง {physRoom}</span>
+          {step>=3&&(
+            <span style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:12.5,fontWeight:600,background:"rgba(255,255,255,.14)",border:"1px solid rgba(255,255,255,.24)",padding:"5px 12px",borderRadius:20}}>
+              👔 {admins.find(a=>a.id===adminId)?.displayName} · 👩‍🏫 {[t1Id,t2Id].map(id=>teachers.find(t=>t.id===id)?.displayName).filter(Boolean).join(", ")}
+            </span>
+          )}
+          <button onClick={()=>setStep(1)} style={{marginLeft:"auto",background:"rgba(255,255,255,.14)",border:"1px solid rgba(255,255,255,.3)",color:"#fff",fontSize:12,fontWeight:700,padding:"6px 13px",borderRadius:20,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>✏️ แก้ไข</button>
+        </div>
+      )}
+
       {step===1&&<div className="card">
         <div className="frow" style={{marginBottom:10}}>
           <label className="flbl">รายวิชา *</label>
@@ -1115,66 +1196,27 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
             <input className="inp" value={physRoom} onChange={e=>setPhysRoom(e.target.value)} placeholder="เช่น 324, อาคาร 4"/>
           </div>
         </div>
-        <div style={{background:"#EEF2FF",borderRadius:10,padding:"14px 16px",marginBottom:12}}>
-          <div style={{fontWeight:700,color:"var(--P)",marginBottom:10,fontSize:14}}>① ผู้บริหารที่นิเทศ (1 คน)</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(185px,1fr))",gap:7}}>
-            {admins.map(a=>{const active=adminId===a.id;return <button key={a.id} onClick={()=>setAdminId(a.id===adminId?"":a.id)}
-              style={{padding:"10px 12px",borderRadius:8,border:`2px solid ${active?"var(--P)":"#C7D2FE"}`,background:active?"var(--P)":"var(--W)",color:active?"#fff":"var(--T)",cursor:"pointer",fontFamily:"Sarabun,sans-serif",textAlign:"left",transition:"all .15s"}}>
-              <div style={{fontWeight:600,fontSize:13}}>{active&&"✓ "}{a.displayName}</div>
-            </button>;})}
-          </div>
-        </div>
-        <div style={{background:"#F0FDF4",borderRadius:10,padding:"14px 16px",marginBottom:18}}>
-          <div style={{fontWeight:700,color:"#166634",marginBottom:10,fontSize:14}}>
-            ② ครูกรรมการ (2 คน) {t1Id&&t2Id&&<span style={{fontWeight:500,fontSize:12,color:"#16A34A"}}>— เลือกครบแล้ว ✓</span>}
-          </div>
-          {selectedTeachers.length > 0 && (
-            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
-              {selectedTeachers.map((t, index) => (
-                <div key={t.id} style={{display:"flex",alignItems:"center",gap:6,background:"var(--G)",color:"#fff",padding:"6px 14px",borderRadius:20,fontSize:13,fontWeight:700}}>
-                  <span>[{index+1}] {t.displayName}</span>
-                  <button onClick={()=>removeTeacher(t.id)} style={{background:"none",border:"none",color:"#fff",cursor:"pointer",padding:0,fontSize:18,lineHeight:1,opacity:.8}}>×</button>
-                </div>
-              ))}
-            </div>
-          )}
-          {(!t1Id || !t2Id) && (
-            <div>
-              {teacherGroups.length>0&&(
-                <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
-                  <button onClick={()=>setTeacherGroupFilter("")} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${!teacherGroupFilter?"#16A34A":"#BBF7D0"}`,background:!teacherGroupFilter?"#16A34A":"#fff",color:!teacherGroupFilter?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ทั้งหมด</button>
-                  {teacherGroups.map(g=>(
-                    <button key={g} onClick={()=>setTeacherGroupFilter(g===teacherGroupFilter?"":g)} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${teacherGroupFilter===g?"#16A34A":"#BBF7D0"}`,background:teacherGroupFilter===g?"#16A34A":"#fff",color:teacherGroupFilter===g?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>{g}</button>
-                  ))}
-                </div>
-              )}
-              <div style={{position:"relative"}}>
-              <input type="text" className="inp" placeholder="🔍 พิมพ์ค้นหาชื่อครูกรรมการ..."
-                value={teacherSearch} onChange={e=>setTeacherSearch(e.target.value)}
-                style={{borderColor:"#BBF7D0",background:"#fff"}}/>
-              {(teacherSearch.trim() !== "" || teacherGroupFilter) && (
-                <div style={{position:"absolute",top:"100%",left:0,right:0,background:"#fff",border:"1px solid #BBF7D0",borderRadius:8,marginTop:4,maxHeight:220,overflowY:"auto",zIndex:10,boxShadow:"0 4px 16px rgba(0,0,0,.1)"}}>
-                  {availableTeachers.length > 0 ? availableTeachers.map(t=>(
-                    <div key={t.id} onClick={()=>addTeacher(t.id)}
-                      style={{padding:"10px 14px",cursor:"pointer",borderBottom:"1px solid #f1f5f9",fontSize:14,display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}
-                      onMouseEnter={e=>e.currentTarget.style.background="#F0FDF4"}
-                      onMouseLeave={e=>e.currentTarget.style.background="#fff"}>
-                      <span style={{fontWeight:600}}>{t.displayName}</span>
-                      {t.subjectGroup&&<span style={{fontSize:11,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"2px 8px",fontWeight:600,whiteSpace:"nowrap"}}>{t.subjectGroup}</span>}
-                    </div>
-                  )) : (
-                    <div style={{padding:"12px",color:"var(--TS)",fontSize:13,textAlign:"center"}}>❌ ไม่พบชื่อครูที่ค้นหา</div>
-                  )}
-                </div>
-              )}
-              </div>
-            </div>
-          )}
-        </div>
-        <button onClick={()=>setStep(2)} disabled={!canStep2} className="btn bp" style={{width:"100%",padding:"12px",fontSize:15}}>ถัดไป: เลือกวันที่และเวลา →</button>
+        <button onClick={()=>setStep(2)} disabled={!classInfoValid} className="btn bp" style={{width:"100%",padding:"12px",fontSize:15}}>ถัดไป: เลือกกรรมการ →</button>
       </div>}
 
-      {step===2&&<div className="g2" style={{alignItems:"start"}}>
+      {step===2&&<div className="card">
+        <h3 style={{fontWeight:700,fontSize:15,marginBottom:4}}>เลือกคณะกรรมการ</h3>
+        <p style={{fontSize:12.5,color:"var(--TS)",marginBottom:16}}>ค้นหาแล้วเลือกได้เลย ใช้วิธีเดียวกันทั้งผู้บริหารและครูกรรมการ</p>
+        <PersonPicker icon="👔" title="ผู้บริหารที่นิเทศ" max={1} showGroupFilter={false}
+          people={admins} selectedIds={adminId?[adminId]:[]} onChange={ids=>setAdminId(ids[0]||"")}/>
+        <PersonPicker icon="👩‍🏫" title="ครูกรรมการ" max={2} showGroupFilter={true}
+          people={teachers} selectedIds={[t1Id,t2Id].filter(Boolean)} onChange={ids=>{setT1Id(ids[0]||"");setT2Id(ids[1]||"");}}/>
+        {committeeValid
+          ? <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12.5,color:"#065F46",background:"#D1FAE5",border:"1px solid #A7F3D0",padding:"9px 13px",borderRadius:8,marginTop:2}}>✅ เลือกครบแล้ว พร้อมไปขั้นตอนถัดไป</div>
+          : <div style={{display:"flex",alignItems:"center",gap:7,fontSize:12.5,color:"#92400E",background:"#FEF3C7",border:"1px solid #FDE68A",padding:"9px 13px",borderRadius:8,marginTop:2}}>⏳ ยังต้องเลือก: {missingCommittee.join(" และ ")}</div>
+        }
+        <div style={{display:"flex",justifyContent:"space-between",gap:10,marginTop:20}}>
+          <button onClick={()=>setStep(1)} className="btn bx">← ย้อนกลับ</button>
+          <button onClick={()=>setStep(3)} disabled={!committeeValid} className="btn bp">ถัดไป: วันและเวลา →</button>
+        </div>
+      </div>}
+
+      {step===3&&<div className="g2" style={{alignItems:"start"}}>
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:10}}>เลือกวันที่</h3>
           <MiniCal year={calY} month={calM} onPrev={prevMon} onNext={nextMon}
@@ -1200,7 +1242,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
             </div>
           </>)}
           {selDate&&selTime&&<button onClick={submit} disabled={saving} className="btn bg" style={{width:"100%",padding:"13px",fontSize:15,marginTop:16}}>📌 ยืนยันการจอง</button>}
-          <button onClick={()=>setStep(1)} className="btn bx" style={{width:"100%",marginTop:8,fontSize:13}}>← กลับแก้ไข</button>
+          <button onClick={()=>setStep(2)} className="btn bx" style={{width:"100%",marginTop:8,fontSize:13}}>← กลับไปเลือกกรรมการ</button>
         </div>
       </div>}
 
