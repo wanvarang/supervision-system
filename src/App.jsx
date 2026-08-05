@@ -165,20 +165,22 @@ const CSS = `
   --P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;
   --A:#F59E0B;--AD:#D97706;
   --G:#16A34A;--R:#DC2626;
-  --T:#1F2937;--TS:#6B7280;--BD:#D1D9F0;--BG:#EEF2FF;--W:#FFFFFF;
-  --shadow-card: 0 4px 24px rgba(30,58,138,.10), 0 1px 4px rgba(0,0,0,.04);
-  --shadow-hover: 0 8px 32px rgba(30,58,138,.16), 0 2px 8px rgba(0,0,0,.06);
-  --border-card: 1px solid rgba(30,58,138,.09);
+  --T:#1F2937;--TS:#6B7280;--BD:#D9E0F5;--BG:#F5F7FE;--W:#FFFFFF;
+  --radius-lg:16px;--radius-md:12px;--radius-sm:9px;
+  --shadow-card: 0 2px 10px rgba(30,58,138,.06), 0 1px 3px rgba(0,0,0,.03);
+  --shadow-hover: 0 14px 34px rgba(30,58,138,.13), 0 3px 8px rgba(0,0,0,.05);
+  --border-card: 1px solid rgba(30,58,138,.07);
 }
 body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-height:100vh;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px rgba(34,197,94,.25);}50%{opacity:.5;box-shadow:0 0 0 5px rgba(34,197,94,.05);}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
 .page-fade{animation:fadeUp .3s ease-out;}
-.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:10px;font-family:var(--font-th);font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
+.inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:var(--radius-sm);font-family:var(--font-th);font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
 .inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.12);}
 .inp:disabled{background:#F9FAFB;color:#9CA3AF;cursor:not-allowed;}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;min-height:40px;}
 .btn:active{transform:scale(.97);}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
 .bp{background:linear-gradient(135deg,var(--P),var(--PD));color:#fff;box-shadow:0 3px 12px rgba(30,58,138,.30);}
@@ -193,13 +195,13 @@ body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-he
 .bx:hover:not(:disabled){background:#C7D2FE;}
 .bo{background:var(--W);color:var(--T);border:1.5px solid var(--BD);}
 .bo:hover:not(:disabled){background:#F5F7FF;}
-.card{background:var(--W);border-radius:14px;box-shadow:var(--shadow-card);padding:20px;border:var(--border-card);transition:box-shadow .2s;}
+.card{background:var(--W);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:22px;border:var(--border-card);transition:box-shadow .2s;}
 .card:hover{box-shadow:var(--shadow-hover);}
 .frow{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
 .flbl{font-size:12.5px;font-weight:700;color:#4B5563;letter-spacing:.02em;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
-.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px;}
 .badge-p{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FEF3C7;color:#92400E;}
 .badge-d{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#D1FAE5;color:#065F46;}
 .badge-part{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#DBEAFE;color:#1E40AF;}
@@ -210,17 +212,25 @@ body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-he
 .score-btn:disabled{opacity:.4;cursor:not-allowed;}
 .progress-bar{height:8px;border-radius:99px;background:#E5E7EB;overflow:hidden;}
 .progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.stat-card{border-radius:14px;padding:22px 20px;border:var(--border-card);box-shadow:var(--shadow-card);transition:transform .18s,box-shadow .18s;}
+.stat-card{border-radius:var(--radius-lg);padding:22px 20px;border:var(--border-card);box-shadow:var(--shadow-card);transition:transform .18s,box-shadow .18s;}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
 .tab-btn{padding:9px 18px;border:none;background:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;color:var(--TS);border-bottom:2.5px solid transparent;transition:all .18s;}
 .tab-btn.active{color:var(--P);border-bottom-color:var(--P);}
 .tab-btn:hover:not(.active){color:var(--T);}
 .tbl-row:hover td{background:#F5F7FF!important;}
+.scroll-fade{position:relative;}
+.scroll-fade::after{content:"";position:absolute;top:0;right:0;bottom:0;width:22px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.06));pointer-events:none;}
+.nav-toggle{display:none;}
+.nav-desktop{display:flex;}
+.nav-mobile{display:none;}
+@media(max-width:860px){
+  .nav-toggle{display:inline-flex;}
+  .nav-desktop{display:none;}
+  .nav-mobile{display:flex;}
+}
 @media(max-width:640px){
-  .g2{grid-template-columns:1fr!important;}
-  .g3{grid-template-columns:1fr 1fr!important;}
-  .g4{grid-template-columns:1fr 1fr!important;}
-  .hsm{display:none!important;}
+  .card{padding:16px;}
+  .score-btn{width:36px;height:36px;}
 }
 @media print{
   .np{display:none!important;}
@@ -282,6 +292,35 @@ function PageHeader({icon,title,subtitle,right}){
 }
 
 // ═══════════════════════════════════════════════
+//  DONUT CHART
+// ═══════════════════════════════════════════════
+function DonutChart({segments,size=140,thickness=16,centerLabel,centerSub}){
+  const total = segments.reduce((a,s)=>a+s.value,0);
+  const r = (size-thickness)/2;
+  const c = 2*Math.PI*r;
+  let offset = 0;
+  const shown = segments.filter(s=>s.value>0);
+  return (
+    <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{transform:"rotate(-90deg)"}}>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#EEF1F8" strokeWidth={thickness}/>
+        {total>0&&shown.map((s,i)=>{
+          const len=(s.value/total)*c, dash=`${len} ${c-len}`, dashOffset=-offset;
+          offset+=len;
+          return <circle key={i} cx={size/2} cy={size/2} r={r} fill="none" stroke={s.color} strokeWidth={thickness}
+            strokeDasharray={dash} strokeDashoffset={dashOffset} strokeLinecap={shown.length>1?"butt":"round"}
+            style={{transition:"stroke-dasharray .6s ease"}}/>;
+        })}
+      </svg>
+      <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",textAlign:"center"}}>
+        {centerLabel!=null&&<div style={{fontSize:size*0.17,fontWeight:800,color:"var(--P)",lineHeight:1}}>{centerLabel}</div>}
+        {centerSub&&<div style={{fontSize:size*0.075,color:"var(--TS)",marginTop:3}}>{centerSub}</div>}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════
 //  LOGIN & REGISTER
 // ═══════════════════════════════════════════════
 function LoginPage({users,settings,onLogin}){
@@ -336,7 +375,7 @@ function LoginPage({users,settings,onLogin}){
   return(
     <div style={{
       display:"flex", alignItems:"center", justifyContent:"center",
-      minHeight:"100vh", background:"#EEF2FF",
+      minHeight:"100vh", background:"#F5F7FE",
       fontFamily:"var(--font-th)", padding:"20px"
     }}>
       <style>{`
@@ -580,64 +619,74 @@ function DashboardPage({bookings,users,structure,settings}){
           {label:"เดือนนี้",value:thisMonthBks.length,icon:"📅",grad:"linear-gradient(135deg,#F0FDF4,#DCFCE7)",tc:"#166634",bc:"rgba(22,163,74,.15)"},
         ].map(s=>(
           <div key={s.label} className="stat-card" style={{background:s.grad,border:`1px solid ${s.bc}`}}>
-            <div style={{fontSize:28,marginBottom:6}}>{s.icon}</div>
-            <div style={{fontSize:30,fontWeight:900,color:s.tc,lineHeight:1}}>{s.value}</div>
-            <div style={{fontSize:12,color:s.tc,opacity:.85,fontWeight:700,marginTop:5}}>{s.label}</div>
+            <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,.6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,marginBottom:12}}>{s.icon}</div>
+            <div style={{fontSize:"clamp(22px,4vw,30px)",fontWeight:900,color:s.tc,lineHeight:1}}>{s.value}</div>
+            <div style={{fontSize:12,color:s.tc,opacity:.85,fontWeight:700,marginTop:6}}>{s.label}</div>
           </div>
         ))}
       </div>
       <div className="g2" style={{marginBottom:20,alignItems:"start"}}>
         <div className="card">
-          <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>📈 แนวโน้มการนิเทศ 6 เดือนล่าสุด</h3>
-          <div style={{display:"flex",alignItems:"flex-end",gap:8,height:120}}>
+          <h3 style={{fontWeight:700,fontSize:15,marginBottom:4,color:"var(--P)"}}>📈 แนวโน้มการนิเทศ 6 เดือนล่าสุด</h3>
+          <div style={{display:"flex",gap:14,marginBottom:14}}>
+            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11.5,color:"var(--TS)"}}><span style={{width:9,height:9,borderRadius:3,background:"#DBEAFE",display:"inline-block"}}/>ทั้งหมด</span>
+            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11.5,color:"var(--TS)"}}><span style={{width:9,height:9,borderRadius:3,background:"var(--P)",display:"inline-block"}}/>ประเมินครบ</span>
+          </div>
+          <div style={{display:"flex",alignItems:"flex-end",gap:"clamp(6px,2vw,10px)",height:"clamp(90px,16vw,120px)",borderBottom:"1.5px solid #F1F5F9",paddingBottom:2}}>
             {months.map((m,i)=>(
-              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+              <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%",justifyContent:"flex-end"}} title={`${m.label}: ${m.count} รายการ (ครบ ${m.done})`}>
                 <div style={{fontSize:10,fontWeight:700,color:"var(--P)"}}>{m.count||""}</div>
-                <div style={{width:"100%",position:"relative",height:80,display:"flex",alignItems:"flex-end"}}>
-                  <div style={{position:"absolute",bottom:0,width:"100%",background:"#EEF2FF",borderRadius:"4px 4px 0 0",height:`${(m.count/maxCount)*80}px`}}/>
-                  <div style={{position:"absolute",bottom:0,width:"100%",background:"var(--P)",borderRadius:"4px 4px 0 0",height:`${(m.done/maxCount)*80}px`,opacity:.85}}/>
+                <div style={{width:"100%",position:"relative",flex:1,display:"flex",alignItems:"flex-end"}}>
+                  <div style={{position:"absolute",bottom:0,width:"100%",background:"#DBEAFE",borderRadius:"6px 6px 0 0",height:`${(m.count/maxCount)*100}%`,transition:"height .5s ease"}}/>
+                  <div style={{position:"absolute",bottom:0,width:"100%",background:"linear-gradient(180deg,var(--P),var(--PD))",borderRadius:"6px 6px 0 0",height:`${(m.done/maxCount)*100}%`,transition:"height .5s ease"}}/>
                 </div>
-                <div style={{fontSize:10,color:"var(--TS)"}}>{m.label}</div>
               </div>
             ))}
+          </div>
+          <div style={{display:"flex",gap:"clamp(6px,2vw,10px)",marginTop:6}}>
+            {months.map((m,i)=><div key={i} style={{flex:1,textAlign:"center",fontSize:10.5,color:"var(--TS)"}}>{m.label}</div>)}
           </div>
         </div>
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>🏅 การกระจายระดับคุณภาพ</h3>
-          {overallAvgPct!==null&&(
-            <div style={{textAlign:"center",marginBottom:16,padding:"12px",background:"var(--PL)",borderRadius:8}}>
-              <div style={{fontSize:36,fontWeight:800,color:"var(--P)"}}>{overallAvgPct}%</div>
-              <div style={{fontSize:13,color:"var(--TS)"}}>คะแนนเฉลี่ยรวม</div>
-              <span style={{display:"inline-block",marginTop:4,padding:"3px 12px",borderRadius:20,background:gradeOf(overallAvgPct).bg,color:gradeOf(overallAvgPct).color,fontWeight:700,fontSize:13}}>{gradeOf(overallAvgPct).label}</span>
+          <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap",justifyContent:"center"}}>
+            <DonutChart size={132} thickness={18}
+              segments={[
+                {value:gradeCount.ดีมาก,color:"#16A34A"},
+                {value:gradeCount.ดี,color:"#4ADE80"},
+                {value:gradeCount.พอใช้,color:"#F59E0B"},
+                {value:gradeCount.ควรปรับปรุง,color:"#DC2626"},
+              ]}
+              centerLabel={overallAvgPct!==null?`${overallAvgPct}%`:"—"}
+              centerSub={overallAvgPct!==null?"เฉลี่ยรวม":"ยังไม่มีข้อมูล"}/>
+            <div style={{display:"flex",flexDirection:"column",gap:9,flex:1,minWidth:150}}>
+              {[
+                {k:"ดีมาก",c:"#16A34A"},
+                {k:"ดี",c:"#4ADE80"},
+                {k:"พอใช้",c:"#F59E0B"},
+                {k:"ควรปรับปรุง",c:"#DC2626"},
+              ].map(g=>(
+                <div key={g.k} style={{display:"flex",alignItems:"center",gap:8}}>
+                  <span style={{width:10,height:10,borderRadius:3,background:g.c,flexShrink:0}}/>
+                  <span style={{flex:1,fontSize:12.5,fontWeight:600,color:"var(--T)"}}>{g.k}</span>
+                  <span style={{fontSize:13,fontWeight:800,color:g.c}}>{gradeCount[g.k]}</span>
+                </div>
+              ))}
             </div>
-          )}
-          {[
-            {k:"ดีมาก",bg:"#D1FAE5",c:"#065F46"},
-            {k:"ดี",bg:"#DCFCE7",c:"#166634"},
-            {k:"พอใช้",bg:"#FEF3C7",c:"#92400E"},
-            {k:"ควรปรับปรุง",bg:"#FEE2E2",c:"#991B1B"},
-          ].map(g=>(
-            <div key={g.k} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
-              <span style={{minWidth:80,fontSize:12,fontWeight:700,color:g.c}}>{g.k}</span>
-              <div style={{flex:1,background:"#F3F4F6",borderRadius:4,height:16,overflow:"hidden"}}>
-                <div style={{width:`${doneScores.length?gradeCount[g.k]/doneScores.length*100:0}%`,height:"100%",background:g.bg,border:`1px solid ${g.c}20`,transition:"width .5s"}}/>
-              </div>
-              <span style={{minWidth:24,fontSize:12,fontWeight:700,color:g.c}}>{gradeCount[g.k]}</span>
-            </div>
-          ))}
+          </div>
         </div>
       </div>
       <div className="card" style={{marginBottom:20}}>
         <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>🎯 คะแนนเฉลี่ยรายด้าน</h3>
-        <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
           {dimAvg.map((d,i)=>(
             <div key={i}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
                 <span style={{fontSize:13,fontWeight:600}}>{d.name}</span>
                 <span style={{fontSize:13,fontWeight:800,color:gradeOf(d.pct).color}}>{d.pct}%</span>
               </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{width:`${d.pct}%`,background:d.pct>=80?"#16A34A":d.pct>=70?"#22C55E":d.pct>=60?"#F59E0B":"#DC2626"}}/>
+              <div className="progress-bar" style={{height:9}}>
+                <div className="progress-fill" style={{width:`${d.pct}%`,background:d.pct>=80?"linear-gradient(90deg,#16A34A,#22C55E)":d.pct>=70?"linear-gradient(90deg,#22C55E,#4ADE80)":d.pct>=60?"linear-gradient(90deg,#F59E0B,#FBBF24)":"linear-gradient(90deg,#DC2626,#EF4444)"}}/>
               </div>
             </div>
           ))}
@@ -646,13 +695,18 @@ function DashboardPage({bookings,users,structure,settings}){
       {teacherStats.length>0&&(
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:14,color:"var(--P)"}}>🏆 ผลการนิเทศครูรายบุคคล</h3>
-          <div style={{display:"flex",flexDirection:"column",gap:6}}>
+          <div style={{display:"flex",flexDirection:"column",gap:7}}>
             {teacherStats.map((t,i)=>{
               const g=gradeOf(t.avg);
+              const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":null;
               return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"#FFFBEB":"#F9FAFB",borderRadius:8,border:`1px solid ${i===0?"#FDE68A":"var(--BD)"}`}}>
-                  <div style={{width:28,height:28,borderRadius:"50%",background:i===0?"#F59E0B":i===1?"#9CA3AF":i===2?"#C77D38":"var(--PL)",color:i<3?"#fff":"var(--P)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>{i+1}</div>
-                  <div style={{flex:1}}>
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${i===0?"#FDE68A":"var(--BD)"}`,flexWrap:"wrap"}}>
+                  <div style={{position:"relative",flexShrink:0}}>
+                    <UAvatar name={t.name} role="teacher" size={40}/>
+                    {medal&&<span style={{position:"absolute",bottom:-4,right:-4,fontSize:14,lineHeight:1}}>{medal}</span>}
+                    {!medal&&<span style={{position:"absolute",bottom:-3,right:-6,background:"var(--W)",border:"1px solid var(--BD)",borderRadius:10,fontSize:10,fontWeight:800,color:"var(--TS)",padding:"0 4px"}}>{i+1}</span>}
+                  </div>
+                  <div style={{flex:1,minWidth:120}}>
                     <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
                     <div style={{fontSize:12,color:"var(--TS)"}}>
                       {t.subjectGroup&&<span style={{marginRight:6,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"1px 7px",fontWeight:600}}>📚 {t.subjectGroup}</span>}
@@ -932,7 +986,7 @@ function ScheduleSummary({bookings,users}){
       </div>
       <div className="card" style={{padding:0,overflow:"hidden",marginBottom:14}}>
         <div style={{background:"var(--P)",color:"#fff",padding:"12px 16px",fontWeight:700,fontSize:14}}>📊 ตารางผู้บริหาร — {fmtDate(viewDate)}</div>
-        <div style={{overflowX:"auto"}}>
+        <div className="scroll-fade" style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:400}}>
             <thead><tr style={{background:"#F8FAFF"}}>
               <th style={{padding:"9px 12px",textAlign:"left",fontWeight:700,color:"var(--TS)",borderBottom:"1px solid var(--BD)",width:65,fontSize:12}}>เวลา</th>
@@ -1381,7 +1435,7 @@ ${!isTeacher ? `
         {sorted.length>0&&<button onClick={exportExcel} className="btn bg" style={{padding:"9px 18px",fontSize:13,whiteSpace:"nowrap"}}>📥 ส่งออก Excel</button>}
       </div>
       <div className="card" style={{padding:0,overflow:"hidden"}}>
-        <div style={{overflowX:"auto"}}>
+        <div className="scroll-fade" style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead><tr style={{background:"var(--P)",color:"#fff"}}>
               {(currentUser.role==="teacher"
@@ -1815,7 +1869,7 @@ function UsersTab({ users }) {
     ➕ เพิ่มผู้ใช้งาน
   </button>
 }/>
-      <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:22}}>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(min(130px,100%),1fr))",gap:10,marginBottom:22}}>
         {stats.map(s=>(
           <div key={s.label} style={{background:"var(--W)",borderRadius:12,padding:"12px 14px",border:"1.5px solid var(--BD)",textAlign:"center"}}>
             <div style={{fontSize:24,fontWeight:800,color:s.color}}>{s.value}</div>
@@ -1953,6 +2007,7 @@ export default function App() {
     catch(e){ return null; }
   });
   const [page,         setPage        ] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings,     setSettings    ] = useState(DEF_SETTINGS);
   const [structure,    setStructure   ] = useState(DEF_STRUCTURE);
   const [bookings,     setBookings    ] = useState([]);
@@ -2005,7 +2060,7 @@ export default function App() {
     localStorage.setItem("sv_currentUser",JSON.stringify(u));
     setPage(hasRole(u,"sysadmin")?"dashboard":hasRole(u,"admin")&&!hasRole(u,"teacher")?"summary":"booking");
   };
-    const handleLogout = () => { setCurrentUser(null); localStorage.removeItem("sv_currentUser"); setPage(""); };
+    const handleLogout = () => { setCurrentUser(null); localStorage.removeItem("sv_currentUser"); setPage(""); setMobileMenuOpen(false); };
 
   const getNav = useCallback(()=>{
     if(!currentUser) return [];
@@ -2032,7 +2087,7 @@ export default function App() {
   ).length:0;
 
   if(!loaded) return(
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EEF2FF",fontFamily:"'Noto Sans Thai','Sarabun',sans-serif"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F5F7FE",fontFamily:"'Noto Sans Thai','Sarabun',sans-serif"}}>
       <div style={{background:"#fff",borderRadius:20,padding:"40px 56px",boxShadow:"0 24px 64px rgba(30,58,138,.18)",textAlign:"center",animation:"loginFadeIn .5s ease-out"}}>
         <style>{`@keyframes loginFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}`}</style>
         <div style={{width:60,height:60,borderRadius:16,background:"linear-gradient(135deg,#1E3A8A,#1E2F6B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",boxShadow:"0 8px 24px rgba(30,58,138,.3)"}}>🏫</div>
@@ -2056,29 +2111,49 @@ export default function App() {
             <div style={{width:38,height:38,borderRadius:10,background:"rgba(255,255,255,.16)",border:"1.5px solid rgba(255,255,255,.28)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
               {settings.logo?<img src={settings.logo} style={{width:32,height:32,borderRadius:8,objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:"🏫"}
             </div>
-            <div style={{minWidth:0,marginRight:6,flexShrink:0}}>
-              <div style={{fontWeight:800,fontSize:13.5,lineHeight:1.2}}>{settings.schoolName}</div>
-              <div style={{fontSize:11,opacity:.8,display:"flex",alignItems:"center",gap:5,marginTop:1}}>
-                <span>{currentUser.displayName}</span>
-                <span style={{background:"rgba(255,255,255,.18)",padding:"1px 8px",borderRadius:20,fontSize:10,border:"1px solid rgba(255,255,255,.22)"}}>{getRoleLabel(currentUser)}</span>
+            <div style={{minWidth:0,marginRight:6,flex:1}}>
+              <div style={{fontWeight:800,fontSize:13.5,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{settings.schoolName}</div>
+              <div style={{fontSize:11,opacity:.8,display:"flex",alignItems:"center",gap:5,marginTop:1,overflow:"hidden"}}>
+                <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{currentUser.displayName}</span>
+                <span style={{background:"rgba(255,255,255,.18)",padding:"1px 8px",borderRadius:20,fontSize:10,border:"1px solid rgba(255,255,255,.22)",flexShrink:0}}>{getRoleLabel(currentUser)}</span>
               </div>
             </div>
-            <nav style={{display:"flex",gap:2,flexWrap:"wrap",flex:1}}>
+            <nav className="nav-desktop" style={{gap:2,flexWrap:"wrap"}}>
               {navItems.map(([id,icon,lb])=>{
                 const active=page===id;
                 return <button key={id} onClick={()=>setPage(id)}
                   style={{padding:"6px 11px",borderRadius:8,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:13,fontWeight:active?700:500,background:active?"rgba(255,255,255,.22)":"transparent",border:`1.5px solid ${active?"rgba(255,255,255,.4)":"transparent"}`,color:active?"#fff":"rgba(255,255,255,.80)",display:"inline-flex",alignItems:"center",gap:4,transition:"all .18s",boxShadow:active?"0 2px 8px rgba(0,0,0,.15)":"none"}}>
-                  <span>{icon}</span><span className="hsm">{lb}</span>
+                  <span>{icon}</span><span>{lb}</span>
                   {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"0 5px",fontSize:10,fontWeight:800,marginLeft:2}}>{pendingCount}</span>}
                 </button>;
               })}
             </nav>
-            <button onClick={handleLogout}
+            <button onClick={handleLogout} className="nav-desktop"
               style={{padding:"7px 14px",borderRadius:8,cursor:"pointer",background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.3)",color:"#fff",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:13,flexShrink:0,transition:"background .18s",fontWeight:600}}
               onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.22)"}
               onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.1)"}
             >ออก</button>
+            <button onClick={()=>setMobileMenuOpen(o=>!o)} className="nav-toggle" aria-label="เมนู"
+              style={{alignItems:"center",justifyContent:"center",width:38,height:38,borderRadius:10,cursor:"pointer",background:mobileMenuOpen?"rgba(255,255,255,.22)":"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.3)",color:"#fff",fontSize:17,flexShrink:0}}>
+              {mobileMenuOpen?"✕":"☰"}
+            </button>
           </div>
+          {mobileMenuOpen&&(
+            <nav className="nav-mobile" style={{flexDirection:"column",gap:4,maxWidth:1100,margin:"0 auto",padding:"4px 0 16px",position:"relative",animation:"slideDown .18s ease-out"}}>
+              {navItems.map(([id,icon,lb])=>{
+                const active=page===id;
+                return <button key={id} onClick={()=>{setPage(id);setMobileMenuOpen(false);}}
+                  style={{padding:"11px 14px",borderRadius:10,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:14,fontWeight:active?700:500,background:active?"rgba(255,255,255,.2)":"rgba(255,255,255,.06)",border:`1.5px solid ${active?"rgba(255,255,255,.4)":"transparent"}`,color:"#fff",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                  <span style={{fontSize:16}}>{icon}</span><span style={{flex:1}}>{lb}</span>
+                  {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:800}}>{pendingCount}</span>}
+                </button>;
+              })}
+              <button onClick={handleLogout}
+                style={{marginTop:6,padding:"11px 14px",borderRadius:10,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:14,fontWeight:600,background:"rgba(220,38,38,.18)",border:"1.5px solid rgba(220,38,38,.35)",color:"#fff",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
+                <span style={{fontSize:16}}>🚪</span><span>ออกจากระบบ</span>
+              </button>
+            </nav>
+          )}
         </header>
       )}
       <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"24px 14px 60px":"0"}}>
