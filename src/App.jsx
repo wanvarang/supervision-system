@@ -144,7 +144,7 @@ const evalStatusList = b => [
   {id:b.teacher2Id,name:b.teacher2Name},
 ].filter(e=>e.id).map(e=>({...e,submitted:!!b.evals?.[e.id]?.submitted}));
 const pendingEvaluatorNames = b => evalStatusList(b).filter(e=>!e.submitted).map(e=>e.name).filter(Boolean);
-const gradeOf        = pct => pct>=80?{label:"ดีมาก",color:"#14532D",bg:"#D1FAE5"}:pct>=70?{label:"ดี",color:"#166634",bg:"#DCFCE7"}:pct>=60?{label:"พอใช้",color:"#78350F",bg:"#FEF3C7"}:{label:"ควรปรับปรุง",color:"#7F1D1D",bg:"#FEE2E2"};
+const gradeOf        = pct => pct>=90?{label:"ดีเยี่ยม",color:"#14532D",bg:"#D1FAE5"}:pct>=80?{label:"ดีมาก",color:"#166634",bg:"#DCFCE7"}:pct>=70?{label:"ดี",color:"#78350F",bg:"#FEF3C7"}:pct>=60?{label:"พอใช่",color:"#78350F",bg:"#FEF3C7"}:{label:"ปรับปรุง",color:"#7F1D1D",bg:"#FEE2E2"};
 const userBusy       = (uid2,date,time,bks,excId=null) => { if(!uid2) return false; return bks.some(b=>b.id!==excId&&b.date===date&&b.time===time&&(b.teacherId===uid2||b.adminId===uid2||b.teacher1Id===uid2||b.teacher2Id===uid2)); };
 const isEvaluator    = (userId,bookings) => bookings.some(b=>b.adminId===userId||b.teacher1Id===userId||b.teacher2Id===userId);
 const getStartOfAcademicYear = () => {
