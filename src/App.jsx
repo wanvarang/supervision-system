@@ -582,7 +582,7 @@ function DashboardPage({bookings,users,structure,settings}){
     const avg = vals.length>0 ? Math.round(vals.reduce((a,v)=>a+(v.score/v.max*100),0)/vals.length) : 0;
     return {name:d.name, pct:avg};
   });
-  const gradeCount = {ดีมาก:0,ดี:0,พอใช้:0,ควรปรับปรุง:0};
+  const gradeCount = {ดีเยี่ยม:0,ดีมาก:0,ดี:0,พอใช้:0,ปรับปรุง:0};
   doneScores.forEach(s=>{ gradeCount[gradeOf(s.avgPct).label]++; });
   const teacherStats = filteredTeachers.map(t=>{
     const tBks = filteredBookings.filter(b=>b.teacherId===t.id&&isFullyEval(b));
@@ -655,18 +655,20 @@ function DashboardPage({bookings,users,structure,settings}){
           <div style={{display:"flex",alignItems:"center",gap:20,flexWrap:"wrap",justifyContent:"center"}}>
             <DonutChart size={132} thickness={18}
               segments={[
-                {value:gradeCount.ดีมาก,color:"#16A34A"},
-                {value:gradeCount.ดี,color:"#4ADE80"},
-                {value:gradeCount.พอใช้,color:"#F59E0B"},
+                {value:gradeCount.ดีเยี่ยม,color:"#16A34A"},
+                {value:gradeCount.ดีมาก,color:"#4ADE80"},
+                {value:gradeCount.ดี,color:"#F59E0B"},
+                {value:gradeCount.พอใช่,color:"#DC2626"},
                 {value:gradeCount.ควรปรับปรุง,color:"#DC2626"},
               ]}
               centerLabel={overallAvgPct!==null?`${overallAvgPct}%`:"—"}
               centerSub={overallAvgPct!==null?"เฉลี่ยรวม":"ยังไม่มีข้อมูล"}/>
             <div style={{display:"flex",flexDirection:"column",gap:9,flex:1,minWidth:150}}>
               {[
-                {k:"ดีมาก",c:"#16A34A"},
-                {k:"ดี",c:"#4ADE80"},
-                {k:"พอใช้",c:"#F59E0B"},
+                {k:"ดีเยี่ยม",c:"#16A34A"},
+                {k:"ดีมาก",c:"#4ADE80"},
+                {k:"ดี",c:"#F59E0B"},
+                {k:"พอใช้",c:"#DC2626"},
                 {k:"ควรปรับปรุง",c:"#DC2626"},
               ].map(g=>(
                 <div key={g.k} style={{display:"flex",alignItems:"center",gap:8}}>
