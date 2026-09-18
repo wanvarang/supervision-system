@@ -1278,7 +1278,29 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
   const visible = currentUser.role==="teacher"
     ? bookings.filter(b=>b.teacherId===currentUser.id)
     : bookings;
-  const sorted=[...visible].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  const [sortConfig,setSortConfig]=useState({key:"date",direction:"asc"});
+  const handleSort=(key)=>{
+    setSortConfig(prev=>prev.key===key?{key,direction:prev.direction==="asc"?"desc":"asc"}:{key,direction:"asc"});
+  };
+  const sortValue=(b,key)=>{
+    switch(key){
+      case "teacherName": return b.teacherName||"";
+      case "subject": return b.subject||"";
+      case "classRoom": return b.classRoom||"";
+      case "date": return b.date||"";
+      case "time": return b.time||"";
+      case "status": { const total=evalIds(b).length||1; return isFullyEval(b)?1:submittedCount(b)/total; }
+      case "score": { const sc=calcAvgScore(b,structure); return sc?sc.avgPct:-1; }
+      default: return "";
+    }
+  };
+  const sorted=[...visible].sort((a,b)=>{
+    const {key,direction}=sortConfig;
+    const va=sortValue(a,key), vb=sortValue(b,key);
+    let cmp=typeof va==="string"?va.localeCompare(vb,"th"):va-vb;
+    if(cmp===0&&key==="date") cmp=a.time.localeCompare(b.time);
+    return direction==="asc"?cmp:-cmp;
+  });
   const [detail, setDetail] = useState(null);
     const exportExcel = () => {
     const isTeacher = currentUser.role === "teacher";
@@ -1483,10 +1505,12 @@ ${!isTeacher ? `
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead><tr style={{background:"var(--P)",color:"#fff"}}>
               {(currentUser.role==="teacher"
-                ? ["#","วิชา","ชั้น","วันที่","เวลา","สถานะ",""]
-                : ["#","ชื่อ-สกุล","วิชา","ชั้น","วันที่","เวลา","สถานะ","คะแนน",""]
-              ).map((h,i)=>(
-                <th key={i} style={{padding:"10px",textAlign:"left",whiteSpace:"nowrap",fontWeight:700}}>{h}</th>
+                ? [["#",null],["วิชา","subject"],["ชั้น","classRoom"],["วันที่","date"],["เวลา","time"],["สถานะ","status"],["",null]]
+                : [["#",null],["ชื่อ-สกุล","teacherName"],["วิชา","subject"],["ชั้น","classRoom"],["วันที่","date"],["เวลา","time"],["สถานะ","status"],["คะแนน","score"],["",null]]
+              ).map(([h,key],i)=>(
+                <th key={i} onClick={()=>key&&handleSort(key)} style={{padding:"10px",textAlign:"left",whiteSpace:"nowrap",fontWeight:700,cursor:key?"pointer":"default",userSelect:"none"}}>
+                  {h}{key&&(sortConfig.key===key?(sortConfig.direction==="asc"?" ▲":" ▼"):<span style={{opacity:.35}}> ⇕</span>)}
+                </th>
               ))}
             </tr></thead>
             <tbody>
