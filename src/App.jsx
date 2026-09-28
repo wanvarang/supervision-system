@@ -577,10 +577,33 @@ function DashboardPage({bookings,users,structure,settings}){
   const thisMonthBks = filteredBookings.filter(b=>b.date.startsWith(thisMonth));
   const doneScores = filteredBookings.filter(isFullyEval).map(b=>calcAvgScore(b,structure)).filter(Boolean);
   const overallAvgPct = doneScores.length>0 ? Math.round(doneScores.reduce((a,r)=>a+r.avgPct,0)/doneScores.length) : null;
-  const dimAvg = structure.map((d,di)=>{
-    const vals = doneScores.map(s=>s.dims[di]).filter(Boolean);
-    const avg = vals.length>0 ? Math.round(vals.reduce((a,v)=>a+(v.score/v.max*100),0)/vals.length) : 0;
-    return {name:d.name, pct:avg};
+  // ── ผลการประเมินรายข้อ + สรุปรายด้าน (เฉลี่ยต่อการนิเทศ 1 ครั้ง แล้วเฉลี่ยข้ามทุกครั้ง) ──
+  const doneBks = filteredBookings.filter(isFullyEval);
+  const itemAvgOfBooking = (b,itemId) => {
+    const evs = Object.values(b.evals||{}).filter(ev=>ev?.submitted);
+    return evs.length ? evs.reduce((a,ev)=>a+(ev.scores?.[itemId]||0),0)/evs.length : null;
+  };
+  const meanSd = vals => {
+    if(!vals.length) return {mean:null,sd:null};
+    const mean = vals.reduce((a,v)=>a+v,0)/vals.length;
+    const sd = vals.length>1 ? Math.sqrt(vals.reduce((a,v)=>a+(v-mean)**2,0)/(vals.length-1)) : 0;
+    return {mean,sd};
+  };
+  const dimAvg = structure.map(d=>{
+    const items = d.items.map(i=>{
+      const vals = doneBks.map(b=>itemAvgOfBooking(b,i.id)).filter(v=>v!==null);
+      const {mean,sd} = meanSd(vals);
+      return {id:i.id,name:i.name,max:i.maxScore,mean,sd,pct:mean!==null&&i.maxScore>0?Math.round(mean/i.maxScore*100):null};
+    });
+    const dMax = d.items.reduce((a,i)=>a+i.maxScore,0);
+    // ค่าเฉลี่ยรายด้าน = ค่าเฉลี่ยต่อข้อของด้านนั้น (คะแนนรวมด้าน ÷ จำนวนข้อ) ในแต่ละครั้ง
+    const dVals = doneBks.map(b=>{
+      const iv = d.items.map(i=>itemAvgOfBooking(b,i.id));
+      return iv.some(v=>v===null)||!d.items.length ? null : iv.reduce((a,v)=>a+v,0)/d.items.length;
+    }).filter(v=>v!==null);
+    const {mean,sd} = meanSd(dVals);
+    const avgMax = d.items.length ? dMax/d.items.length : 0;
+    return {id:d.id,name:d.name,items,mean,sd,avgMax,pct:mean!==null&&avgMax>0?Math.round(mean/avgMax*100):null};
   });
   const gradeCount = {ดีเยี่ยม:0,ดีมาก:0,ดี:0,พอใช้:0,ปรับปรุง:0};
   doneScores.forEach(s=>{ gradeCount[gradeOf(s.avgPct).label]++; });
@@ -681,20 +704,59 @@ function DashboardPage({bookings,users,structure,settings}){
           </div>
         </div>
       </div>
-      <div className="card" style={{marginBottom:20}}>
-        <h3 style={{fontWeight:700,fontSize:15,marginBottom:16,color:"var(--P)"}}>🎯 คะแนนเฉลี่ยรายด้าน</h3>
-        <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          {dimAvg.map((d,i)=>(
-            <div key={i}>
-              <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
-                <span style={{fontSize:13,fontWeight:600}}>{d.name}</span>
-                <span style={{fontSize:13,fontWeight:800,color:gradeOf(d.pct).color}}>{d.pct}%</span>
-              </div>
-              <div className="progress-bar" style={{height:9}}>
-                <div className="progress-fill" style={{width:`${d.pct}%`,background:d.pct>=80?"linear-gradient(90deg,#16A34A,#22C55E)":d.pct>=70?"linear-gradient(90deg,#22C55E,#4ADE80)":d.pct>=60?"linear-gradient(90deg,#F59E0B,#FBBF24)":"linear-gradient(90deg,#DC2626,#EF4444)"}}/>
-              </div>
-            </div>
-          ))}
+      <div className="card" style={{padding:0,overflow:"hidden",marginBottom:20}}>
+        <div style={{padding:"16px 18px 10px"}}>
+          <h3 style={{fontWeight:700,fontSize:15,color:"var(--P)"}}>🎯 ผลการประเมินรายข้อและรายด้าน</h3>
+          <div style={{fontSize:12,color:"var(--TS)",marginTop:4}}>
+            {doneBks.length>0?`จากการนิเทศที่ประเมินครบแล้ว ${doneBks.length} ครั้ง · x̄ = ค่าเฉลี่ย, S.D. = ส่วนเบี่ยงเบนมาตรฐาน`:"ยังไม่มีการนิเทศที่ประเมินครบ"}
+          </div>
+        </div>
+        <div className="scroll-fade" style={{overflowX:"auto"}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:560}}>
+            <thead><tr style={{background:"#F8FAFF"}}>
+              {[["รายการประเมิน","left"],["x̄","center",64],["S.D.","center",60],["ร้อยละ","left",150],["ระดับ","center",90]].map(([h,al,w])=>(
+                <th key={h} style={{padding:"9px 12px",textAlign:al,fontWeight:700,color:"var(--TS)",borderBottom:"1px solid var(--BD)",fontSize:12,width:w,whiteSpace:"nowrap"}}>{h}</th>
+              ))}
+            </tr></thead>
+            <tbody>
+              {dimAvg.map((d,di)=>{
+                const bar = pct => pct===null ? <span style={{color:"#D1D5DB"}}>—</span> : (
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <div className="progress-bar" style={{height:7,flex:1,minWidth:60}}>
+                      <div className="progress-fill" style={{width:`${pct}%`,background:pct>=80?"linear-gradient(90deg,#16A34A,#22C55E)":pct>=70?"linear-gradient(90deg,#22C55E,#4ADE80)":pct>=60?"linear-gradient(90deg,#F59E0B,#FBBF24)":"linear-gradient(90deg,#DC2626,#EF4444)"}}/>
+                    </div>
+                    <span style={{fontWeight:800,color:gradeOf(pct).color,minWidth:36,textAlign:"right"}}>{pct}%</span>
+                  </div>
+                );
+                const badge = pct => pct===null ? <span style={{color:"#D1D5DB"}}>—</span> : (
+                  <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:gradeOf(pct).bg,color:gradeOf(pct).color,whiteSpace:"nowrap"}}>{gradeOf(pct).label}</span>
+                );
+                const num = v => v===null ? "—" : v.toFixed(2);
+                const cell = {padding:"8px 12px",borderBottom:"1px solid var(--BD)"};
+                return [
+                  <tr key={d.id} style={{background:"#EEF2FF"}}>
+                    <td style={{...cell,fontWeight:800,color:"var(--P)"}}>ด้านที่ {di+1} {d.name}</td>
+                    <td style={{...cell,textAlign:"center",fontWeight:800,color:"var(--P)"}}>{num(d.mean)}</td>
+                    <td style={{...cell,textAlign:"center",fontWeight:700,color:"var(--TS)"}}>{num(d.sd)}</td>
+                    <td style={cell}>{bar(d.pct)}</td>
+                    <td style={{...cell,textAlign:"center"}}>{badge(d.pct)}</td>
+                  </tr>,
+                  ...d.items.map((it,ii)=>(
+                    <tr key={it.id} className="tbl-row" style={{background:"var(--W)"}}>
+                      <td style={{...cell,paddingLeft:28}}>
+                        <span style={{color:"var(--TS)",marginRight:6}}>{di+1}.{ii+1}</span>{it.name}
+                        <span style={{fontSize:11,color:"var(--TS)",marginLeft:6}}>(เต็ม {it.max})</span>
+                      </td>
+                      <td style={{...cell,textAlign:"center",fontWeight:700}}>{num(it.mean)}</td>
+                      <td style={{...cell,textAlign:"center",color:"var(--TS)"}}>{num(it.sd)}</td>
+                      <td style={cell}>{bar(it.pct)}</td>
+                      <td style={{...cell,textAlign:"center"}}>{badge(it.pct)}</td>
+                    </tr>
+                  )),
+                ];
+              })}
+            </tbody>
+          </table>
         </div>
       </div>
       {teacherStats.length>0&&(
