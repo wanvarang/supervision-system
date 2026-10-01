@@ -2036,7 +2036,7 @@ function UsersTab({ users }) {
   return (
     <div style={{maxWidth:860,padding:"0 0 32px"}}>
       <PageHeader icon="👥" title="จัดการผู้ใช้งาน" subtitle="เพิ่ม แก้ไข หรือลบบัญชีผู้ใช้ในระบบ" right={
-  <button onClick={()=>setModal({user:{}})} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",borderRadius:10,border:"1.5px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--font-th)",whiteSpace:"nowrap"}}>
+  <button className="btn bp" onClick={()=>setModal({user:{}})}>
     ➕ เพิ่มผู้ใช้งาน
   </button>
 }/>
