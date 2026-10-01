@@ -120,6 +120,19 @@ const calcOneEval = (ev,str) => {
   return {total,maxTotal,pct:maxTotal>0?Math.round(total/maxTotal*100):0,pctExact:maxTotal>0?total/maxTotal*100:0,dims};
 };
 
+// รายข้อที่ถูกประเมิน: คะแนนเฉลี่ยของแต่ละข้อจากกรรมการที่ส่งแบบประเมินแล้ว (ทศนิยม 2 ตำแหน่ง)
+const itemRowsOf = (b,str) => {
+  const evs = Object.values(b.evals||{}).filter(ev=>ev?.submitted);
+  const rows = [];
+  str.forEach(d=>d.items.forEach(i=>{
+    const vals = evs.map(ev=>ev.scores?.[i.id]).filter(v=>v!==undefined&&v!==null);
+    if(!vals.length) return;
+    const score = Math.round(vals.reduce((a,v)=>a+v,0)/vals.length*100)/100;
+    rows.push({no:rows.length+1,name:i.name,score,max:i.maxScore,pct:i.maxScore>0?Math.round(score/i.maxScore*100):0});
+  }));
+  return rows;
+};
+
 // ✅ แก้ไข: ฟังก์ชัน calcAvgScore เพื่อแสดงค่าเฉลี่ยรายด้านเป็นทศนิยม 2 ตำแหน่ง
 const calcAvgScore = (b,str) => {
   const results = Object.values(b.evals||{}).map(ev=>calcOneEval(ev,str)).filter(Boolean);
@@ -1453,10 +1466,11 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       </tr>`;
     }).join("");
 
-    const dimRows = sc ? sc.dims.map(d => {
-      const pct = Math.round(d.score / d.max * 100);
+    const dimRows = sc ? itemRowsOf(b, structure).map(d => {
+      const pct = d.pct;
       const g = gradeOf(pct);
       return `<tr>
+        <td style="text-align:center">${d.no}</td>
         <td>${d.name}</td>
         <td style="text-align:center">${d.score}/${d.max}</td>
         <td style="text-align:center;font-weight:700;color:${g.color}">${pct}%</td>
@@ -1519,10 +1533,11 @@ ${!isTeacher ? `
 ` : ""}      <div class="info-item"><div class="info-lbl">สถานะ</div><div class="info-val" style="color:#065F46">✅ ประเมินครบแล้ว (${sc?.count || 0} คน)</div></div>
     </div>
     <!-- คะแนนรายด้าน (ครูเห็นได้ แต่ไม่เห็นชื่อกรรมการ) -->
-    <div class="sec">ผลการประเมินรายด้าน</div>
+    <div class="sec">ผลการประเมินรายข้อ</div>
     <table>
       <thead><tr>
-        <th style="text-align:left">ด้านการประเมิน</th>
+        <th style="width:36px">ข้อ</th>
+        <th style="text-align:left">รายการประเมิน</th>
         <th style="width:70px">คะแนน</th>
         <th style="width:55px">ร้อยละ</th>
         <th style="width:120px">กราฟ</th>
@@ -1646,9 +1661,9 @@ ${!isTeacher ? `
                       {r?<span style={{fontWeight:800,color:gradeOf(r.pct).color,fontSize:14}}>{r.total}/{r.maxTotal} ({r.pct}%)</span>
                         :<span style={{color:"#D1D5DB",fontSize:12}}>ยังไม่ได้ประเมิน</span>}
                     </div>
-                    {r&&r.dims.map((d,i)=>(
+                    {r&&itemRowsOf({evals:{[eid]:ev}},structure).map((d,i)=>(
                       <div key={i} style={{display:"flex",alignItems:"center",gap:6,marginBottom:3}}>
-                        <span style={{fontSize:11,color:"var(--TS)",flex:1}}>{d.name}</span>
+                        <span style={{fontSize:11,color:"var(--TS)",flex:1}}>{d.no}. {d.name}</span>
                         <div style={{width:80,height:6,background:"#E5E7EB",borderRadius:3,overflow:"hidden"}}>
                           <div style={{height:"100%",background:"var(--G)",width:`${d.max>0?d.score/d.max*100:0}%`}}/>
                         </div>
