@@ -117,7 +117,7 @@ const calcOneEval = (ev,str) => {
     total+=dt; maxTotal+=dm;
     return {name:d.name,score:dt,max:dm};
   });
-  return {total,maxTotal,pct:maxTotal>0?Math.round(total/maxTotal*100):0,dims};
+  return {total,maxTotal,pct:maxTotal>0?Math.round(total/maxTotal*100):0,pctExact:maxTotal>0?total/maxTotal*100:0,dims};
 };
 
 // ✅ แก้ไข: ฟังก์ชัน calcAvgScore เพื่อแสดงค่าเฉลี่ยรายด้านเป็นทศนิยม 2 ตำแหน่ง
@@ -125,6 +125,7 @@ const calcAvgScore = (b,str) => {
   const results = Object.values(b.evals||{}).map(ev=>calcOneEval(ev,str)).filter(Boolean);
   if(results.length===0) return null;
   const avgPct   = Math.round(results.reduce((a,r)=>a+r.pct,0)/results.length);
+  const avgPctExact = Math.round(results.reduce((a,r)=>a+r.pctExact,0)/results.length*100)/100;
   const avgTotal = Math.round(results.reduce((a,r)=>a+r.total,0)/results.length);
   // ✅ เปลี่ยน: คำนวณค่าเฉลี่ยแล้วปัดเศษเป็น 2 ตำแหน่งทศนิยม
   //     แทนการปัดเป็นจำนวนเต็ม (Math.round())
@@ -132,7 +133,7 @@ const calcAvgScore = (b,str) => {
     const avgScore = results.reduce((a,r)=>a+r.dims[i].score,0)/results.length;
     return {name:d.name,max:results[0].dims[i].max,score:Math.round(avgScore*100)/100};
   });
-  return {avgPct,avgTotal,maxTotal:results[0].maxTotal,dims,count:results.length};
+  return {avgPct,avgPctExact,avgTotal,maxTotal:results[0].maxTotal,dims,count:results.length};
 };
 
 const evalIds        = b => [b.adminId,b.teacher1Id,b.teacher2Id].filter(Boolean);
@@ -611,8 +612,8 @@ function DashboardPage({bookings,users,structure,settings}){
     const tBks = filteredBookings.filter(b=>b.teacherId===t.id&&isFullyEval(b));
     const scores = tBks.map(b=>calcAvgScore(b,structure)).filter(Boolean);
     if(!scores.length) return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:0,avg:null};
-    return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:scores.length,avg:Math.round(scores.reduce((a,s)=>a+s.avgPct,0)/scores.length)};
-  }).filter(t=>t.count>0).sort((a,b)=>b.avg-a.avg).map((t,i,arr)=>({...t,rank:i>0&&arr[i-1].avg===t.avg?arr[i-1].rank:i+1}));
+    return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:scores.length,avg:Math.round(scores.reduce((a,s)=>a+s.avgPctExact,0)/scores.length*100)/100};
+  }).filter(t=>t.count>0).sort((a,b)=>b.avg-a.avg).reduce((acc,t,i)=>{acc.push({...t,rank:i>0&&acc[i-1].avg===t.avg?acc[i-1].rank:i+1});return acc;},[]);
   const months = [];
   for(let i=5;i>=0;i--){
     const d=new Date(); d.setMonth(d.getMonth()-i);
@@ -710,14 +711,14 @@ function DashboardPage({bookings,users,structure,settings}){
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {Object.values(teacherStats.reduce((m,t)=>{(m[t.rank]=m[t.rank]||[]).push(t);return m;},{})).map((grp,gi)=>{
               const rank=grp[0].rank;
-              const g=gradeOf(grp[0].avg);
+              const g=gradeOf(Math.round(grp[0].avg));
               const medal=rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":null;
               return(
                 <div key={gi} style={{padding:"10px 14px",background:rank===1?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${rank===1?"#FDE68A":"var(--BD)"}`}}>
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",paddingBottom:8,marginBottom:8,borderBottom:"1px solid var(--BD)"}}>
                     <div style={{fontWeight:800,fontSize:15}}>{medal?`${medal} `:""}อันดับ {rank}{grp.length>1?` (${grp.length} คน)`:""}</div>
                     <div style={{marginLeft:"auto",textAlign:"right",display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{fontWeight:800,fontSize:18,color:g.color}}>{grp[0].avg}%</span>
+                      <span style={{fontWeight:800,fontSize:18,color:g.color}}>{grp[0].avg.toFixed(2)}%</span>
                       <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:g.bg,color:g.color}}>{g.label}</span>
                     </div>
                   </div>
