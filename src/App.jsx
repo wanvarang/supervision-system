@@ -764,7 +764,9 @@ function DashboardPage({bookings,users,structure,settings}){
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:14,color:"var(--P)"}}>🏆 ผลการนิเทศครูรายบุคคล</h3>
           <div style={{display:"flex",flexDirection:"column",gap:7}}>
             {Object.values(teacherStats.reduce((m,t)=>{(m[t.rank]=m[t.rank]||[]).push(t);return m;},{})).map((grp,gi)=>(
-              <div key={gi} style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+              <div key={gi} style={{display:"flex",flexDirection:"column",gap:7}}>
+              <div style={{fontSize:12,fontWeight:700,color:"var(--TS)",marginTop:gi>0?4:0}}>อันดับ {grp[0].rank} · คะแนน {grp[0].avg}%{grp.length>1?` (${grp.length} คน)`:""}</div>
+              <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
               {grp.map((t,i)=>{
               const g=gradeOf(t.avg);
               const medal=t.rank===1?"🥇":t.rank===2?"🥈":t.rank===3?"🥉":null;
@@ -789,6 +791,7 @@ function DashboardPage({bookings,users,structure,settings}){
                 </div>
               );
               })}
+              </div>
               </div>
             ))}
           </div>
