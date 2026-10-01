@@ -762,38 +762,37 @@ function DashboardPage({bookings,users,structure,settings}){
       {teacherStats.length>0&&(
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:14,color:"var(--P)"}}>🏆 ผลการนิเทศครูรายบุคคล</h3>
-          <div style={{display:"flex",flexDirection:"column",gap:7}}>
-            {Object.values(teacherStats.reduce((m,t)=>{(m[t.rank]=m[t.rank]||[]).push(t);return m;},{})).map((grp,gi)=>(
-              <div key={gi} style={{display:"flex",flexDirection:"column",gap:7}}>
-              <div style={{fontSize:12,fontWeight:700,color:"var(--TS)",marginTop:gi>0?4:0}}>อันดับ {grp[0].rank} · คะแนน {grp[0].avg}%{grp.length>1?` (${grp.length} คน)`:""}</div>
-              <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-              {grp.map((t,i)=>{
-              const g=gradeOf(t.avg);
-              const medal=t.rank===1?"🥇":t.rank===2?"🥈":t.rank===3?"🥉":null;
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {Object.values(teacherStats.reduce((m,t)=>{(m[t.rank]=m[t.rank]||[]).push(t);return m;},{})).map((grp,gi)=>{
+              const rank=grp[0].rank;
+              const g=gradeOf(grp[0].avg);
+              const medal=rank===1?"🥇":rank===2?"🥈":rank===3?"🥉":null;
               return(
-                <div key={i} style={{flex:"1 1 280px",minWidth:0,display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:t.rank===1?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${t.rank===1?"#FDE68A":"var(--BD)"}`,flexWrap:"wrap"}}>
-                  <div style={{position:"relative",flexShrink:0}}>
-                    <UAvatar name={t.name} role="teacher" size={40}/>
-                    {medal&&<span style={{position:"absolute",bottom:-4,right:-4,fontSize:14,lineHeight:1}}>{medal}</span>}
-                    {!medal&&<span style={{position:"absolute",bottom:-3,right:-6,background:"var(--W)",border:"1px solid var(--BD)",borderRadius:10,fontSize:10,fontWeight:800,color:"var(--TS)",padding:"0 4px"}}>{t.rank}</span>}
-                  </div>
-                  <div style={{flex:1,minWidth:120}}>
-                    <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
-                    <div style={{fontSize:12,color:"var(--TS)"}}>
-                      {t.subjectGroup&&<span style={{marginRight:6,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"1px 7px",fontWeight:600}}>📚 {t.subjectGroup}</span>}
-                      นิเทศแล้ว {t.count} ครั้ง
+                <div key={gi} style={{padding:"10px 14px",background:rank===1?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${rank===1?"#FDE68A":"var(--BD)"}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap",paddingBottom:8,marginBottom:8,borderBottom:"1px solid var(--BD)"}}>
+                    <div style={{fontWeight:800,fontSize:15}}>{medal?`${medal} `:""}อันดับ {rank}{grp.length>1?` (${grp.length} คน)`:""}</div>
+                    <div style={{marginLeft:"auto",textAlign:"right",display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontWeight:800,fontSize:18,color:g.color}}>{grp[0].avg}%</span>
+                      <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:g.bg,color:g.color}}>{g.label}</span>
                     </div>
                   </div>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{fontWeight:800,fontSize:18,color:g.color}}>{t.avg}%</div>
-                    <span style={{padding:"2px 8px",borderRadius:20,fontSize:11,fontWeight:700,background:g.bg,color:g.color}}>{g.label}</span>
+                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                    {grp.map((t,i)=>(
+                      <div key={i} style={{display:"flex",alignItems:"center",gap:12}}>
+                        <UAvatar name={t.name} role="teacher" size={36}/>
+                        <div style={{flex:1,minWidth:120}}>
+                          <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
+                          <div style={{fontSize:12,color:"var(--TS)"}}>
+                            {t.subjectGroup&&<span style={{marginRight:6,background:"#e0f2fe",color:"#0369a1",borderRadius:10,padding:"1px 7px",fontWeight:600}}>📚 {t.subjectGroup}</span>}
+                            นิเทศแล้ว {t.count} ครั้ง
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               );
-              })}
-              </div>
-              </div>
-            ))}
+            })}
           </div>
         </div>
       )}
