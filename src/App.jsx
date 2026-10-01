@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Fragment } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
@@ -1376,9 +1376,22 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
 }
 
 function SummaryPage({currentUser,bookings,structure,users,settings}){
-  const visible = currentUser.role==="teacher"
+  const isTeacherView = currentUser.role==="teacher";
+  const NO_GROUP = "ไม่ระบุกลุ่มสาระ";
+  const groupOf = b => users.find(u=>u.id===b.teacherId)?.subjectGroup || NO_GROUP;
+  const [groupFilter,setGroupFilter]=useState("");
+  const [groupBy,setGroupBy]=useState(false);
+  const mine = isTeacherView
     ? bookings.filter(b=>b.teacherId===currentUser.id)
     : bookings;
+  const groupOrder = g => { const i=SUBJECT_GROUPS.indexOf(g); return i<0?999:i; };
+  const groupStats = [...new Set(mine.map(groupOf))].sort((a,b)=>groupOrder(a)-groupOrder(b)).map(g=>{
+    const bks = mine.filter(b=>groupOf(b)===g);
+    const scores = bks.filter(isFullyEval).map(b=>calcAvgScore(b,structure)).filter(Boolean);
+    return {name:g,total:bks.length,done:bks.filter(isFullyEval).length,
+      avg:scores.length?Math.round(scores.reduce((a,r)=>a+r.avgPctExact,0)/scores.length*100)/100:null};
+  });
+  const visible = groupFilter ? mine.filter(b=>groupOf(b)===groupFilter) : mine;
   const [sortConfig,setSortConfig]=useState({key:"date",direction:"asc"});
   const handleSort=(key)=>{
     setSortConfig(prev=>prev.key===key?{key,direction:prev.direction==="asc"?"desc":"asc"}:{key,direction:"asc"});
@@ -1386,6 +1399,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
   const sortValue=(b,key)=>{
     switch(key){
       case "teacherName": return b.teacherName||"";
+      case "group": return groupOf(b);
       case "subject": return b.subject||"";
       case "classRoom": return b.classRoom||"";
       case "date": return b.date||"";
@@ -1396,6 +1410,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
     }
   };
   const sorted=[...visible].sort((a,b)=>{
+    if(groupBy&&!isTeacherView){ const gc=groupOrder(groupOf(a))-groupOrder(groupOf(b)); if(gc!==0) return gc; }
     const {key,direction}=sortConfig;
     const va=sortValue(a,key), vb=sortValue(b,key);
     let cmp=typeof va==="string"?va.localeCompare(vb,"th"):va-vb;
@@ -1440,7 +1455,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       );
 
       return [
-        idx + 1, b.teacherName, b.subjectGroup || "", b.subject, b.classRoom, b.date, b.time,
+        idx + 1, b.teacherName, groupOf(b) === NO_GROUP ? "" : groupOf(b), b.subject, b.classRoom, b.date, b.time,
         b.adminName, b.teacher1Name, b.teacher2Name,
         statusLabel, ...dimScores,
         sc ? sc.avgTotal : "", sc ? sc.maxTotal : "", sc ? sc.avgPct : "", grade, allStrengths, allImprove
@@ -1603,13 +1618,62 @@ ${!isTeacher ? `
         <PageHeader icon="📊" title={currentUser.role==="teacher"?"ผลการนิเทศของฉัน":"สรุปผลการนิเทศทั้งหมด"} subtitle={`ทั้งหมด ${sorted.length} รายการ | ประเมินครบ ${sorted.filter(isFullyEval).length} รายการ`}/>
         {sorted.length>0&&<button onClick={exportExcel} className="btn bg" style={{padding:"9px 18px",fontSize:13,whiteSpace:"nowrap"}}>📥 ส่งออก Excel</button>}
       </div>
+      {!isTeacherView&&groupStats.length>0&&(<>
+        <div className="card" style={{padding:0,overflow:"hidden",marginBottom:16}}>
+          <div style={{padding:"16px 18px 10px"}}>
+            <h3 style={{fontWeight:700,fontSize:15}}>📚 สรุปตามกลุ่มสาระการเรียนรู้</h3>
+            <div style={{fontSize:12,color:"var(--TS)",marginTop:3}}>คลิกแถวเพื่อกรองรายการด้านล่างเฉพาะกลุ่มสาระนั้น</div>
+          </div>
+          <div className="scroll-fade" style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:480}}>
+              <thead><tr style={{background:"#F8F9FD"}}>
+                {[["กลุ่มสาระ","left"],["นิเทศ (ครั้ง)","center"],["ประเมินครบ","center"],["คะแนนเฉลี่ย","left",190]].map(([h,al,w])=>(
+                  <th key={h} style={{padding:"9px 14px",textAlign:al,fontWeight:700,color:"var(--TS)",fontSize:12,borderBottom:"1px solid var(--BD)",whiteSpace:"nowrap",width:w}}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {groupStats.map(g=>{
+                  const on=groupFilter===g.name;
+                  return(
+                  <tr key={g.name} className="tbl-row" onClick={()=>setGroupFilter(on?"":g.name)} style={{cursor:"pointer",background:on?"var(--PL)":"var(--W)"}}>
+                    <td style={{padding:"10px 14px",borderBottom:"1px solid var(--BD)",fontWeight:700,color:on?"var(--P)":"var(--T)"}}>{g.name}</td>
+                    <td style={{padding:"10px 14px",borderBottom:"1px solid var(--BD)",textAlign:"center",fontWeight:700}}>{g.total}</td>
+                    <td style={{padding:"10px 14px",borderBottom:"1px solid var(--BD)",textAlign:"center"}}>{g.done}/{g.total}</td>
+                    <td style={{padding:"10px 14px",borderBottom:"1px solid var(--BD)"}}>
+                      {g.avg===null?<span style={{color:"#CBD5E1"}}>—</span>:(
+                        <div style={{display:"flex",alignItems:"center",gap:8}}>
+                          <div className="progress-bar" style={{height:7,flex:1,minWidth:60}}>
+                            <div className="progress-fill" style={{width:`${g.avg}%`,background:gradeOf(g.avg).color}}/>
+                          </div>
+                          <span style={{fontWeight:800,color:gradeOf(g.avg).color,minWidth:56,textAlign:"right"}}>{g.avg.toFixed(2)}%</span>
+                        </div>
+                      )}
+                    </td>
+                  </tr>);
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+          <span style={{fontSize:13,fontWeight:700,color:"var(--TS)"}}>📚 กลุ่มสาระ:</span>
+          {[["","ทั้งหมด"],...groupStats.map(g=>[g.name,g.name])].map(([val,label])=>{
+            const on=groupFilter===val;
+            return <button key={label} onClick={()=>setGroupFilter(val)} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${on?"var(--P)":"var(--BD)"}`,background:on?"var(--P)":"var(--W)",color:on?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-th)"}}>{label}</button>;
+          })}
+          <label style={{marginLeft:"auto",display:"inline-flex",alignItems:"center",gap:6,fontSize:13,fontWeight:600,cursor:"pointer",color:"var(--T)"}}>
+            <input type="checkbox" checked={groupBy} onChange={e=>setGroupBy(e.target.checked)} style={{accentColor:"var(--P)",width:16,height:16}}/>
+            จัดกลุ่มตามกลุ่มสาระ
+          </label>
+        </div>
+      </>)}
       <div className="card" style={{padding:0,overflow:"hidden"}}>
         <div className="scroll-fade" style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
             <thead><tr style={{background:"var(--P)",color:"#fff"}}>
               {(currentUser.role==="teacher"
                 ? [["#",null],["วิชา","subject"],["ชั้น","classRoom"],["วันที่","date"],["เวลา","time"],["สถานะ","status"],["",null]]
-                : [["#",null],["ชื่อ-สกุล","teacherName"],["วิชา","subject"],["ชั้น","classRoom"],["วันที่","date"],["เวลา","time"],["สถานะ","status"],["คะแนน","score"],["",null]]
+                : [["#",null],["ชื่อ-สกุล","teacherName"],["กลุ่มสาระ","group"],["วิชา","subject"],["ชั้น","classRoom"],["วันที่","date"],["เวลา","time"],["สถานะ","status"],["คะแนน","score"],["",null]]
               ).map(([h,key],i)=>(
                 <th key={i} onClick={()=>key&&handleSort(key)} style={{padding:"10px",textAlign:"left",whiteSpace:"nowrap",fontWeight:700,cursor:key?"pointer":"default",userSelect:"none"}}>
                   {h}{key&&(sortConfig.key===key?(sortConfig.direction==="asc"?" ▲":" ▼"):<span style={{opacity:.35}}> ⇕</span>)}
@@ -1617,10 +1681,19 @@ ${!isTeacher ? `
               ))}
             </tr></thead>
             <tbody>
-              {sorted.map((b,idx)=>{const sc=calcAvgScore(b,structure);return(
-                <tr key={b.id} style={{background:idx%2?"#F9FAFB":"var(--W)",borderBottom:"1px solid var(--BD)"}}>
+              {sorted.map((b,idx)=>{const sc=calcAvgScore(b,structure);
+                const gName=groupOf(b);
+                const showGroupRow=groupBy&&!isTeacherView&&(idx===0||groupOf(sorted[idx-1])!==gName);
+                const gs=showGroupRow?groupStats.find(x=>x.name===gName):null;
+                return(<Fragment key={b.id}>
+                {showGroupRow&&<tr><td colSpan={10} style={{padding:"10px 14px",background:"var(--PL)",color:"var(--P)",fontWeight:800,borderBottom:"1px solid var(--BD)"}}>
+                  📚 {gName}
+                  <span style={{fontWeight:600,fontSize:12,marginLeft:10,color:"var(--TS)"}}>{sorted.filter(x=>groupOf(x)===gName).length} รายการ{gs&&gs.avg!==null?` · เฉลี่ย ${gs.avg.toFixed(2)}%`:""}</span>
+                </td></tr>}
+                <tr style={{background:idx%2?"#F9FAFB":"var(--W)",borderBottom:"1px solid var(--BD)"}}>
                   <td style={{padding:"9px 10px"}}>{idx+1}</td>
                   {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px",fontWeight:600,whiteSpace:"nowrap"}}>{b.teacherName}</td>}
+                  {currentUser.role!=="teacher"&&<td style={{padding:"9px 10px"}}>{gName===NO_GROUP?<span style={{color:"#CBD5E1"}}>—</span>:<span style={{background:"#E0F2FE",color:"#0369A1",borderRadius:10,padding:"2px 8px",fontSize:11,fontWeight:600,whiteSpace:"nowrap"}}>{gName}</span>}</td>}
                   <td style={{padding:"9px 10px"}}>{b.subject}</td>
                   <td style={{padding:"9px 10px"}}>{b.classRoom}</td>
                   <td style={{padding:"9px 10px",whiteSpace:"nowrap"}}>{fmtDate(b.date)}</td>
@@ -1636,7 +1709,9 @@ ${!isTeacher ? `
                     {isFullyEval(b)&&<button onClick={()=>setDetail(b)} className="btn bx" style={{padding:"5px 10px",fontSize:11}}>ดู</button>}
                   </td>
                 </tr>
+                </Fragment>
               );})}
+              {sorted.length===0&&<tr><td colSpan={10} style={{padding:28,textAlign:"center",color:"var(--TS)"}}>ไม่พบรายการ</td></tr>}
             </tbody>
           </table>
         </div>
@@ -2181,7 +2256,7 @@ export default function App() {
   });
   const [page,         setPage        ] = useState(()=>{
     try { const u=JSON.parse(localStorage.getItem("sv_currentUser")||"null"); return u?homeOf(u):""; }
-    catch(e){ return ""; }
+    catch{ return ""; }
   });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings,     setSettings    ] = useState(DEF_SETTINGS);
