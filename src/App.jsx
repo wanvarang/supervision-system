@@ -53,7 +53,7 @@ const TIME_SLOTS  = [
   "15:00 - 15:50\n(คาบที่ 9)"
 ];
 const ROLES      = { sysadmin:"ผู้ดูแลระบบ", admin:"ผู้บริหาร", teacher:"ครูผู้สอน" };
-const ROLE_COLOR = { sysadmin:"#be0e0e", admin:"#1E3A8A", teacher:"#166634" };
+const ROLE_COLOR = { sysadmin:"#be0e0e", admin:"#4F46E5", teacher:"#166634" };
 
 const SUBJECT_GROUPS = [
   "ภาษาไทย",
@@ -176,71 +176,99 @@ const CSS = `
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
   --font-th: 'Noto Sans Thai', 'Sarabun', sans-serif;
-  --P:#1E3A8A;--PD:#1E2F6B;--PL:#EEF2FF;
+  --P:#4F46E5;--PD:#4338CA;--PL:#EEF2FF;
   --A:#F59E0B;--AD:#D97706;
-  --G:#16A34A;--R:#DC2626;
-  --T:#1F2937;--TS:#6B7280;--BD:#D9E0F5;--BG:#F5F7FE;--W:#FFFFFF;
-  --radius-lg:16px;--radius-md:12px;--radius-sm:9px;
-  --shadow-card: 0 2px 10px rgba(30,58,138,.06), 0 1px 3px rgba(0,0,0,.03);
-  --shadow-hover: 0 14px 34px rgba(30,58,138,.13), 0 3px 8px rgba(0,0,0,.05);
-  --border-card: 1px solid rgba(30,58,138,.07);
+  --G:#059669;--R:#E11D48;
+  --T:#0F172A;--TS:#64748B;--BD:#E4E7F0;--BG:#F6F7FB;--W:#FFFFFF;
+  --SB:#0F172A;--SBH:rgba(255,255,255,.07);--SBW:244px;
+  --radius-lg:18px;--radius-md:12px;--radius-sm:10px;
+  --shadow-card: 0 1px 2px rgba(15,23,42,.04), 0 4px 16px rgba(15,23,42,.04);
+  --shadow-hover: 0 2px 4px rgba(15,23,42,.05), 0 12px 28px rgba(79,70,229,.10);
+  --border-card: 1px solid #ECEEF5;
 }
 body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-height:100vh;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 2px rgba(34,197,94,.25);}50%{opacity:.5;box-shadow:0 0 0 5px rgba(34,197,94,.05);}}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
 @keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-.page-fade{animation:fadeUp .3s ease-out;}
+@keyframes slideIn{from{transform:translateX(-100%)}to{transform:none}}
+.page-fade{animation:fadeUp .28s ease-out;}
 .inp{width:100%;padding:10px 13px;border:1.5px solid var(--BD);border-radius:var(--radius-sm);font-family:var(--font-th);font-size:14px;background:var(--W);outline:none;transition:border-color .2s,box-shadow .2s;color:var(--T);}
-.inp:focus{border-color:var(--P);box-shadow:0 0 0 3px rgba(30,58,138,.12);}
-.inp:disabled{background:#F9FAFB;color:#9CA3AF;cursor:not-allowed;}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;transition:all .18s;white-space:nowrap;letter-spacing:.01em;min-height:40px;}
+.inp:focus{border-color:var(--P);box-shadow:0 0 0 4px rgba(79,70,229,.12);}
+.inp:disabled{background:#F8FAFC;color:#94A3B8;cursor:not-allowed;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;transition:background .18s,box-shadow .18s,transform .18s;white-space:nowrap;min-height:40px;}
 .btn:active{transform:scale(.97);}
 .btn:disabled{opacity:.45;cursor:not-allowed;}
-.bp{background:linear-gradient(135deg,var(--P),var(--PD));color:#fff;box-shadow:0 3px 12px rgba(30,58,138,.30);}
-.bp:hover:not(:disabled){background:linear-gradient(135deg,#2547b0,var(--P));box-shadow:0 5px 18px rgba(30,58,138,.38);}
+.btn:focus-visible,.sb-item:focus-visible,.tab-btn:focus-visible{outline:2px solid var(--P);outline-offset:2px;}
+.bp{background:var(--P);color:#fff;box-shadow:0 1px 2px rgba(15,23,42,.1),0 4px 12px rgba(79,70,229,.25);}
+.bp:hover:not(:disabled){background:var(--PD);box-shadow:0 1px 2px rgba(15,23,42,.1),0 6px 18px rgba(79,70,229,.35);}
 .ba{background:var(--A);color:#422006;}
 .ba:hover:not(:disabled){background:var(--AD);}
-.bg{background:var(--G);color:#fff;box-shadow:0 2px 8px rgba(22,163,74,.22);}
-.bg:hover:not(:disabled){background:#15803D;}
-.br{background:var(--R);color:#fff;box-shadow:0 2px 8px rgba(220,38,38,.2);}
-.br:hover:not(:disabled){background:#B91C1C;}
-.bx{background:var(--PL);color:var(--P);border:1.5px solid #C7D2FE;}
-.bx:hover:not(:disabled){background:#C7D2FE;}
+.bg{background:var(--G);color:#fff;box-shadow:0 1px 2px rgba(15,23,42,.1),0 4px 12px rgba(5,150,105,.22);}
+.bg:hover:not(:disabled){background:#047857;}
+.br{background:var(--R);color:#fff;box-shadow:0 1px 2px rgba(15,23,42,.1),0 4px 12px rgba(225,29,72,.2);}
+.br:hover:not(:disabled){background:#BE123C;}
+.bx{background:var(--PL);color:var(--P);}
+.bx:hover:not(:disabled){background:#E0E7FF;}
 .bo{background:var(--W);color:var(--T);border:1.5px solid var(--BD);}
-.bo:hover:not(:disabled){background:#F5F7FF;}
+.bo:hover:not(:disabled){background:#F8F9FD;border-color:#CBD2E6;}
 .card{background:var(--W);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);padding:22px;border:var(--border-card);transition:box-shadow .2s;}
 .card:hover{box-shadow:var(--shadow-hover);}
+.card h3{letter-spacing:-.005em;}
 .frow{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
-.flbl{font-size:12.5px;font-weight:700;color:#4B5563;letter-spacing:.02em;}
+.flbl{font-size:12.5px;font-weight:700;color:#475569;letter-spacing:.01em;}
 .g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));gap:16px;}
 .g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:12px;}
-.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(140px,100%),1fr));gap:12px;}
-.badge-p{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#FEF3C7;color:#92400E;}
-.badge-d{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#D1FAE5;color:#065F46;}
-.badge-part{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;background:#DBEAFE;color:#1E40AF;}
+.g4{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(150px,100%),1fr));gap:14px;}
+.badge-p,.badge-d,.badge-part{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;}
+.badge-p{background:#FEF3C7;color:#92400E;}
+.badge-d{background:#D1FAE5;color:#065F46;}
+.badge-part{background:#E0E7FF;color:#3730A3;}
 .rt-dot{width:7px;height:7px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:6px;box-shadow:0 0 0 2px rgba(34,197,94,.25);animation:pulse 2s infinite;}
-.score-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--BD);background:var(--W);cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
-.score-btn:hover:not(:disabled){border-color:var(--P);color:var(--P);background:var(--PL);transform:scale(1.08);}
-.score-btn.active{background:linear-gradient(135deg,var(--P),var(--PD));color:#fff;border-color:var(--P);box-shadow:0 2px 10px rgba(30,58,138,.35);}
+.score-btn{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--BD);background:var(--W);cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:700;transition:all .15s;color:var(--TS);}
+.score-btn:hover:not(:disabled){border-color:var(--P);color:var(--P);background:var(--PL);transform:translateY(-1px);}
+.score-btn.active{background:var(--P);color:#fff;border-color:var(--P);box-shadow:0 4px 12px rgba(79,70,229,.35);}
 .score-btn:disabled{opacity:.4;cursor:not-allowed;}
-.progress-bar{height:8px;border-radius:99px;background:#E5E7EB;overflow:hidden;}
+.progress-bar{height:8px;border-radius:99px;background:#EEF0F6;overflow:hidden;}
 .progress-fill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1);}
-.stat-card{border-radius:var(--radius-lg);padding:22px 20px;border:var(--border-card);box-shadow:var(--shadow-card);transition:transform .18s,box-shadow .18s;}
+.stat-card{border-radius:var(--radius-lg);padding:20px;border:var(--border-card);box-shadow:var(--shadow-card);transition:transform .18s,box-shadow .18s;}
 .stat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);}
 .tab-btn{padding:9px 18px;border:none;background:none;cursor:pointer;font-family:var(--font-th);font-size:14px;font-weight:600;color:var(--TS);border-bottom:2.5px solid transparent;transition:all .18s;}
 .tab-btn.active{color:var(--P);border-bottom-color:var(--P);}
 .tab-btn:hover:not(.active){color:var(--T);}
-.tbl-row:hover td{background:#F5F7FF!important;}
+.tbl-row:hover td{background:#F4F5FD!important;}
 .scroll-fade{position:relative;}
-.scroll-fade::after{content:"";position:absolute;top:0;right:0;bottom:0;width:22px;background:linear-gradient(90deg,transparent,rgba(0,0,0,.06));pointer-events:none;}
-.nav-toggle{display:none;}
-.nav-desktop{display:flex;}
-.nav-mobile{display:none;}
-@media(max-width:860px){
-  .nav-toggle{display:inline-flex;}
-  .nav-desktop{display:none;}
-  .nav-mobile{display:flex;}
+.scroll-fade::after{content:"";position:absolute;top:0;right:0;bottom:0;width:22px;background:linear-gradient(90deg,transparent,rgba(15,23,42,.05));pointer-events:none;}
+/* ── app shell (neutralise Vite-template #root styles once signed in) ── */
+body.app-shell #root{width:100%;max-width:none;margin:0;border-inline:none;text-align:left;display:block;min-height:100vh;}
+.shell{font-size:16px;line-height:1.5;letter-spacing:0;text-align:left;}
+.shell h1,.shell h2{margin:0;letter-spacing:normal;font-family:var(--font-th);}
+.shell h1{font-size:inherit;}
+.shell{min-height:100vh;display:flex;}
+.sidebar{width:var(--SBW);flex-shrink:0;background:var(--SB);color:#E2E8F0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:18px 14px;gap:6px;z-index:300;}
+.sb-brand{display:flex;align-items:center;gap:11px;padding:4px 6px 16px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:8px;}
+.sb-logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#6366F1,#8B5CF6);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;}
+.sb-label{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:#64748B;padding:10px 10px 4px;text-transform:uppercase;}
+.sb-nav{display:flex;flex-direction:column;gap:3px;flex:1;overflow-y:auto;}
+.sb-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:11px;border:none;background:transparent;color:#CBD5E1;font-family:var(--font-th);font-size:14px;font-weight:500;cursor:pointer;text-align:left;transition:background .15s,color .15s;width:100%;}
+.sb-item:hover{background:var(--SBH);color:#fff;}
+.sb-item.active{background:var(--P);color:#fff;font-weight:700;box-shadow:0 6px 16px rgba(79,70,229,.4);}
+.sb-ico{width:22px;text-align:center;font-size:16px;flex-shrink:0;}
+.sb-count{margin-left:auto;background:var(--A);color:#1c1000;border-radius:20px;padding:0 7px;font-size:11px;font-weight:800;line-height:18px;}
+.sb-user{display:flex;align-items:center;gap:10px;padding:12px 8px 4px;border-top:1px solid rgba(255,255,255,.08);margin-top:6px;}
+.sb-avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex-shrink:0;}
+.sb-logout{width:100%;margin-top:8px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#CBD5E1;font-family:var(--font-th);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.sb-logout:hover{background:rgba(225,29,72,.18);border-color:rgba(225,29,72,.5);color:#fff;}
+.shell-main{flex:1;min-width:0;display:flex;flex-direction:column;}
+.topbar{display:none;}
+.content{width:100%;max-width:1120px;margin:0 auto;padding:28px 24px 64px;}
+.backdrop{display:none;}
+@media(max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;bottom:0;transform:translateX(-102%);transition:transform .25s ease;box-shadow:none;}
+  .sidebar.open{transform:none;box-shadow:0 0 60px rgba(15,23,42,.5);}
+  .backdrop.open{display:block;position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(2px);z-index:290;}
+  .topbar{display:flex;align-items:center;gap:12px;padding:0 14px;height:56px;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid #ECEEF5;position:sticky;top:0;z-index:200;}
+  .content{padding:18px 14px 56px;}
 }
 @media(max-width:640px){
   .card{padding:16px;}
@@ -252,6 +280,7 @@ body,#root{font-family:var(--font-th);background:var(--BG);color:var(--T);min-he
 @media print{
   .np{display:none!important;}
   body{background:white;}
+  .content{padding:0;max-width:none;}
   .card{box-shadow:none!important;border:1px solid #ddd!important;}
 }
 `;
@@ -264,9 +293,9 @@ function MiniCal({year,month,onPrev,onNext,renderCell}){
   return(
     <div>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-        <button onClick={onPrev} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--P)",padding:"2px 8px",lineHeight:1}}>‹</button>
+        <button onClick={onPrev} style={{background:"var(--PL)",border:"none",cursor:"pointer",fontSize:20,color:"var(--P)",width:32,height:32,borderRadius:10,lineHeight:1}}>‹</button>
         <span style={{fontWeight:700,fontSize:15}}>{TH_MONTHS[month]} {year+543}</span>
-        <button onClick={onNext} style={{background:"none",border:"none",cursor:"pointer",fontSize:22,color:"var(--P)",padding:"2px 8px",lineHeight:1}}>›</button>
+        <button onClick={onNext} style={{background:"var(--PL)",border:"none",cursor:"pointer",fontSize:20,color:"var(--P)",width:32,height:32,borderRadius:10,lineHeight:1}}>›</button>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
         {WEEKDAYS.map(d=><div key={d} style={{textAlign:"center",fontSize:11,fontWeight:700,color:"var(--TS)",paddingBottom:4}}>{d}</div>)}
@@ -285,25 +314,15 @@ function MiniCal({year,month,onPrev,onNext,renderCell}){
 // ═══════════════════════════════════════════════
 function PageHeader({icon,title,subtitle,right}){
   return(
-    <div style={{
-      background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",
-      borderRadius:18,padding:"24px 28px",marginBottom:24,
-      color:"#fff",position:"relative",overflow:"hidden",
-      boxShadow:"0 8px 32px rgba(30,58,138,.28)"
-    }}>
-      <div style={{position:"absolute",top:-50,right:-50,width:180,height:180,borderRadius:"50%",background:"rgba(255,255,255,.06)",pointerEvents:"none"}}/>
-      <div style={{position:"absolute",bottom:-70,left:-30,width:220,height:220,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
-      <div style={{position:"absolute",top:"50%",right:80,transform:"translateY(-50%)",width:60,height:60,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
-      <div style={{display:"flex",alignItems:"center",gap:16,position:"relative",flexWrap:"wrap"}}>
-        <div style={{width:52,height:52,borderRadius:14,background:"rgba(255,255,255,.18)",border:"2px solid rgba(255,255,255,.30)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0,boxShadow:"0 4px 12px rgba(0,0,0,.15)"}}>
-          {icon}
-        </div>
-        <div style={{flex:1,minWidth:0}}>
-          <div style={{fontWeight:800,fontSize:20,lineHeight:1.2,textShadow:"0 1px 4px rgba(0,0,0,.15)"}}>{title}</div>
-          {subtitle&&<div style={{fontSize:13,opacity:.82,marginTop:4,display:"flex",alignItems:"center",gap:6}}>{subtitle}</div>}
-        </div>
-        {right&&<div style={{flexShrink:0}}>{right}</div>}
+    <div style={{display:"flex",alignItems:"center",gap:16,marginBottom:24,flexWrap:"wrap"}}>
+      <div style={{width:48,height:48,borderRadius:14,background:"var(--PL)",color:"var(--P)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:23,flexShrink:0,boxShadow:"inset 0 0 0 1px rgba(79,70,229,.12)"}}>
+        {icon}
       </div>
+      <div style={{flex:1,minWidth:0}}>
+        <h1 style={{fontWeight:800,fontSize:"clamp(19px,3.4vw,24px)",lineHeight:1.25,color:"var(--T)",letterSpacing:"-.01em"}}>{title}</h1>
+        {subtitle&&<div style={{fontSize:13,color:"var(--TS)",marginTop:3,display:"flex",alignItems:"center",gap:6,flexWrap:"wrap"}}>{subtitle}</div>}
+      </div>
+      {right&&<div style={{flexShrink:0}}>{right}</div>}
     </div>
   );
 }
@@ -320,7 +339,7 @@ function DonutChart({segments,size=140,thickness=16,centerLabel,centerSub}){
   return (
     <div style={{position:"relative",width:size,height:size,flexShrink:0}}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{transform:"rotate(-90deg)"}}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#EEF1F8" strokeWidth={thickness}/>
+        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#EEF0F6" strokeWidth={thickness}/>
         {total>0&&shown.map((s,i)=>{
           const len=(s.value/total)*c, dash=`${len} ${c-len}`, dashOffset=-offset;
           offset+=len;
@@ -645,22 +664,22 @@ function DashboardPage({bookings,users,structure,settings}){
       {usedGroups.length>0&&(
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:16,flexWrap:"wrap"}}>
           <span style={{fontSize:13,fontWeight:700,color:"var(--TS)"}}>📚 กลุ่มสาระ:</span>
-          <button onClick={()=>setFilterGroup("")} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${!filterGroup?"var(--P)":"var(--BD)"}`,background:!filterGroup?"var(--P)":"var(--W)",color:!filterGroup?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ทั้งหมด</button>
+          <button onClick={()=>setFilterGroup("")} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${!filterGroup?"var(--P)":"var(--BD)"}`,background:!filterGroup?"var(--P)":"var(--W)",color:!filterGroup?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-th)"}}>ทั้งหมด</button>
           {usedGroups.map(g=>(
-            <button key={g} onClick={()=>setFilterGroup(g===filterGroup?"":g)} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${filterGroup===g?"var(--P)":"var(--BD)"}`,background:filterGroup===g?"var(--P)":"var(--W)",color:filterGroup===g?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>{g}</button>
+            <button key={g} onClick={()=>setFilterGroup(g===filterGroup?"":g)} style={{padding:"5px 14px",borderRadius:20,border:`1.5px solid ${filterGroup===g?"var(--P)":"var(--BD)"}`,background:filterGroup===g?"var(--P)":"var(--W)",color:filterGroup===g?"#fff":"var(--T)",fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-th)"}}>{g}</button>
           ))}
         </div>
       )}
       <div className="g4" style={{marginBottom:20}}>
         {[
-          {label:"การนิเทศทั้งหมด",value:total,icon:"📋",grad:"linear-gradient(135deg,#EEF2FF,#DBEAFE)",tc:"var(--P)",bc:"rgba(30,58,138,.15)"},
-          {label:"ประเมินครบแล้ว",value:done,icon:"✅",grad:"linear-gradient(135deg,#D1FAE5,#A7F3D0)",tc:"#065F46",bc:"rgba(5,150,105,.15)"},
-          {label:"รอการประเมิน",value:pending,icon:"⏳",grad:"linear-gradient(135deg,#FEF3C7,#FDE68A)",tc:"#92400E",bc:"rgba(217,119,6,.15)"},
-          {label:"เดือนนี้",value:thisMonthBks.length,icon:"📅",grad:"linear-gradient(135deg,#F0FDF4,#DCFCE7)",tc:"#166634",bc:"rgba(22,163,74,.15)"},
+          {label:"การนิเทศทั้งหมด",value:total,icon:"📋",grad:"#EEF2FF",tc:"#4338CA",bc:"rgba(79,70,229,.14)"},
+          {label:"ประเมินครบแล้ว",value:done,icon:"✅",grad:"#ECFDF5",tc:"#047857",bc:"rgba(5,150,105,.14)"},
+          {label:"รอการประเมิน",value:pending,icon:"⏳",grad:"#FFFBEB",tc:"#B45309",bc:"rgba(217,119,6,.16)"},
+          {label:"เดือนนี้",value:thisMonthBks.length,icon:"📅",grad:"#F0F9FF",tc:"#0369A1",bc:"rgba(14,165,233,.16)"},
         ].map(s=>(
           <div key={s.label} className="stat-card" style={{background:s.grad,border:`1px solid ${s.bc}`}}>
-            <div style={{width:44,height:44,borderRadius:12,background:"rgba(255,255,255,.6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,marginBottom:12}}>{s.icon}</div>
-            <div style={{fontSize:"clamp(22px,4vw,30px)",fontWeight:900,color:s.tc,lineHeight:1}}>{s.value}</div>
+            <div style={{width:44,height:44,borderRadius:12,background:"#fff",boxShadow:"0 1px 3px rgba(15,23,42,.08)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:21,marginBottom:14}}>{s.icon}</div>
+            <div style={{fontSize:"clamp(24px,4vw,32px)",fontWeight:800,letterSpacing:"-.02em",color:s.tc,lineHeight:1}}>{s.value}</div>
             <div style={{fontSize:12,color:s.tc,opacity:.85,fontWeight:700,marginTop:6}}>{s.label}</div>
           </div>
         ))}
@@ -669,7 +688,7 @@ function DashboardPage({bookings,users,structure,settings}){
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:4,color:"var(--P)"}}>📈 แนวโน้มการนิเทศ 6 เดือนล่าสุด</h3>
           <div style={{display:"flex",gap:14,marginBottom:14}}>
-            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11.5,color:"var(--TS)"}}><span style={{width:9,height:9,borderRadius:3,background:"#DBEAFE",display:"inline-block"}}/>ทั้งหมด</span>
+            <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11.5,color:"var(--TS)"}}><span style={{width:9,height:9,borderRadius:3,background:"#E0E7FF",display:"inline-block"}}/>ทั้งหมด</span>
             <span style={{display:"flex",alignItems:"center",gap:5,fontSize:11.5,color:"var(--TS)"}}><span style={{width:9,height:9,borderRadius:3,background:"var(--P)",display:"inline-block"}}/>ประเมินครบ</span>
           </div>
           <div style={{display:"flex",alignItems:"flex-end",gap:"clamp(6px,2vw,10px)",height:"clamp(90px,16vw,120px)",borderBottom:"1.5px solid #F1F5F9",paddingBottom:2}}>
@@ -677,7 +696,7 @@ function DashboardPage({bookings,users,structure,settings}){
               <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%",justifyContent:"flex-end"}} title={`${m.label}: ${m.count} รายการ (ครบ ${m.done})`}>
                 <div style={{fontSize:10,fontWeight:700,color:"var(--P)"}}>{m.count||""}</div>
                 <div style={{width:"100%",position:"relative",flex:1,display:"flex",alignItems:"flex-end"}}>
-                  <div style={{position:"absolute",bottom:0,width:"100%",background:"#DBEAFE",borderRadius:"6px 6px 0 0",height:`${(m.count/maxCount)*100}%`,transition:"height .5s ease"}}/>
+                  <div style={{position:"absolute",bottom:0,width:"100%",background:"#E0E7FF",borderRadius:"6px 6px 0 0",height:`${(m.count/maxCount)*100}%`,transition:"height .5s ease"}}/>
                   <div style={{position:"absolute",bottom:0,width:"100%",background:"linear-gradient(180deg,var(--P),var(--PD))",borderRadius:"6px 6px 0 0",height:`${(m.done/maxCount)*100}%`,transition:"height .5s ease"}}/>
                 </div>
               </div>
@@ -764,7 +783,7 @@ function DashboardPage({bookings,users,structure,settings}){
         </div>
         <div className="scroll-fade" style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:560}}>
-            <thead><tr style={{background:"#F8FAFF"}}>
+            <thead><tr style={{background:"#F8F9FD"}}>
               {[["รายการประเมิน","left"],["x̄","center",64],["S.D.","center",60],["ร้อยละ","left",150],["ระดับ","center",90]].map(([h,al,w])=>(
                 <th key={h} style={{padding:"9px 12px",textAlign:al,fontWeight:700,color:"var(--TS)",borderBottom:"1px solid var(--BD)",fontSize:12,width:w,whiteSpace:"nowrap"}}>{h}</th>
               ))}
@@ -1042,7 +1061,7 @@ function ScheduleSummary({bookings,users}){
               let bg="var(--W)",col="var(--T)",bc="var(--BD)";
               if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(hasBk){bg="#EEF2FF";bc="#C7D2FE";}
               return <button key={ds} onClick={()=>setViewDate(ds)}
-                style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isSel?700:400,position:"relative",transition:"all .15s"}}>
+                style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"var(--font-th)",fontWeight:isSel?700:400,position:"relative",transition:"all .15s"}}>
                 {day}{hasBk&&!isSel&&<div style={{position:"absolute",bottom:2,left:"50%",transform:"translateX(-50%)",width:4,height:4,borderRadius:"50%",background:"var(--P)"}}/>}
               </button>;
             }}/>
@@ -1075,7 +1094,7 @@ function ScheduleSummary({bookings,users}){
         <div style={{background:"var(--P)",color:"#fff",padding:"12px 16px",fontWeight:700,fontSize:14}}>📊 ตารางผู้บริหาร — {fmtDate(viewDate)}</div>
         <div className="scroll-fade" style={{overflowX:"auto"}}>
           <table style={{width:"100%",borderCollapse:"collapse",fontSize:13,minWidth:400}}>
-            <thead><tr style={{background:"#F8FAFF"}}>
+            <thead><tr style={{background:"#F8F9FD"}}>
               <th style={{padding:"9px 12px",textAlign:"left",fontWeight:700,color:"var(--TS)",borderBottom:"1px solid var(--BD)",width:65,fontSize:12}}>เวลา</th>
               {admins.map(a=><th key={a.id} style={{padding:"9px 8px",textAlign:"center",fontWeight:700,color:"var(--P)",borderBottom:"1px solid var(--BD)",fontSize:12,minWidth:100}}>{short(a.displayName)}</th>)}
             </tr></thead>
@@ -1122,7 +1141,7 @@ function PersonPicker({icon,title,people,selectedIds,max,onChange,showGroupFilte
   const remove = id => onChange(selectedIds.filter(x=>x!==id));
 
   return (
-    <div style={{background:"#F8FAFF",border:"1px solid var(--BD)",borderRadius:"var(--radius-md)",padding:"14px 16px",marginBottom:14}}>
+    <div style={{background:"#F8F9FD",border:"1px solid var(--BD)",borderRadius:"var(--radius-md)",padding:"14px 16px",marginBottom:14}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8,marginBottom:10,flexWrap:"wrap"}}>
         <span style={{fontWeight:700,fontSize:14,color:"var(--T)"}}>{icon} {title}</span>
         <span style={{fontSize:11.5,fontWeight:700,color:selected.length===max?"var(--G)":"var(--TS)"}}>เลือกแล้ว {selected.length}/{max}</span>
@@ -1141,9 +1160,9 @@ function PersonPicker({icon,title,people,selectedIds,max,onChange,showGroupFilte
         <div>
           {showGroupFilter&&groups.length>0&&(
             <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
-              <button onClick={()=>setGroupFilter("")} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${!groupFilter?"var(--P)":"var(--BD)"}`,background:!groupFilter?"var(--P)":"#fff",color:!groupFilter?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ทั้งหมด</button>
+              <button onClick={()=>setGroupFilter("")} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${!groupFilter?"var(--P)":"var(--BD)"}`,background:!groupFilter?"var(--P)":"#fff",color:!groupFilter?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-th)"}}>ทั้งหมด</button>
               {groups.map(g=>(
-                <button key={g} onClick={()=>setGroupFilter(g===groupFilter?"":g)} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${groupFilter===g?"var(--P)":"var(--BD)"}`,background:groupFilter===g?"var(--P)":"#fff",color:groupFilter===g?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>{g}</button>
+                <button key={g} onClick={()=>setGroupFilter(g===groupFilter?"":g)} style={{padding:"4px 10px",borderRadius:20,border:`1.5px solid ${groupFilter===g?"var(--P)":"var(--BD)"}`,background:groupFilter===g?"var(--P)":"#fff",color:groupFilter===g?"#fff":"#374151",fontSize:11,fontWeight:600,cursor:"pointer",fontFamily:"var(--font-th)"}}>{g}</button>
               ))}
             </div>
           )}
@@ -1234,7 +1253,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
           const active=step===n, done=step>n, reachable=n<=maxReachableStep;
           return (
             <button key={n} onClick={()=>{if(reachable)setStep(n);}} disabled={!reachable}
-              style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"9px 6px",borderRadius:99,border:"none",cursor:reachable?"pointer":"not-allowed",fontFamily:"Sarabun,sans-serif",fontSize:12.5,fontWeight:700,background:active?"var(--PL)":"transparent",color:active?"var(--P)":done?"#16A34A":"var(--TS)",opacity:reachable?1:.5}}>
+              style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",gap:7,padding:"9px 6px",borderRadius:99,border:"none",cursor:reachable?"pointer":"not-allowed",fontFamily:"var(--font-th)",fontSize:12.5,fontWeight:700,background:active?"var(--PL)":"transparent",color:active?"var(--P)":done?"#16A34A":"var(--TS)",opacity:reachable?1:.5}}>
               <span style={{width:20,height:20,borderRadius:"50%",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800,background:done?"#16A34A":active?"var(--P)":"#F3F4F6",color:done||active?"#fff":"var(--TS)"}}>{done?"✓":n}</span>
               <span className="step-lbl">{label}</span>
             </button>
@@ -1251,7 +1270,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
               👔 {admins.find(a=>a.id===adminId)?.displayName} · 👩‍🏫 {[t1Id,t2Id].map(id=>teachers.find(t=>t.id===id)?.displayName).filter(Boolean).join(", ")}
             </span>
           )}
-          <button onClick={()=>setStep(1)} style={{marginLeft:"auto",background:"rgba(255,255,255,.14)",border:"1px solid rgba(255,255,255,.3)",color:"#fff",fontSize:12,fontWeight:700,padding:"6px 13px",borderRadius:20,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>✏️ แก้ไข</button>
+          <button onClick={()=>setStep(1)} style={{marginLeft:"auto",background:"rgba(255,255,255,.14)",border:"1px solid rgba(255,255,255,.3)",color:"#fff",fontSize:12,fontWeight:700,padding:"6px 13px",borderRadius:20,cursor:"pointer",fontFamily:"var(--font-th)"}}>✏️ แก้ไข</button>
         </div>
       )}
 
@@ -1309,7 +1328,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
               let bg="var(--W)",col="var(--T)",bc="var(--BD)";
               if(isSel){bg="var(--P)";col="#fff";bc="var(--P)";} else if(isBlk){bg="#FEE2E2";col="#EF4444";bc="#FECACA";} else if(isPast){bg="#F9FAFB";col="#D1D5DB";bc="#F3F4F6";}
               return <button key={ds} onClick={()=>{if(!isPast&&!isBlk){setSelDate(ds);setSelTime("");}}} disabled={isPast||isBlk}
-                style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:(isPast||isBlk)?"not-allowed":"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isSel?700:400}}>{day}</button>;
+                style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${bc}`,background:bg,color:col,borderRadius:6,cursor:(isPast||isBlk)?"not-allowed":"pointer",fontSize:12,fontFamily:"var(--font-th)",fontWeight:isSel?700:400}}>{day}</button>;
             }}/>
         </div>
         <div className="card">
@@ -1318,7 +1337,7 @@ function BookingPage({currentUser,users,bookings,blockedDates,onSave,onDelete}){
             <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6}}>
               {TIME_SLOTS.map(t=>{const blocked=blockedTimesFor(selDate).includes(t),isSel=selTime===t;
                 return <button key={t} disabled={blocked} onClick={()=>setSelTime(t)}
-                  style={{padding:"10px 4px",borderRadius:8,border:"1.5px solid",fontFamily:"Sarabun,sans-serif",cursor:blocked?"not-allowed":"pointer",
+                  style={{padding:"10px 4px",borderRadius:8,border:"1.5px solid",fontFamily:"var(--font-th)",cursor:blocked?"not-allowed":"pointer",
                     borderColor:isSel?"var(--P)":blocked?"#FECACA":"var(--BD)",background:isSel?"var(--P)":blocked?"#FEF2F2":"var(--W)",color:isSel?"#fff":blocked?"#FECACA":"var(--T)",
                     display:"flex",flexDirection:"column",alignItems:"center",gap:2,lineHeight:1.2}}>
                   {t.split('\n').map((line,i)=><span key={i} style={{fontSize:i===0?13:11,fontWeight:isSel?700:i===0?600:400}}>{line}</span>)}
@@ -1494,18 +1513,18 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       @page{ size:A4 portrait; margin:12mm 14mm; }
       *{ box-sizing:border-box; margin:0; padding:0; }
       body{ font-family:'Sarabun',sans-serif; color:#1F2937; font-size:10pt; line-height:1.45; }
-      .hdr{ display:flex; align-items:center; gap:12px; padding-bottom:8px; border-bottom:2.5px solid #1E3A8A; margin-bottom:10px; }
-      .hdr-text h1{ font-size:14pt; font-weight:800; color:#1E3A8A; }
+      .hdr{ display:flex; align-items:center; gap:12px; padding-bottom:8px; border-bottom:2.5px solid var(--P); margin-bottom:10px; }
+      .hdr-text h1{ font-size:14pt; font-weight:800; color:var(--P); }
       .hdr-text p{ font-size:9pt; color:#6B7280; margin-top:1px; }
       .info-grid{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:10px; }
-      .info-item{ background:#F8FAFF; border:1px solid #E0E7FF; border-radius:7px; padding:5px 10px; }
+      .info-item{ background:#F8F9FD; border:1px solid #E0E7FF; border-radius:7px; padding:5px 10px; }
       .info-lbl{ font-size:8pt; color:#6B7280; }
       .info-val{ font-size:9.5pt; font-weight:700; color:#1F2937; }
-      .sec{ font-size:10pt; font-weight:700; color:#1E3A8A; margin:9px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #BFDBFE; }
+      .sec{ font-size:10pt; font-weight:700; color:var(--P); margin:9px 0 5px; padding-bottom:3px; border-bottom:1.5px solid #BFDBFE; }
       table{ width:100%; border-collapse:collapse; font-size:9pt; }
-      th{ background:#1E3A8A; color:#fff; padding:5px 8px; font-weight:700; }
+      th{ background:var(--P); color:#fff; padding:5px 8px; font-weight:700; }
       td{ padding:4px 8px; border-bottom:1px solid #E5E7EB; vertical-align:middle; }
-      tr:nth-child(even) td{ background:#F8FAFF; }
+      tr:nth-child(even) td{ background:#F8F9FD; }
       .footer{ margin-top:10px; font-size:8pt; color:#9CA3AF; border-top:1px solid #E5E7EB; padding-top:6px; display:flex; justify-content:space-between; }
     </style>
     </head><body>
@@ -1516,7 +1535,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
         <p>${settings.schoolName} · พิมพ์วันที่ ${new Date().toLocaleDateString("th-TH",{year:"numeric",month:"long",day:"numeric"})}</p>
       </div>
       ${(grade) ? `<div style="margin-left:auto;text-align:center">
-        <div style="font-size:34pt;font-weight:800;color:#1E3A8A">${sc.avgPct}%</div>
+        <div style="font-size:34pt;font-weight:800;color:var(--P)">${sc.avgPct}%</div>
         <div style="font-size:9pt;color:#6B7280">${sc.avgTotal}/${sc.maxTotal} คะแนน</div>
         <span style="display:inline-block;padding:3px 12px;border-radius:20px;font-weight:700;background:${grade.bg};color:${grade.color}">${grade.label}</span>
       </div>` : ""}
@@ -1625,9 +1644,9 @@ ${!isTeacher ? `
 
       {/* Detail Modal — ครูเห็นแค่ข้อเสนอแนะ ไม่เห็นชื่อ/คะแนน */}
       {detail&&(()=>{const sc=calcAvgScore(detail,structure);return(
-        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(30,58,138,.28)",backdropFilter:"blur(4px)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fadeUp .2s ease-out"}}>
-          <div onClick={e=>e.stopPropagation()} style={{background:"var(--W)",borderRadius:18,maxWidth:520,width:"100%",maxHeight:"88vh",overflow:"auto",boxShadow:"0 24px 64px rgba(30,58,138,.22)"}}>
-            <div style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",color:"#fff",padding:"18px 22px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",overflow:"hidden"}}>
+        <div onClick={()=>setDetail(null)} style={{position:"fixed",inset:0,background:"rgba(15,23,42,.45)",backdropFilter:"blur(4px)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fadeUp .2s ease-out"}}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"var(--W)",borderRadius:18,maxWidth:520,width:"100%",maxHeight:"88vh",overflow:"auto",boxShadow:"0 24px 64px rgba(79,70,229,.22)"}}>
+            <div style={{background:"linear-gradient(135deg,var(--P) 0%,var(--PD) 100%)",color:"#fff",padding:"18px 22px",borderRadius:"18px 18px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center",position:"relative",overflow:"hidden"}}>
               <div style={{position:"absolute",top:"-30px",right:"-20px",width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.07)",pointerEvents:"none"}}/>
               <div>
                 <div style={{fontWeight:700,fontSize:16}}>{detail.teacherName}</div>
@@ -1777,7 +1796,7 @@ function SettingsPage({settings,structure,blockedDates,onSaveSettings,onSaveStru
               renderCell={(day,ds)=>{
                 const isBlk=blocked.includes(ds);
                 return <button key={ds} onClick={()=>toggleBlocked(ds)}
-                  style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${isBlk?"#EF4444":"var(--BD)"}`,background:isBlk?"#FEE2E2":"var(--W)",color:isBlk?"#991B1B":"var(--T)",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"Sarabun,sans-serif",fontWeight:isBlk?700:400}}>{day}</button>;
+                  style={{width:"100%",aspectRatio:"1",border:`1.5px solid ${isBlk?"#EF4444":"var(--BD)"}`,background:isBlk?"#FEE2E2":"var(--W)",color:isBlk?"#991B1B":"var(--T)",borderRadius:6,cursor:"pointer",fontSize:12,fontFamily:"var(--font-th)",fontWeight:isBlk?700:400}}>{day}</button>;
               }}/>
           </div>
           <div className="card">
@@ -1880,7 +1899,7 @@ function ProfileTab({ currentUser }) {
         {newPw.length>0&&<div style={{fontSize:12,marginBottom:12,color:newPw.length<4?"#ef4444":newPw.length<8?"#f59e0b":"#10b981"}}>{newPw.length<4?"⚠️ สั้นเกินไป":newPw.length<8?"🟡 ปานกลาง":"🟢 แข็งแกร่ง"}</div>}
         {pwErr&&<div style={{background:"#FEE2E2",color:"#991B1B",borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:13,fontWeight:600}}>⚠️ {pwErr}</div>}
         {pwMsg&&<div style={{background:"#D1FAE5",color:"#065F46",borderRadius:8,padding:"9px 13px",marginBottom:12,fontSize:13,fontWeight:600}}>{pwMsg}</div>}
-        <button onClick={changePassword} disabled={savingPw} style={{width:"100%",padding:"11px",borderRadius:9,border:"none",background:savingPw?"#94a3b8":"#6366f1",color:"#fff",fontWeight:700,fontSize:14,cursor:savingPw?"wait":"pointer",fontFamily:"Sarabun,sans-serif"}}>
+        <button onClick={changePassword} disabled={savingPw} style={{width:"100%",padding:"11px",borderRadius:9,border:"none",background:savingPw?"#94a3b8":"#6366f1",color:"#fff",fontWeight:700,fontSize:14,cursor:savingPw?"wait":"pointer",fontFamily:"var(--font-th)"}}>
           🔐 {savingPw?"กำลังบันทึก...":"เปลี่ยนรหัสผ่าน"}
         </button>
       </div>
@@ -1924,12 +1943,12 @@ function UserModal({ user, onClose, onSave }) {
     catch(e) { alert("เกิดข้อผิดพลาด: " + e.message); }
     finally { setLoading(false); }
   };
-  const inp = { width:"100%", padding:"9px 12px", borderRadius:8, border:"1.5px solid var(--BD)", fontSize:14, background:"var(--W)", color:"inherit", outline:"none", boxSizing:"border-box", fontFamily:"Sarabun,sans-serif" };
+  const inp = { width:"100%", padding:"9px 12px", borderRadius:8, border:"1.5px solid var(--BD)", fontSize:14, background:"var(--W)", color:"inherit", outline:"none", boxSizing:"border-box", fontFamily:"var(--font-th)" };
   const lbl = { fontSize:12, fontWeight:700, color:"var(--TS)", marginBottom:4, display:"block" };
   return (
-    <div style={{position:"fixed",inset:0,background:"rgba(30,58,138,.3)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fadeUp .2s ease-out"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:"var(--W)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 24px 64px rgba(30,58,138,.22)",overflow:"hidden"}}>
-        <div style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",padding:"20px 24px",color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",overflow:"hidden"}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(15,23,42,.45)",backdropFilter:"blur(4px)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:16,animation:"fadeUp .2s ease-out"}} onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div style={{background:"var(--W)",borderRadius:20,width:"100%",maxWidth:460,boxShadow:"0 24px 64px rgba(79,70,229,.22)",overflow:"hidden"}}>
+        <div style={{background:"linear-gradient(135deg,var(--P) 0%,var(--PD) 100%)",padding:"20px 24px",color:"#fff",display:"flex",alignItems:"center",justifyContent:"space-between",position:"relative",overflow:"hidden"}}>
           <div style={{position:"absolute",top:"-30px",right:"-20px",width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.07)",pointerEvents:"none"}}/>
           <div style={{fontWeight:800,fontSize:16,display:"flex",alignItems:"center",gap:8,position:"relative"}}>{isEdit?"✏️ แก้ไขผู้ใช้งาน":"➕ เพิ่มผู้ใช้งานใหม่"}</div>
           <button onClick={onClose} style={{background:"rgba(255,255,255,.15)",border:"1px solid rgba(255,255,255,.3)",color:"#fff",borderRadius:8,padding:"4px 11px",cursor:"pointer",fontSize:16,position:"relative"}}>✕</button>
@@ -1947,7 +1966,7 @@ function UserModal({ user, onClose, onSave }) {
                   <label key={v} style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer",padding:"7px 10px",borderRadius:7,background:on?bg:"transparent",border:`1.5px solid ${on?color:"var(--BD)"}`}}>
                     <input type="checkbox" checked={on} onChange={()=>toggleRole(v)} style={{width:15,height:15,accentColor:color,cursor:"pointer"}}/>
                     <span style={{fontSize:16}}>{icon}</span>
-                    <span style={{fontSize:14,fontWeight:on?700:400,color:on?color:"inherit",fontFamily:"Sarabun,sans-serif"}}>{rl}</span>
+                    <span style={{fontSize:14,fontWeight:on?700:400,color:on?color:"inherit",fontFamily:"var(--font-th)"}}>{rl}</span>
                   </label>
                 );
               })}
@@ -1963,8 +1982,8 @@ function UserModal({ user, onClose, onSave }) {
             </div>
           )}
           <div style={{display:"flex",gap:10,marginTop:4}}>
-            <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:9,border:"1.5px solid var(--BD)",background:"transparent",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"Sarabun,sans-serif"}}>ยกเลิก</button>
-            <button onClick={handleSave} disabled={loading} style={{flex:2,padding:"10px",borderRadius:9,border:"none",background:isEdit?"#6366f1":"#10b981",color:"#fff",cursor:loading?"wait":"pointer",fontSize:14,fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>
+            <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:9,border:"1.5px solid var(--BD)",background:"transparent",cursor:"pointer",fontSize:14,fontWeight:600,fontFamily:"var(--font-th)"}}>ยกเลิก</button>
+            <button onClick={handleSave} disabled={loading} style={{flex:2,padding:"10px",borderRadius:9,border:"none",background:isEdit?"#6366f1":"#10b981",color:"#fff",cursor:loading?"wait":"pointer",fontSize:14,fontWeight:700,fontFamily:"var(--font-th)"}}>
               {loading?"กำลังบันทึก…":isEdit?"💾 บันทึก":"✅ เพิ่มผู้ใช้งาน"}
             </button>
           </div>
@@ -2017,7 +2036,7 @@ function UsersTab({ users }) {
   return (
     <div style={{maxWidth:860,padding:"0 0 32px"}}>
       <PageHeader icon="👥" title="จัดการผู้ใช้งาน" subtitle="เพิ่ม แก้ไข หรือลบบัญชีผู้ใช้ในระบบ" right={
-  <button onClick={()=>setModal({user:{}})} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",borderRadius:10,border:"1.5px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"Sarabun,sans-serif",whiteSpace:"nowrap"}}>
+  <button onClick={()=>setModal({user:{}})} style={{display:"flex",alignItems:"center",gap:8,padding:"10px 18px",borderRadius:10,border:"1.5px solid rgba(255,255,255,.4)",background:"rgba(255,255,255,.15)",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer",fontFamily:"var(--font-th)",whiteSpace:"nowrap"}}>
     ➕ เพิ่มผู้ใช้งาน
   </button>
 }/>
@@ -2044,8 +2063,8 @@ function UsersTab({ users }) {
                   <div style={{fontSize:12,color:"var(--TS)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
                 </div>
                 <div style={{display:"flex",gap:7,flexShrink:0}}>
-                  <button onClick={()=>updateStatus(u.id)} style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#10b981",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>อนุมัติ</button>
-                  <button onClick={()=>removeUser(u.id)} style={{padding:"6px 12px",borderRadius:8,border:"1.5px solid #f87171",background:"transparent",color:"#ef4444",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"Sarabun,sans-serif"}}>ลบ</button>
+                  <button onClick={()=>updateStatus(u.id)} style={{padding:"6px 14px",borderRadius:8,border:"none",background:"#10b981",color:"#fff",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-th)"}}>อนุมัติ</button>
+                  <button onClick={()=>removeUser(u.id)} style={{padding:"6px 12px",borderRadius:8,border:"1.5px solid #f87171",background:"transparent",color:"#ef4444",fontWeight:700,fontSize:12,cursor:"pointer",fontFamily:"var(--font-th)"}}>ลบ</button>
                 </div>
               </div>
             ))}
@@ -2070,7 +2089,7 @@ function UsersTab({ users }) {
                   </div>
                   {!isSA&&(
                     <select value={u.role} onChange={e=>updateRole(u.id,e.target.value)}
-                      style={{padding:"6px 8px",borderRadius:8,border:"1.5px solid var(--BD)",fontSize:12,background:m.bg,color:m.color,fontWeight:700,cursor:"pointer",outline:"none",flexShrink:0,fontFamily:"Sarabun,sans-serif"}}>
+                      style={{padding:"6px 8px",borderRadius:8,border:"1.5px solid var(--BD)",fontSize:12,background:m.bg,color:m.color,fontWeight:700,cursor:"pointer",outline:"none",flexShrink:0,fontFamily:"var(--font-th)"}}>
                       <option value="teacher">👩‍🏫 ครูผู้สอน</option>
                       <option value="admin">👔 ผู้บริหาร</option>
                       <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
@@ -2078,8 +2097,8 @@ function UsersTab({ users }) {
                   )}
                   {!isSA&&(
                     <div style={{display:"flex",gap:6,flexShrink:0}}>
-                      <button onClick={()=>setModal({user:u})} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #6366f1",background:"#eef2ff",color:"#6366f1",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>✏️</button>
-                      <button onClick={()=>removeUser(u.id)} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #f87171",background:"#fff1f2",color:"#ef4444",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>🗑️</button>
+                      <button onClick={()=>setModal({user:u})} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #6366f1",background:"#eef2ff",color:"#6366f1",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"var(--font-th)"}}>✏️</button>
+                      <button onClick={()=>removeUser(u.id)} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #f87171",background:"#fff1f2",color:"#ef4444",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"var(--font-th)"}}>🗑️</button>
                     </div>
                   )}
                 </div>
@@ -2125,14 +2144,14 @@ function UsersTab({ users }) {
                             <div style={{fontSize:12,color:"var(--TS)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{u.email}</div>
                           </div>
                           <select value={u.role} onChange={e=>updateRole(u.id,e.target.value)}
-                            style={{padding:"6px 8px",borderRadius:8,border:"1.5px solid var(--BD)",fontSize:12,background:m.bg,color:m.color,fontWeight:700,cursor:"pointer",outline:"none",flexShrink:0,fontFamily:"Sarabun,sans-serif"}}>
+                            style={{padding:"6px 8px",borderRadius:8,border:"1.5px solid var(--BD)",fontSize:12,background:m.bg,color:m.color,fontWeight:700,cursor:"pointer",outline:"none",flexShrink:0,fontFamily:"var(--font-th)"}}>
                             <option value="teacher">👩‍🏫 ครูผู้สอน</option>
                             <option value="admin">👔 ผู้บริหาร</option>
                             <option value="sysadmin">🔧 ผู้ดูแลระบบ</option>
                           </select>
                           <div style={{display:"flex",gap:6,flexShrink:0}}>
-                            <button onClick={()=>setModal({user:u})} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #6366f1",background:"#eef2ff",color:"#6366f1",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>✏️</button>
-                            <button onClick={()=>removeUser(u.id)} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #f87171",background:"#fff1f2",color:"#ef4444",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"Sarabun,sans-serif"}}>🗑️</button>
+                            <button onClick={()=>setModal({user:u})} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #6366f1",background:"#eef2ff",color:"#6366f1",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"var(--font-th)"}}>✏️</button>
+                            <button onClick={()=>removeUser(u.id)} style={{padding:"6px 10px",borderRadius:8,border:"1.5px solid #f87171",background:"#fff1f2",color:"#ef4444",fontSize:13,cursor:"pointer",fontWeight:700,fontFamily:"var(--font-th)"}}>🗑️</button>
                           </div>
                         </div>
                       );
@@ -2152,13 +2171,18 @@ function UsersTab({ users }) {
 // ═══════════════════════════════════════════════
 //  ROOT APP
 // ═══════════════════════════════════════════════
+const homeOf = u => hasRole(u,"sysadmin")?"dashboard":hasRole(u,"admin")&&!hasRole(u,"teacher")?"summary":"booking";
+
 export default function App() {
   const [loaded,       setLoaded      ] = useState(false);
   const [currentUser,  setCurrentUser ] = useState(()=>{
     try { const saved=localStorage.getItem("sv_currentUser"); return saved?JSON.parse(saved):null; }
     catch(e){ return null; }
   });
-  const [page,         setPage        ] = useState("");
+  const [page,         setPage        ] = useState(()=>{
+    try { const u=JSON.parse(localStorage.getItem("sv_currentUser")||"null"); return u?homeOf(u):""; }
+    catch(e){ return ""; }
+  });
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settings,     setSettings    ] = useState(DEF_SETTINGS);
   const [structure,    setStructure   ] = useState(DEF_STRUCTURE);
@@ -2210,27 +2234,32 @@ export default function App() {
    const handleLogin = u => {
     setCurrentUser(u);
     localStorage.setItem("sv_currentUser",JSON.stringify(u));
-    setPage(hasRole(u,"sysadmin")?"dashboard":hasRole(u,"admin")&&!hasRole(u,"teacher")?"summary":"booking");
+    setPage(homeOf(u));
   };
     const handleLogout = () => { setCurrentUser(null); localStorage.removeItem("sv_currentUser"); setPage(""); setMobileMenuOpen(false); };
 
   const getNav = useCallback(()=>{
     if(!currentUser) return [];
     if(hasRole(currentUser,"sysadmin")) return [
-      ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
+      ["dashboard","📊","ภาพรวม"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
       ["schedule","🗓️","ตาราง"],["users","👥","ผู้ใช้"],["settings","⚙️","ตั้งค่า"],["profile","👤","โปรไฟล์"]
     ];
     if(hasRole(currentUser,"admin")&&!hasRole(currentUser,"teacher")) return [
-      ["dashboard","📊","Dashboard"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
+      ["dashboard","📊","ภาพรวม"],["summary","📋","สรุปผล"],["evaluate","📝","ประเมิน"],
       ["schedule","🗓️","ตาราง"],["profile","👤","โปรไฟล์"]
     ];
     const nav=[["booking","📅","จองเวลา"]];
-    if(hasRole(currentUser,"admin")) nav.push(...[["dashboard","📊","Dashboard"],["schedule","🗓️","ตาราง"]]);
+    if(hasRole(currentUser,"admin")) nav.push(...[["dashboard","📊","ภาพรวม"],["schedule","🗓️","ตาราง"]]);
     nav.push(["summary","📋","สรุปผล / ผลของฉัน"]);
     if(isEvaluator(currentUser.id,bookings)||hasRole(currentUser,"admin")) nav.push(["evaluate","📝","ประเมิน"]);
     nav.push(["profile","👤","โปรไฟล์"]);
     return nav;
   },[currentUser,bookings]);
+
+  useEffect(()=>{
+    document.body.classList.toggle("app-shell",!!currentUser);
+    return ()=>document.body.classList.remove("app-shell");
+  },[currentUser]);
 
   const navItems=getNav();
   const pendingCount=currentUser?bookings.filter(b=>
@@ -2239,88 +2268,79 @@ export default function App() {
   ).length:0;
 
   if(!loaded) return(
-    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F5F7FE",fontFamily:"'Noto Sans Thai','Sarabun',sans-serif"}}>
+    <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F6F7FB",fontFamily:"'Noto Sans Thai','Sarabun',sans-serif"}}>
       <div style={{background:"#fff",borderRadius:20,padding:"40px 56px",boxShadow:"0 24px 64px rgba(30,58,138,.18)",textAlign:"center",animation:"loginFadeIn .5s ease-out"}}>
         <style>{`@keyframes loginFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}`}</style>
-        <div style={{width:60,height:60,borderRadius:16,background:"linear-gradient(135deg,#1E3A8A,#1E2F6B)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",boxShadow:"0 8px 24px rgba(30,58,138,.3)"}}>🏫</div>
-        <div style={{fontSize:16,fontWeight:800,color:"#1E3A8A",marginBottom:6}}>ระบบนิเทศการสอน</div>
+        <div style={{width:60,height:60,borderRadius:16,background:"linear-gradient(135deg,#6366F1,#8B5CF6)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,margin:"0 auto 16px",boxShadow:"0 8px 24px rgba(79,70,229,.3)"}}>🏫</div>
+        <div style={{fontSize:16,fontWeight:800,color:"#4F46E5",marginBottom:6}}>ระบบนิเทศการสอน</div>
         <div style={{fontSize:13,color:"#6B7280",display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}>
-          <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#1E3A8A",animation:"pulse2 1.2s infinite"}}/>กำลังเชื่อมต่อ...
+          <span style={{display:"inline-block",width:8,height:8,borderRadius:"50%",background:"#4F46E5",animation:"pulse2 1.2s infinite"}}/>กำลังเชื่อมต่อ...
         </div>
         <style>{`@keyframes pulse2{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}`}</style>
       </div>
     </div>
   );
 
-  return(
+  const goto = id => { setPage(id); setMobileMenuOpen(false); window.scrollTo({top:0}); };
+  if(!currentUser) return(
     <div style={{minHeight:"100vh",fontFamily:"var(--font-th,Sarabun,sans-serif)"}}>
       <style>{CSS}</style>
-      {currentUser&&(
-        <header className="np" style={{background:"linear-gradient(135deg,#1E3A8A 0%,#1E2F6B 100%)",color:"#fff",padding:"0 16px",position:"sticky",top:0,zIndex:300,boxShadow:"0 4px 20px rgba(30,58,138,.35)",overflow:"hidden"}}>
-          <div style={{position:"absolute",top:"-30px",right:"-20px",width:120,height:120,borderRadius:"50%",background:"rgba(255,255,255,.05)",pointerEvents:"none"}}/>
-          <div style={{position:"absolute",bottom:"-40px",left:"40%",width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,.04)",pointerEvents:"none"}}/>
-          <div style={{maxWidth:1100,margin:"0 auto",display:"flex",alignItems:"center",gap:10,height:58,position:"relative"}}>
-            <div style={{width:38,height:38,borderRadius:10,background:"rgba(255,255,255,.16)",border:"1.5px solid rgba(255,255,255,.28)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>
-              {settings.logo?<img src={settings.logo} style={{width:32,height:32,borderRadius:8,objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:"🏫"}
-            </div>
-            <div style={{minWidth:0,marginRight:6,flex:1}}>
-              <div style={{fontWeight:800,fontSize:13.5,lineHeight:1.2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{settings.schoolName}</div>
-              <div style={{fontSize:11,opacity:.8,display:"flex",alignItems:"center",gap:5,marginTop:1,overflow:"hidden"}}>
-                <span style={{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{currentUser.displayName}</span>
-                <span style={{background:"rgba(255,255,255,.18)",padding:"1px 8px",borderRadius:20,fontSize:10,border:"1px solid rgba(255,255,255,.22)",flexShrink:0}}>{getRoleLabel(currentUser)}</span>
-              </div>
-            </div>
-            <nav className="nav-desktop" style={{gap:2,flexWrap:"wrap"}}>
-              {navItems.map(([id,icon,lb])=>{
-                const active=page===id;
-                return <button key={id} onClick={()=>setPage(id)}
-                  style={{padding:"6px 11px",borderRadius:8,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:13,fontWeight:active?700:500,background:active?"rgba(255,255,255,.22)":"transparent",border:`1.5px solid ${active?"rgba(255,255,255,.4)":"transparent"}`,color:active?"#fff":"rgba(255,255,255,.80)",display:"inline-flex",alignItems:"center",gap:4,transition:"all .18s",boxShadow:active?"0 2px 8px rgba(0,0,0,.15)":"none"}}>
-                  <span>{icon}</span><span>{lb}</span>
-                  {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"0 5px",fontSize:10,fontWeight:800,marginLeft:2}}>{pendingCount}</span>}
-                </button>;
-              })}
-            </nav>
-            <button onClick={handleLogout} className="nav-desktop"
-              style={{padding:"7px 14px",borderRadius:8,cursor:"pointer",background:"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.3)",color:"#fff",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:13,flexShrink:0,transition:"background .18s",fontWeight:600}}
-              onMouseEnter={e=>e.currentTarget.style.background="rgba(255,255,255,.22)"}
-              onMouseLeave={e=>e.currentTarget.style.background="rgba(255,255,255,.1)"}
-            >ออก</button>
-            <button onClick={()=>setMobileMenuOpen(o=>!o)} className="nav-toggle" aria-label="เมนู"
-              style={{alignItems:"center",justifyContent:"center",width:38,height:38,borderRadius:10,cursor:"pointer",background:mobileMenuOpen?"rgba(255,255,255,.22)":"rgba(255,255,255,.1)",border:"1.5px solid rgba(255,255,255,.3)",color:"#fff",fontSize:17,flexShrink:0}}>
-              {mobileMenuOpen?"✕":"☰"}
-            </button>
+      <LoginPage users={users} settings={settings} onLogin={handleLogin}/>
+    </div>
+  );
+  const initial = (currentUser.displayName||"?").trim().slice(0,1).toUpperCase();
+  const curNav = navItems.find(n=>n[0]===page);
+  return(
+    <div className="shell" style={{fontFamily:"var(--font-th,Sarabun,sans-serif)"}}>
+      <style>{CSS}</style>
+      <div className={`backdrop np${mobileMenuOpen?" open":""}`} onClick={()=>setMobileMenuOpen(false)}/>
+      <aside className={`sidebar np${mobileMenuOpen?" open":""}`}>
+        <div className="sb-brand">
+          <div className="sb-logo">
+            {settings.logo?<img src={settings.logo} alt="" style={{width:"100%",height:"100%",objectFit:"cover"}} onError={e=>{e.target.style.display="none";}}/>:"🏫"}
           </div>
-          {mobileMenuOpen&&(
-            <nav className="nav-mobile" style={{flexDirection:"column",gap:4,maxWidth:1100,margin:"0 auto",padding:"4px 0 16px",position:"relative",animation:"slideDown .18s ease-out"}}>
-              {navItems.map(([id,icon,lb])=>{
-                const active=page===id;
-                return <button key={id} onClick={()=>{setPage(id);setMobileMenuOpen(false);}}
-                  style={{padding:"11px 14px",borderRadius:10,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:14,fontWeight:active?700:500,background:active?"rgba(255,255,255,.2)":"rgba(255,255,255,.06)",border:`1.5px solid ${active?"rgba(255,255,255,.4)":"transparent"}`,color:"#fff",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
-                  <span style={{fontSize:16}}>{icon}</span><span style={{flex:1}}>{lb}</span>
-                  {id==="evaluate"&&pendingCount>0&&<span style={{background:"#F59E0B",color:"#1a0000",borderRadius:20,padding:"1px 8px",fontSize:11,fontWeight:800}}>{pendingCount}</span>}
-                </button>;
-              })}
-              <button onClick={handleLogout}
-                style={{marginTop:6,padding:"11px 14px",borderRadius:10,cursor:"pointer",fontFamily:"var(--font-th,Sarabun,sans-serif)",fontSize:14,fontWeight:600,background:"rgba(220,38,38,.18)",border:"1.5px solid rgba(220,38,38,.35)",color:"#fff",display:"flex",alignItems:"center",gap:10,textAlign:"left"}}>
-                <span style={{fontSize:16}}>🚪</span><span>ออกจากระบบ</span>
-              </button>
-            </nav>
-          )}
+          <div style={{minWidth:0}}>
+            <div style={{fontWeight:800,fontSize:14,lineHeight:1.25,color:"#fff"}}>{settings.schoolName}</div>
+            <div style={{fontSize:11,color:"#94A3B8",marginTop:2}}>ระบบนิเทศการสอน</div>
+          </div>
+        </div>
+        <div className="sb-label">เมนู</div>
+        <nav className="sb-nav">
+          {navItems.map(([id,icon,lb])=>(
+            <button key={id} className={`sb-item${page===id?" active":""}`} onClick={()=>goto(id)} aria-current={page===id?"page":undefined}>
+              <span className="sb-ico">{icon}</span><span>{lb}</span>
+              {id==="evaluate"&&pendingCount>0&&<span className="sb-count">{pendingCount}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="sb-user">
+          <div className="sb-avatar">{initial}</div>
+          <div style={{minWidth:0}}>
+            <div style={{fontSize:13,fontWeight:700,color:"#fff",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{currentUser.displayName}</div>
+            <div style={{fontSize:11,color:"#94A3B8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{getRoleLabel(currentUser)}</div>
+          </div>
+        </div>
+        <button className="sb-logout" onClick={handleLogout}>🚪 ออกจากระบบ</button>
+      </aside>
+      <div className="shell-main">
+        <header className="topbar np">
+          <button onClick={()=>setMobileMenuOpen(true)} aria-label="เมนู" className="btn bo" style={{padding:0,width:38,minHeight:38,fontSize:17}}>☰</button>
+          <div style={{flex:1,minWidth:0,fontWeight:800,fontSize:15,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{curNav?`${curNav[1]} ${curNav[2]}`:settings.schoolName}</div>
+          {pendingCount>0&&<button className="btn bx" style={{padding:"4px 12px",minHeight:32,fontSize:12}} onClick={()=>goto("evaluate")}>📝 รอประเมิน {pendingCount}</button>}
         </header>
-      )}
-      <main style={{maxWidth:1100,margin:"0 auto",padding:currentUser?"24px 14px 60px":"0"}}>
-        {!currentUser&&<LoginPage users={users} settings={settings} onLogin={handleLogin}/>}
-        {currentUser&&(<div key={page} className="page-fade">
-          {page==="dashboard"                                   &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
-          {page==="booking"  &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
-          {page==="summary"                                     &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings}/>}
-          {page==="evaluate"                                    &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
-          {page==="schedule"                                    &&<ScheduleSummary bookings={bookings} users={users}/>}
-          {page==="users"   &&hasRole(currentUser,"sysadmin")   &&<UsersTab users={users}/>}
-          {page==="settings"&&hasRole(currentUser,"sysadmin")   &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
-          {page==="profile"                                     &&<ProfileTab currentUser={currentUser}/>}
-        </div>)}
-      </main>
+        <main className="content">
+          <div key={page} className="page-fade">
+            {page==="dashboard"                                   &&<DashboardPage bookings={bookings} users={users} structure={structure} settings={settings}/>}
+            {page==="booking"  &&hasRole(currentUser,"teacher")   &&<BookingPage currentUser={currentUser} users={users} bookings={bookings} blockedDates={blockedDates} onSave={addBooking} onDelete={deleteBooking}/>}
+            {page==="summary"                                     &&<SummaryPage currentUser={currentUser} bookings={bookings} structure={structure} users={users} settings={settings}/>}
+            {page==="evaluate"                                    &&<EvaluateTab currentUser={currentUser} bookings={bookings} structure={structure} onSaveBooking={updateBooking}/>}
+            {page==="schedule"                                    &&<ScheduleSummary bookings={bookings} users={users}/>}
+            {page==="users"   &&hasRole(currentUser,"sysadmin")   &&<UsersTab users={users}/>}
+            {page==="settings"&&hasRole(currentUser,"sysadmin")   &&<SettingsPage settings={settings} structure={structure} blockedDates={blockedDates} onSaveSettings={saveSettings} onSaveStructure={saveStructure} onSaveBlocked={saveBlocked}/>}
+            {page==="profile"                                     &&<ProfileTab currentUser={currentUser}/>}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
