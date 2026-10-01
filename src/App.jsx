@@ -794,7 +794,7 @@ function DashboardPage({bookings,users,structure,settings}){
                   </tr>,
                   ...d.items.map((it,ii)=>(
                     <tr key={it.id} className="tbl-row" style={{background:"var(--W)"}}>
-                      <td style={{...cell,paddingLeft:28}}>
+                      <td style={{...cell,textAlign:"left"}}>
                         <span style={{color:"var(--TS)",marginRight:6}}>{di+1}.{ii+1}</span>{it.name}
                         <span style={{fontSize:11,color:"var(--TS)",marginLeft:6}}>(เต็ม {it.max})</span>
                       </td>
@@ -1471,7 +1471,7 @@ function SummaryPage({currentUser,bookings,structure,users,settings}){
       const g = gradeOf(pct);
       return `<tr>
         <td style="text-align:center">${d.no}</td>
-        <td>${d.name}</td>
+        <td style="text-align:left">${d.name}</td>
         <td style="text-align:center">${d.score}/${d.max}</td>
         <td style="text-align:center;font-weight:700;color:${g.color}">${pct}%</td>
         <td style="padding:4px 8px">
