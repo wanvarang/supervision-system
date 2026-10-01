@@ -612,7 +612,7 @@ function DashboardPage({bookings,users,structure,settings}){
     const scores = tBks.map(b=>calcAvgScore(b,structure)).filter(Boolean);
     if(!scores.length) return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:0,avg:null};
     return {name:t.displayName,subjectGroup:t.subjectGroup||"",count:scores.length,avg:Math.round(scores.reduce((a,s)=>a+s.avgPct,0)/scores.length)};
-  }).filter(t=>t.count>0).sort((a,b)=>b.avg-a.avg);
+  }).filter(t=>t.count>0).sort((a,b)=>b.avg-a.avg).map((t,i,arr)=>({...t,rank:i>0&&arr[i-1].avg===t.avg?arr[i-1].rank:i+1}));
   const months = [];
   for(let i=5;i>=0;i--){
     const d=new Date(); d.setMonth(d.getMonth()-i);
@@ -765,13 +765,13 @@ function DashboardPage({bookings,users,structure,settings}){
           <div style={{display:"flex",flexDirection:"column",gap:7}}>
             {teacherStats.map((t,i)=>{
               const g=gradeOf(t.avg);
-              const medal=i===0?"🥇":i===1?"🥈":i===2?"🥉":null;
+              const medal=t.rank===1?"🥇":t.rank===2?"🥈":t.rank===3?"🥉":null;
               return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:i===0?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${i===0?"#FDE68A":"var(--BD)"}`,flexWrap:"wrap"}}>
+                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:t.rank===1?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${t.rank===1?"#FDE68A":"var(--BD)"}`,flexWrap:"wrap"}}>
                   <div style={{position:"relative",flexShrink:0}}>
                     <UAvatar name={t.name} role="teacher" size={40}/>
                     {medal&&<span style={{position:"absolute",bottom:-4,right:-4,fontSize:14,lineHeight:1}}>{medal}</span>}
-                    {!medal&&<span style={{position:"absolute",bottom:-3,right:-6,background:"var(--W)",border:"1px solid var(--BD)",borderRadius:10,fontSize:10,fontWeight:800,color:"var(--TS)",padding:"0 4px"}}>{i+1}</span>}
+                    {!medal&&<span style={{position:"absolute",bottom:-3,right:-6,background:"var(--W)",border:"1px solid var(--BD)",borderRadius:10,fontSize:10,fontWeight:800,color:"var(--TS)",padding:"0 4px"}}>{t.rank}</span>}
                   </div>
                   <div style={{flex:1,minWidth:120}}>
                     <div style={{fontWeight:700,fontSize:14}}>{t.name}</div>
