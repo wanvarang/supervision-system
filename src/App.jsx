@@ -763,11 +763,13 @@ function DashboardPage({bookings,users,structure,settings}){
         <div className="card">
           <h3 style={{fontWeight:700,fontSize:15,marginBottom:14,color:"var(--P)"}}>🏆 ผลการนิเทศครูรายบุคคล</h3>
           <div style={{display:"flex",flexDirection:"column",gap:7}}>
-            {teacherStats.map((t,i)=>{
+            {Object.values(teacherStats.reduce((m,t)=>{(m[t.rank]=m[t.rank]||[]).push(t);return m;},{})).map((grp,gi)=>(
+              <div key={gi} style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+              {grp.map((t,i)=>{
               const g=gradeOf(t.avg);
               const medal=t.rank===1?"🥇":t.rank===2?"🥈":t.rank===3?"🥉":null;
               return(
-                <div key={i} style={{display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:t.rank===1?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${t.rank===1?"#FDE68A":"var(--BD)"}`,flexWrap:"wrap"}}>
+                <div key={i} style={{flex:"1 1 280px",minWidth:0,display:"flex",alignItems:"center",gap:12,padding:"10px 14px",background:t.rank===1?"#FFFBEB":"#F9FAFB",borderRadius:10,border:`1px solid ${t.rank===1?"#FDE68A":"var(--BD)"}`,flexWrap:"wrap"}}>
                   <div style={{position:"relative",flexShrink:0}}>
                     <UAvatar name={t.name} role="teacher" size={40}/>
                     {medal&&<span style={{position:"absolute",bottom:-4,right:-4,fontSize:14,lineHeight:1}}>{medal}</span>}
@@ -786,7 +788,9 @@ function DashboardPage({bookings,users,structure,settings}){
                   </div>
                 </div>
               );
-            })}
+              })}
+              </div>
+            ))}
           </div>
         </div>
       )}
